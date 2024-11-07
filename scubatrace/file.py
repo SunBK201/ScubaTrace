@@ -4,28 +4,36 @@ import os
 from abc import abstractmethod
 from functools import cached_property
 from parser import c_parser
+from typing import TYPE_CHECKING
 
 import language
-from function import CFunction, Function
 from structure import CStruct, Struct
+
+if TYPE_CHECKING:
+    from function import CFunction, Function
+    from project import Project
 
 
 class File:
-    def __init__(self, path: str):
-        self.path = path
+    def __init__(self, path: str, project: Project):
+        self.__path = path
+        self.project = project
 
     @property
     def abspath(self) -> str:
-        return os.path.abspath(self.path)
+        return os.path.abspath(self.__path)
 
     @property
     def relpath(self) -> str:
-        return os.path.relpath(self.path)
+        return self.__path.replace(self.project.path + "/", "")
 
     @property
     def text(self) -> str:
-        with open(self.path, "r") as f:
+        with open(self.__path, "r") as f:
             return f.read()
+
+    def __str__(self) -> str:
+        return self.relpath
 
     @cached_property
     @abstractmethod
@@ -49,11 +57,12 @@ class File:
 
 
 class CFile(File):
-    def __init__(self, path: str):
-        super().__init__(path)
+    def __init__(self, path: str, project: Project):
+        super().__init__(path, project)
 
     @cached_property
     def imports(self) -> list[File]:
+        # TODO
         include_node = c_parser.query_all(self.text, language.C.query_include)
         import_files = []
         for node in include_node:
@@ -63,8 +72,13 @@ class CFile(File):
             include_path = include_path.text.decode()
             if include_path[0] == "<":
                 continue
+            include_path = include_path.strip('"')
+
             import_files.append(
-                CFile(os.path.join(os.path.dirname(self.path), include_path))
+                CFile(
+                    os.path.join(os.path.dirname(self.__path), include_path),
+                    self.project,
+                )
             )
         return import_files
 

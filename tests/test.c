@@ -1,6 +1,7 @@
 /* hello world */
 
 #include <stdio.h>
+#include "test.h"
 
 int uct_pagesize = 1;
 int uct_pagesize_shift;

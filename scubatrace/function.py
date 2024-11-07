@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from parser import c_parser
+from typing import TYPE_CHECKING
 
 import language
 from tree_sitter import Node
 
+if TYPE_CHECKING:
+    from file import File
+
 
 class Function:
-    def __init__(self, node: Node, file):
+    def __init__(self, node: Node, file: File):
         self.node = node
         self.file = file
 
@@ -54,6 +58,9 @@ class Function:
         else:
             return self.body_node.end_point[0] + 1
 
+    def __str__(self) -> str:
+        return f"{self.name}({self.start_line}-{self.end_line})"
+
     @property
     @abstractmethod
     def name(self) -> str: ...
@@ -76,11 +83,11 @@ class Function:
 
     @property
     @abstractmethod
-    def callees(self) -> dict[Node, str]: ...
+    def callees(self) -> list[Function]: ...
 
     @property
     @abstractmethod
-    def callers(self) -> dict[Node, str]: ...
+    def callers(self) -> list[Function]: ...
 
 
 class CFunction(Function):
@@ -149,6 +156,5 @@ class CFunction(Function):
         funcs = []
         for file in self.file.imports:
             for function in file.functions:
-                if function.name in self.calls.values():
-                    funcs.append(function)
+                funcs.append(function)
         return funcs

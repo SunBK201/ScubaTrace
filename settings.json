@@ -1,0 +1,7 @@
+{
+    "python.analysis.typeCheckingMode": "standard",
+    "files.associations": {
+        "*.plist": "xml",
+        "test.h": "c"
+    },
+}
