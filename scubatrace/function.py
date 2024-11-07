@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from parser import c_parser
 
@@ -6,8 +8,9 @@ from tree_sitter import Node
 
 
 class Function:
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, file):
         self.node = node
+        self.file = file
 
     @property
     def text(self) -> str:
@@ -29,7 +32,9 @@ class Function:
 
     @property
     def lines(self) -> dict[int, str]:
-        return {i + self.start_line: line for i, line in enumerate(self.text.split("\n"))}
+        return {
+            i + self.start_line: line for i, line in enumerate(self.text.split("\n"))
+        }
 
     @property
     def body_node(self) -> Node | None:
@@ -63,6 +68,10 @@ class Function:
 
     @property
     @abstractmethod
+    def accessible_functions(self) -> list[Function]: ...
+
+    @property
+    @abstractmethod
     def calls(self) -> dict[Node, str]: ...
 
     @property
@@ -75,15 +84,22 @@ class Function:
 
 
 class CFunction(Function):
-    def __init__(self, node: Node):
-        super().__init__(node)
+    def __init__(self, node: Node, file):
+        super().__init__(node, file)
 
     @property
     def name(self) -> str:
         name_node = self.node.child_by_field_name("declarator")
-        while name_node is not None and name_node.type not in {"identifier", "operator_name", "type_identifier"}:
+        while name_node is not None and name_node.type not in {
+            "identifier",
+            "operator_name",
+            "type_identifier",
+        }:
             all_temp_name_node = name_node
-            if name_node.child_by_field_name("declarator") is None and name_node.type == "reference_declarator":
+            if (
+                name_node.child_by_field_name("declarator") is None
+                and name_node.type == "reference_declarator"
+            ):
                 for temp_node in name_node.children:
                     if temp_node.type == "function_declarator":
                         name_node = temp_node
@@ -91,7 +107,11 @@ class CFunction(Function):
             if name_node.child_by_field_name("declarator") is not None:
                 name_node = name_node.child_by_field_name("declarator")
             # int *a()
-            if name_node is not None and name_node.type == "field_identifier" and name_node.child_by_field_name("declarator") is None:
+            if (
+                name_node is not None
+                and name_node.type == "field_identifier"
+                and name_node.child_by_field_name("declarator") is None
+            ):
                 break
             if name_node == all_temp_name_node:
                 break
@@ -111,14 +131,24 @@ class CFunction(Function):
     def variables(self) -> dict[Node, str]:
         variables = self.identifiers
         for node in self.identifiers:
-            if node.parent is not None and node.parent.type in ["call_expression", "function_declarator"]:
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+            ]:
                 variables.pop(node)
         return variables
 
     @property
     def calls(self) -> dict[Node, str]:
         nodes = c_parser.query_all(self.node, language.C.query_call)
-        calls = {
-            node: node.text.decode() for node in nodes if node.text is not None
-        }
+        calls = {node: node.text.decode() for node in nodes if node.text is not None}
         return calls
+
+    @property
+    def accessible_functions(self) -> list[Function]:
+        funcs = []
+        for file in self.file.imports:
+            for function in file.functions:
+                if function.name in self.calls.values():
+                    funcs.append(function)
+        return funcs

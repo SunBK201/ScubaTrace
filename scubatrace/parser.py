@@ -36,7 +36,9 @@ class Parser:
             results.extend(nodes)
         return results
 
-    def query_by_capture_name(self, target: str | Node, query_str: str, capture_name: str) -> list[Node]:
+    def query_by_capture_name(
+        self, target: str | Node, query_str: str, capture_name: str
+    ) -> list[Node]:
         captures = self.query(target, query_str)
         return captures.get(capture_name, [])
 
