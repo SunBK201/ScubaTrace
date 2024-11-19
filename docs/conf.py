@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../scubatrace"))
+sys.path.insert(0, os.path.abspath('../'))
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -21,7 +21,7 @@ release = "0.0.1"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    'sphinx.ext.autosummary',
     "sphinx_copybutton",
     "sphinx.ext.viewcode",
 ]
@@ -30,14 +30,6 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 language = "en"
 
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": True,
-    "private-members": True,
-    "special-members": "__init__",
-    "inherited-members": True,
-    "show-inheritance": True,
-}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

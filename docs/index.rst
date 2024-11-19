@@ -32,6 +32,10 @@ Navigation
    :maxdepth: 2
    
    usage
+   ref_infer
+   algorithms
+   sbom
+   misc
    reference
 
 .. toctree::
