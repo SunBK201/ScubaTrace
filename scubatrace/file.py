@@ -3,15 +3,15 @@ from __future__ import annotations
 import os
 from abc import abstractmethod
 from functools import cached_property
-from parser import c_parser
 from typing import TYPE_CHECKING
 
-import language
-from structure import CStruct, Struct
+from . import language
+from .parser import c_parser
+from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
-    from function import CFunction, Function
-    from project import Project
+    from .function import CFunction, Function
+    from .project import Project
 
 
 class File:

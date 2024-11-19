@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-import language
 from tree_sitter import Node
 
+from . import language
+
 if TYPE_CHECKING:
-    from file import File
-    from method import Method
+    from .file import File
+    from .method import Method
 
 
 class Statement:

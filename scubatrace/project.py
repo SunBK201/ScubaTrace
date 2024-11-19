@@ -1,9 +1,9 @@
 import os
 from functools import cached_property
 
-import language
-from file import CFile, CPPFile, File, JavaFile
-from function import Function
+from . import language
+from .file import CFile, CPPFile, File, JavaFile
+from .function import Function
 
 
 class Project:

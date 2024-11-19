@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from parser import c_parser
 from typing import TYPE_CHECKING
 
-import language
 from tree_sitter import Node
 
+from . import language
+from .parser import c_parser
+
 if TYPE_CHECKING:
-    from file import File
+    from .file import File
 
 
 class Function:

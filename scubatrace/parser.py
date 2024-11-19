@@ -1,7 +1,8 @@
-import language
 from tree_sitter import Language as TSLanguage
 from tree_sitter import Node
 from tree_sitter import Parser as TSParser
+
+from . import language
 
 
 class Parser:

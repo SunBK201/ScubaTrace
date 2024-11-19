@@ -1,1 +1,4 @@
-from .project import *
+from .clazz import Class
+from .file import File
+from .function import Function
+from .project import CProject
