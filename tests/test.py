@@ -7,7 +7,7 @@ import scubatrace
 
 def main():
     a_proj = scubatrace.CProject("../tests")
-    print(a_proj.files[0].structs[0].name)
+    print(a_proj)
 
 
 if __name__ == '__main__':
