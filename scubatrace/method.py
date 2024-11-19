@@ -1,10 +1,7 @@
-from typing import TYPE_CHECKING
-
-from function import Function
 from tree_sitter import Node
 
-if TYPE_CHECKING:
-    from .clazz import Class
+from .clazz import Class
+from .function import Function
 
 
 class Method(Function):
