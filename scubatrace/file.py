@@ -41,19 +41,11 @@ class File:
 
     @property
     @abstractmethod
-    def exports(self) -> list[File]: ...
-
-    @property
-    @abstractmethod
     def functions(self) -> list[Function]: ...
 
     @property
     @abstractmethod
     def structs(self) -> list[Struct]: ...
-
-    @property
-    @abstractmethod
-    def accessible_files(self) -> list[File]: ...
 
 
 class CFile(File):

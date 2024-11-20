@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
 from . import language
 from .parser import c_parser
+from .statement import Statement
 
 if TYPE_CHECKING:
     from .file import File
@@ -16,6 +18,9 @@ class Function:
     def __init__(self, node: Node, file: File):
         self.node = node
         self.file = file
+
+    def __str__(self) -> str:
+        return f"{self.name}({self.start_line}-{self.end_line})"
 
     @property
     def text(self) -> str:
@@ -59,8 +64,9 @@ class Function:
         else:
             return self.body_node.end_point[0] + 1
 
-    def __str__(self) -> str:
-        return f"{self.name}({self.start_line}-{self.end_line})"
+    @cached_property
+    @abstractmethod
+    def statements(self) -> list[Statement]: ...
 
     @property
     @abstractmethod
@@ -80,15 +86,15 @@ class Function:
 
     @property
     @abstractmethod
-    def calls(self) -> dict[Node, str]: ...
+    def calls(self) -> list[Statement]: ...
 
     @property
     @abstractmethod
-    def callees(self) -> list[Function]: ...
+    def callees(self) -> dict[Function, list[Statement]]: ...
 
     @property
     @abstractmethod
-    def callers(self) -> list[Function]: ...
+    def callers(self) -> dict[Function, list[Statement]]: ...
 
 
 class CFunction(Function):
@@ -147,10 +153,10 @@ class CFunction(Function):
         return variables
 
     @property
-    def calls(self) -> dict[Node, str]:
-        nodes = c_parser.query_all(self.node, language.C.query_call)
-        calls = {node: node.text.decode() for node in nodes if node.text is not None}
-        return calls
+    def calls(self) -> list[Statement]:
+        # nodes = c_parser.query_all(self.node, language.C.query_call)
+        # calls = {node: node.text.decode() for node in nodes if node.text is not None}
+        ...
 
     @property
     def accessible_functions(self) -> list[Function]:
