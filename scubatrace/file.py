@@ -6,30 +6,30 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from . import language
+from .function import CFunction, Function
 from .parser import c_parser
 from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
-    from .function import CFunction, Function
     from .project import Project
 
 
 class File:
     def __init__(self, path: str, project: Project):
-        self.__path = path
+        self._path = path
         self.project = project
 
     @property
     def abspath(self) -> str:
-        return os.path.abspath(self.__path)
+        return os.path.abspath(self._path)
 
     @property
     def relpath(self) -> str:
-        return self.__path.replace(self.project.path + "/", "")
+        return self._path.replace(self.project.path + "/", "")
 
     @property
     def text(self) -> str:
-        with open(self.__path, "r") as f:
+        with open(self._path, "r") as f:
             return f.read()
 
     def __str__(self) -> str:
@@ -54,7 +54,6 @@ class CFile(File):
 
     @cached_property
     def imports(self) -> list[File]:
-        # TODO
         include_node = c_parser.query_all(self.text, language.C.query_include)
         import_files = []
         for node in include_node:
@@ -66,12 +65,13 @@ class CFile(File):
                 continue
             include_path = include_path.strip('"')
 
-            import_files.append(
-                CFile(
-                    os.path.join(os.path.dirname(self.__path), include_path),
-                    self.project,
-                )
+            import_file = CFile(
+                os.path.join(os.path.dirname(self._path), include_path),
+                self.project,
             )
+            import_files.append(import_file)
+            for file in import_file.imports:
+                import_files.append(file)
         return import_files
 
     @property
