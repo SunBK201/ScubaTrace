@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from functools import cached_property
+from os import access
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
@@ -154,9 +155,34 @@ class CFunction(Function):
 
     @property
     def calls(self) -> list[Statement]:
-        # nodes = c_parser.query_all(self.node, language.C.query_call)
-        # calls = {node: node.text.decode() for node in nodes if node.text is not None}
-        ...
+        nodes = c_parser.query_all(self.node, language.C.query_call)
+        calls = {node: node.text.decode() for node in nodes if node.text is not None}
+        stmts = []
+        call_funcs = {}
+        for call_node in calls:
+            func = call_node.child_by_field_name("function")
+            assert func is not None
+            for child in func.children:
+                if child.type == "identifier" and child.text is not None:
+                    call_funcs[call_node] = child.text.decode()
+                    break
+
+        for call in call_funcs.copy():
+            accessible = False
+            for func in self.accessible_functions:
+                if func == call_funcs[call]:
+                    accessible = True
+                    break
+            if not accessible:
+                call_funcs.pop(call)
+
+        for node in call_funcs:
+            for stmt in self.statements:
+                if stmt.node == node:
+                    stmts.append(stmt)
+                    break
+
+        return stmts
 
     @property
     def accessible_functions(self) -> list[Function]:
