@@ -5,7 +5,7 @@ from hashlib import md5
 from tree_sitter import Node
 
 from .file import File
-from .method import Function
+from .function import Function
 
 
 class Statement:

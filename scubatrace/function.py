@@ -8,10 +8,10 @@ from tree_sitter import Node
 
 from . import language
 from .parser import c_parser
-from .statement import Statement
 
 if TYPE_CHECKING:
     from .file import File
+    from .statement import Statement
 
 
 class Function:
