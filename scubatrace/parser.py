@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import Generator
 
 from tree_sitter import Language as TSLanguage
@@ -31,10 +30,6 @@ class Parser:
             elif not cursor.goto_parent():
                 break
 
-    @abstractmethod
-    @staticmethod
-    def traverse_statements(tree: Tree | Node) -> Generator[Node, None, None]: ...
-
     def query(self, target: str | Node, query_str: str) -> dict[str, list[Node]]:
         if isinstance(target, str):
             node = self.parse(target)
@@ -64,14 +59,6 @@ class Parser:
     ) -> list[Node]:
         captures = self.query(target, query_str)
         return captures.get(capture_name, [])
-
-    @abstractmethod
-    @staticmethod
-    def is_block_statement(node: Node) -> bool: ...
-
-    @abstractmethod
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool: ...
 
 
 class CParser(Parser):

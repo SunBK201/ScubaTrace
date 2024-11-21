@@ -9,10 +9,8 @@ from tree_sitter import Node
 from . import language
 from .parser import c_parser
 from .statement import (
-    BlockStatement,
     CBlockStatement,
     CSimpleStatement,
-    SimpleStatement,
     Statement,
 )
 
@@ -164,14 +162,6 @@ class CFunction(Function):
                 visited_children = False
             elif not cursor.goto_parent():
                 break
-        for node in c_parser.traverse_statements(self.body_node):
-            # skip the first body node
-            if node == self.body_node:
-                continue
-            if not c_parser.is_block_statement(node):
-                yield SimpleStatement(node, self)
-            else:
-                yield BlockStatement(node, self)
 
     @property
     def identifiers(self) -> dict[Node, str]:
