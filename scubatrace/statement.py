@@ -61,3 +61,16 @@ class BlockStatement(Statement):
 
     @property
     def statements(self) -> list[Statement]: ...
+
+
+class CSimpleStatement(SimpleStatement):
+    def __init__(self, node: Node, parent: Function | File):
+        super().__init__(node, parent)
+
+
+class CBlockStatement(BlockStatement):
+    def __init__(self, node: Node, parent: Function | File):
+        super().__init__(node, parent)
+
+    @property
+    def statements(self) -> list[Statement]: ...

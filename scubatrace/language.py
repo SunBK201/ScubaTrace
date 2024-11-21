@@ -21,6 +21,35 @@ class C(Language):
     query_struct = "(struct_specifier)@name"
     query_include = "(preproc_include)@name"
 
+    block_statements = [
+        "compound_statement",
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "do_statement",
+        "switch_statement",
+        "case_statement",
+        "default_statement",
+    ]
+
+    simple_statements = [
+        "declaration",
+        "expression_statement",
+        "return_statement",
+        "break_statement",
+        "continue_statement",
+        "goto_statement",
+    ]
+
+    control_statements = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "do_statement",
+        "switch_statement",
+        "case_statement",
+    ]
+
     def language(self):
         return C
 

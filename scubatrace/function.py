@@ -2,17 +2,22 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from functools import cached_property
-from os import access
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 from tree_sitter import Node
 
 from . import language
 from .parser import c_parser
+from .statement import (
+    BlockStatement,
+    CBlockStatement,
+    CSimpleStatement,
+    SimpleStatement,
+    Statement,
+)
 
 if TYPE_CHECKING:
     from .file import File
-    from .statement import Statement
 
 
 class Function:
@@ -67,7 +72,7 @@ class Function:
 
     @cached_property
     @abstractmethod
-    def statements(self) -> list[Statement]: ...
+    def statements(self) -> Generator[Statement, None, None]: ...
 
     @property
     @abstractmethod
@@ -133,6 +138,40 @@ class CFunction(Function):
         assert name_node is not None
         assert name_node.text is not None
         return name_node.text.decode()
+
+    @cached_property
+    def statements(self) -> Generator[Statement, None, None]:
+        if self.body_node is None:
+            return
+
+        cursor = self.body_node.walk()
+        visited_children = False
+        while True:
+            if not visited_children:
+                assert cursor.node is not None
+                if c_parser.is_simple_statement(cursor.node):
+                    yield CSimpleStatement(cursor.node, self)
+                elif c_parser.is_block_statement(cursor.node):
+                    yield CBlockStatement(cursor.node, self)
+
+                if not c_parser.is_block_statement(cursor.node):
+                    visited_children = True
+                elif not cursor.goto_first_child():
+                    visited_children = True
+                else:
+                    continue
+            elif cursor.goto_next_sibling():
+                visited_children = False
+            elif not cursor.goto_parent():
+                break
+        for node in c_parser.traverse_statements(self.body_node):
+            # skip the first body node
+            if node == self.body_node:
+                continue
+            if not c_parser.is_block_statement(node):
+                yield SimpleStatement(node, self)
+            else:
+                yield BlockStatement(node, self)
 
     @property
     def identifiers(self) -> dict[Node, str]:
