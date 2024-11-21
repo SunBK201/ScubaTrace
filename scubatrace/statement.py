@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from hashlib import md5
+from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
-from .file import File
-from .function import Function
+if TYPE_CHECKING:
+    from .file import File
+    from .function import Function
 
 
 class Statement:
