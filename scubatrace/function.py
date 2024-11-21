@@ -81,7 +81,7 @@ class Function:
     @abstractmethod
     def variables(self) -> dict[Node, str]: ...
 
-    @property
+    @cached_property
     @abstractmethod
     def accessible_functions(self) -> list[Function]: ...
 
@@ -240,7 +240,7 @@ class CFunction(Function):
 
         return callees
 
-    @property
+    @cached_property
     def accessible_functions(self) -> list[Function]:
         funcs = []
         for file in self.file.imports:
