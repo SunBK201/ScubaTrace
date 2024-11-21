@@ -32,7 +32,7 @@ Navigation
    :maxdepth: 2
    
    usage
-   ref_infer
+   relation
    algorithms
    sbom
    misc
