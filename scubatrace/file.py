@@ -15,24 +15,64 @@ if TYPE_CHECKING:
 
 
 class File:
+    """
+    Represents a file in a project.
+
+    Attributes:
+        _path (str): The file path.
+        project (Project): The project to which the file belongs.
+    """
+
     def __init__(self, path: str, project: Project):
+        """
+        Initializes a new instance of the class.
+
+        Args:
+            path (str): The file path.
+            project (Project): The project associated with this instance.
+        """
         self._path = path
         self.project = project
 
     @property
     def abspath(self) -> str:
+        """
+        Returns the absolute path of the file.
+
+        Returns:
+            str: The absolute path of the file.
+        """
         return os.path.abspath(self._path)
 
     @property
     def relpath(self) -> str:
+        """
+        Returns the relative path of the file with respect to the project directory.
+
+        The method removes the project directory path from the file's absolute path,
+        leaving only the relative path.
+
+        Returns:
+            str: The relative path of the file.
+        """
         return self._path.replace(self.project.path + "/", "")
 
     @property
     def text(self) -> str:
+        """
+        Reads the content of the file at the given path and returns it as a string.
+
+        Returns:
+            str: The content of the file.
+        """
         with open(self._path, "r") as f:
             return f.read()
 
     def __str__(self) -> str:
+        return self.signature
+
+    @property
+    def signature(self) -> str:
         return self.relpath
 
     @cached_property

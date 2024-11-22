@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from hashlib import md5
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
@@ -14,6 +13,19 @@ class Statement:
     def __init__(self, node: Node, parent: Function | File):
         self.node = node
         self.parent = parent
+
+    def __str__(self) -> str:
+        return self.signature
+
+    @property
+    def signature(self) -> str:
+        return (
+            self.parent.signature
+            + "#"
+            + str(self.start_line)
+            + "#"
+            + str(self.end_line)
+        )
 
     @property
     def text(self) -> str:
@@ -38,12 +50,6 @@ class Statement:
         if isinstance(self.parent, File):
             return self.parent
         return self.parent.file
-
-    @property
-    def signature(self) -> str:
-        return md5(
-            (self.file.abspath + str(self.start_line) + str(self.end_line)).encode()
-        ).hexdigest()
 
     @property
     def pre_controls(self) -> list[Statement]: ...

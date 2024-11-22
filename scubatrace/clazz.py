@@ -15,6 +15,21 @@ class Class:
         self.node = node
         self.file = file
 
+    def __str__(self) -> str:
+        return self.signature
+
+    @property
+    def signature(self) -> str:
+        return (
+            self.file.signature
+            + "#"
+            + self.name
+            + "#"
+            + str(self.start_line)
+            + "#"
+            + str(self.end_line)
+        )
+
     @property
     def text(self) -> str:
         if self.node.text is None:

@@ -19,43 +19,126 @@ if TYPE_CHECKING:
 
 
 class Function:
+    """
+    Represents a function in the source code with various properties and methods to access its details.
+
+    Attributes:
+        node (Node): The AST node representing the function.
+        file (File): The file in which the function is defined.
+    """
+
     def __init__(self, node: Node, file: File):
+        """
+        Initializes a new instance of the class.
+
+        Args:
+            node (Node): The node associated with this instance.
+            file (File): The file associated with this instance.
+        """
         self.node = node
         self.file = file
 
     def __str__(self) -> str:
-        return f"{self.name}({self.start_line}-{self.end_line})"
+        return self.signature
+
+    @property
+    def signature(self) -> str:
+        return (
+            self.file.signature
+            + "#"
+            + self.name
+            + "#"
+            + str(self.start_line)
+            + "#"
+            + str(self.end_line)
+        )
 
     @property
     def text(self) -> str:
+        """
+        Returns the text content of the node.
+
+        Raises:
+            ValueError: If the node's text is None.
+
+        Returns:
+            str: The decoded text content of the node.
+        """
         if self.node.text is None:
             raise ValueError("Node text is None")
         return self.node.text.decode()
 
     @property
     def start_line(self) -> int:
+        """
+        Returns the starting line number of the node.
+
+        The line number is determined by the node's start point and is incremented by 1
+        to convert from a zero-based index to a one-based index.
+
+        Returns:
+            int: The starting line number of the node.
+        """
         return self.node.start_point[0] + 1
 
     @property
     def end_line(self) -> int:
+        """
+        Returns the ending line number of the node.
+
+        The line number is derived from the node's end_point attribute and is
+        incremented by 1 to convert from a zero-based index to a one-based index.
+
+        Returns:
+            int: The ending line number of the node.
+        """
         return self.node.end_point[0] + 1
 
     @property
     def length(self):
+        """
+        Calculate the length of the range.
+
+        Returns:
+            int: The length of the range, calculated as the difference between
+            end_line and start_line, plus one.
+        """
         return self.end_line - self.start_line + 1
 
     @property
     def lines(self) -> dict[int, str]:
+        """
+        Generates a dictionary mapping line numbers to their corresponding lines of text.
+
+        Returns:
+            dict[int, str]: A dictionary where the keys are line numbers (starting from `self.start_line`)
+                            and the values are the lines of text from `self.text`.
+        """
         return {
             i + self.start_line: line for i, line in enumerate(self.text.split("\n"))
         }
 
     @property
     def body_node(self) -> Node | None:
+        """
+        Retrieves the body node of the current node.
+
+        Returns:
+            Node | None: The body node if it exists, otherwise None.
+        """
         return self.node.child_by_field_name("body")
 
     @property
     def body_start_line(self) -> int:
+        """
+        Returns the starting line number of the body of the node.
+
+        If the body node is not defined, it returns the starting line number of the node itself.
+        Otherwise, it returns the starting line number of the body node.
+
+        Returns:
+            int: The starting line number of the body or the node.
+        """
         if self.body_node is None:
             return self.start_line
         else:
@@ -63,6 +146,15 @@ class Function:
 
     @property
     def body_end_line(self) -> int:
+        """
+        Returns the ending line number of the body of the node.
+
+        If the body_node attribute is None, it returns the end_line attribute.
+        Otherwise, it returns the line number immediately after the end of the body_node.
+
+        Returns:
+            int: The ending line number of the body.
+        """
         if self.body_node is None:
             return self.end_line
         else:
