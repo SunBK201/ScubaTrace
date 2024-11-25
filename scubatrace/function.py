@@ -11,6 +11,7 @@ from .parser import c_parser
 from .statement import (
     CBlockStatement,
     CSimpleStatement,
+    CStatement,
     Statement,
 )
 
@@ -162,7 +163,7 @@ class Function:
 
     @cached_property
     @abstractmethod
-    def statements(self) -> Generator[Statement, None, None]: ...
+    def statements(self) -> list[Statement]: ...
 
     @property
     @abstractmethod
@@ -230,30 +231,10 @@ class CFunction(Function):
         return name_node.text.decode()
 
     @cached_property
-    def statements(self) -> Generator[Statement, None, None]:
+    def statements(self) -> list[Statement]:
         if self.body_node is None:
-            return
-
-        cursor = self.body_node.walk()
-        visited_children = False
-        while True:
-            if not visited_children:
-                assert cursor.node is not None
-                if c_parser.is_simple_statement(cursor.node):
-                    yield CSimpleStatement(cursor.node, self)
-                elif c_parser.is_block_statement(cursor.node):
-                    yield CBlockStatement(cursor.node, self)
-
-                if not c_parser.is_block_statement(cursor.node):
-                    visited_children = True
-                elif not cursor.goto_first_child():
-                    visited_children = True
-                else:
-                    continue
-            elif cursor.goto_next_sibling():
-                visited_children = False
-            elif not cursor.goto_parent():
-                break
+            return []
+        return list(CStatement.generater(self.body_node, self))
 
     @property
     def identifiers(self) -> dict[Node, str]:

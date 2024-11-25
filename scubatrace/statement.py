@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 from tree_sitter import Node
+
+from .parser import c_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -58,6 +60,39 @@ class Statement:
     def post_controls(self) -> list[Statement]: ...
 
 
+class CStatement(Statement):
+    def __init__(self, node: Node, parent: Function | File):
+        super().__init__(node, parent)
+
+    @staticmethod
+    def generater(
+        node: Node, parent: Function | File
+    ) -> Generator[Statement, None, None]:
+        if node is None:
+            yield from ()
+
+        cursor = node.walk()
+        visited_children = False
+        while True:
+            if not visited_children:
+                assert cursor.node is not None
+                if c_parser.is_simple_statement(cursor.node):
+                    yield CSimpleStatement(cursor.node, parent)
+                elif c_parser.is_block_statement(cursor.node):
+                    yield CBlockStatement(cursor.node, parent)
+
+                if not c_parser.is_block_statement(cursor.node):
+                    visited_children = True
+                elif not cursor.goto_first_child():
+                    visited_children = True
+                else:
+                    continue
+            elif cursor.goto_next_sibling():
+                visited_children = False
+            elif not cursor.goto_parent():
+                break
+
+
 class SimpleStatement(Statement):
     def __init__(self, node: Node, parent: Function | File):
         super().__init__(node, parent)
@@ -81,4 +116,5 @@ class CBlockStatement(BlockStatement):
         super().__init__(node, parent)
 
     @property
-    def statements(self) -> list[Statement]: ...
+    def statements(self) -> list[Statement]:
+        return list(CStatement.generater(self.node, self.parent))
