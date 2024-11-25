@@ -39,6 +39,8 @@ class C(Language):
         "break_statement",
         "continue_statement",
         "goto_statement",
+        "binary_expression",
+        "unary_expression",
     ]
 
     control_statements = [
@@ -48,6 +50,8 @@ class C(Language):
         "do_statement",
         "switch_statement",
         "case_statement",
+        "labeled_statement",
+        "condition_clause",
     ]
 
     def language(self):

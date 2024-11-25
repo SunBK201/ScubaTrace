@@ -1,27 +1,30 @@
-/* hello world */
-
-#include <stdio.h>
-#include "test.h"
-
-int uct_pagesize = 1;
-int uct_pagesize_shift;
-int uct_cacheline_size;
-
-int add(int a, int b);
-
-struct test_struct {
-    int a;
-    int b;
-};
-
-int add(int a, int b)
+static bool match_exception_partial(struct list_head *exceptions, short type,
+				    u32 major, u32 minor, short access)
 {
-    add(1, 2);
-    return a + b;
-}
+	struct dev_exception_item *ex;
 
-int main()
-{
-    printf("Hello, world!\n");
-    return 0;
+	list_for_each_entry_rcu(ex, exceptions, list,
+				lockdep_is_held(&devcgroup_mutex)) {
+		if ((type & DEVCG_DEV_BLOCK) && !(ex->type & DEVCG_DEV_BLOCK))
+			continue;
+		if ((type & DEVCG_DEV_CHAR) && !(ex->type & DEVCG_DEV_CHAR))
+			continue;
+		/*
+		 * We must be sure that both the exception and the provided
+		 * range aren't masking all devices
+		 */
+		if (ex->major != ~0 && major != ~0 && ex->major != major)
+			continue;
+		if (ex->minor != ~0 && minor != ~0 && ex->minor != minor)
+			continue;
+		/*
+		 * In order to make sure the provided range isn't matching
+		 * an exception, all its access bits shouldn't match the
+		 * exception's access bits
+		 */
+		if (!(access & ex->access))
+			continue;
+		return true;
+	}
+	return false;
 }
