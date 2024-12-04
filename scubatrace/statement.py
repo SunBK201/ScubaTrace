@@ -72,24 +72,16 @@ class CStatement(Statement):
             yield from ()
 
         cursor = node.walk()
-        visited_children = False
+        if not cursor.goto_first_child():
+            yield from ()
         while True:
-            if not visited_children:
-                assert cursor.node is not None
-                if c_parser.is_simple_statement(cursor.node):
-                    yield CSimpleStatement(cursor.node, parent)
-                elif c_parser.is_block_statement(cursor.node):
-                    yield CBlockStatement(cursor.node, parent)
+            assert cursor.node is not None
+            if c_parser.is_simple_statement(cursor.node):
+                yield CSimpleStatement(cursor.node, parent)
+            elif c_parser.is_block_statement(cursor.node):
+                yield CBlockStatement(cursor.node, parent)
 
-                if not c_parser.is_block_statement(cursor.node):
-                    visited_children = True
-                elif not cursor.goto_first_child():
-                    visited_children = True
-                else:
-                    continue
-            elif cursor.goto_next_sibling():
-                visited_children = False
-            elif not cursor.goto_parent():
+            if not cursor.goto_next_sibling():
                 break
 
 

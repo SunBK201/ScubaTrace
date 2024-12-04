@@ -1,10 +1,10 @@
 import sys
-from html import parser
 
 sys.path.append("..")
 
 import scubatrace
 from scubatrace.parser import c_parser
+from scubatrace.statement import CBlockStatement
 
 
 def main():
@@ -42,6 +42,20 @@ def testIsSimpleStatement():
                     continue
                 elif c_parser.is_block_statement(stmt.node):
                     print("block statements", stmt.text)
+                    if isinstance(stmt, CBlockStatement):
+                        for s in stmt.statements:
+                            if isinstance(s, CBlockStatement):
+                                print("first layer block statements", s.text)
+                                for ss in s.statements:
+                                    if isinstance(ss, CBlockStatement):
+                                        for sss in ss.statements:
+                                            print(
+                                                "third layer block statements", sss.text
+                                            )
+                                        print("second layer block statements", ss.text)
+                                    else:
+                                        print("second layer simple statements", ss.text)
+
                     continue
                 else:
                     print(stmt.text, stmt.node.type)
