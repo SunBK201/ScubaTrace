@@ -55,6 +55,8 @@ def testIsSimpleStatement():
                                         print("second layer block statements", ss.text)
                                     else:
                                         print("second layer simple statements", ss.text)
+                            else:
+                                print("first layer simple statements", s.text)
 
                     continue
                 else:
