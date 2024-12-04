@@ -1,26 +1,32 @@
 static bool match_exception_partial(struct list_head *exceptions, short type,
 				    u32 major, u32 minor, short access)
-{
-	struct dev_exception_item *ex;
-
-	if ((type & DEVCG_DEV_BLOCK) && !(ex->type & DEVCG_DEV_BLOCK))
-		continue;
-	if ((type & DEVCG_DEV_CHAR) && !(ex->type & DEVCG_DEV_CHAR))
-		continue;
-	/*
-		* We must be sure that both the exception and the provided
-		* range aren't masking all devices
-		*/
-	if (ex->major != ~0 && major != ~0 && ex->major != major)
-		continue;
-	if (ex->minor != ~0 && minor != ~0 && ex->minor != minor)
-		continue;
-	/*
-		* In order to make sure the provided range isn't matching
-		* an exception, all its access bits shouldn't match the
-		* exception's access bits
-		*/
-	if (!(access & ex->access))
-		continue;
-	return true;
+//  Created by www.runoob.com on 15/11/9.
+//  Copyright © 2015年 菜鸟教程. All rights reserved.
+//
+ 
+#include <stdio.h>
+#include <stdlib.h>
+int main(){
+    int day, x1 = 0, x2;
+    day=9;
+    x2=1;
+    while(day>0) {
+        x1=(x2+1)*2;  // 第一天的桃子数是第2天桃子数加1后的2倍
+        x2=x1;
+        day--;
+        if(x2==0)
+        	continue;
+        if (x2==0){
+        	continue;
+        }
+        switch(x){
+        	case 2:{
+            	x+= 1;
+            }
+            case 3: x+= 1; break;
+        }
+    }
+    printf("总数为 %d\n",x1);
+    
+    return 0;
 }

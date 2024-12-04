@@ -49,7 +49,6 @@ class C(Language):
         "while_statement",
         "do_statement",
         "switch_statement",
-        "case_statement",
         "labeled_statement",
         "condition_clause",
     ]

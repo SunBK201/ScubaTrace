@@ -109,4 +109,10 @@ class CBlockStatement(BlockStatement):
 
     @property
     def statements(self) -> list[Statement]:
-        return list(CStatement.generater(self.node, self.parent))
+        if self.node.type in ["compound_statement"]:
+            return list(CStatement.generater(self.node, self.parent))
+        else:
+            for child in self.node.children:
+                if child.type in ["compound_statement"]:
+                    return list(CStatement.generater(child, self.parent))
+            return list(CStatement.generater(self.node, self.parent))
