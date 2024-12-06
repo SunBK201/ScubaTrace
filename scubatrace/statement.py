@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Generator
 
 from tree_sitter import Node
@@ -12,12 +13,17 @@ if TYPE_CHECKING:
 
 
 class Statement:
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         self.node = node
         self.parent = parent
+        self._post_statements = []
+        self._pre_statements = []
 
     def __str__(self) -> str:
-        return self.signature
+        return f"{self.signature}: {self.text}"
+
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, Statement) and self.signature == value.signature
 
     @property
     def signature(self) -> str:
@@ -34,6 +40,13 @@ class Statement:
         if self.node.text is None:
             raise ValueError("Node text is None")
         return self.node.text.decode()
+
+    @property
+    def dot_text(self) -> str:
+        """
+        escape the text ':' for dot
+        """
+        return self.text.replace(":", "")
 
     @property
     def start_line(self) -> int:
@@ -54,19 +67,50 @@ class Statement:
         return self.parent.file
 
     @property
-    def pre_controls(self) -> list[Statement]: ...
+    def function(self):
+        cur = self
+        while "Function" not in cur.__class__.__name__:
+            cur = cur.parent  # type: ignore
+            if "File" in cur.__class__.__name__:
+                return None
+        return cur
 
     @property
-    def post_controls(self) -> list[Statement]: ...
+    def post_controls(self) -> list[Statement]:
+        func = self.function
+        if func is None:
+            return []
+        assert "Function" in func.__class__.__name__
+        if not func._is_build_cfg:  # type: ignore
+            func.build_cfg()  # type: ignore
+        return self._post_statements
+
+    @post_controls.setter
+    def post_controls(self, stats: list[Statement]):
+        self._post_statements = stats
+
+    @property
+    def pre_controls(self) -> list[Statement]:
+        func = self.function
+        if func is None:
+            return []
+        assert "Function" in func.__class__.__name__
+        if not func._is_build_cfg:  # type: ignore
+            func.build_cfg()  # type: ignore
+        return self._pre_statements
+
+    @pre_controls.setter
+    def pre_controls(self, stats: list[Statement]):
+        self._pre_statements = stats
 
 
 class CStatement(Statement):
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
     @staticmethod
     def generater(
-        node: Node, parent: Function | File
+        node: Node, parent: BlockStatement | Function | File
     ) -> Generator[Statement, None, None]:
         if node is None:
             yield from ()
@@ -86,33 +130,36 @@ class CStatement(Statement):
 
 
 class SimpleStatement(Statement):
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
 
 class BlockStatement(Statement):
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
-    @property
+    @cached_property
     def statements(self) -> list[Statement]: ...
+
+    def __getitem__(self, index: int) -> Statement:
+        return self.statements[index]
 
 
 class CSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
 
 class CBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: Function | File):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
-    @property
+    @cached_property
     def statements(self) -> list[Statement]:
         if self.node.type in ["compound_statement"]:
-            return list(CStatement.generater(self.node, self.parent))
+            return list(CStatement.generater(self.node, self))
         else:
             for child in self.node.children:
                 if child.type in ["compound_statement"]:
-                    return list(CStatement.generater(child, self.parent))
-            return list(CStatement.generater(self.node, self.parent))
+                    return list(CStatement.generater(child, self))
+            return list(CStatement.generater(self.node, self))

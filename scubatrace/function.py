@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING
 
+import networkx as nx
 from tree_sitter import Node
 
 from . import language
 from .parser import c_parser
 from .statement import (
-    CBlockStatement,
-    CSimpleStatement,
+    BlockStatement,
     CStatement,
+    SimpleStatement,
     Statement,
 )
 
@@ -38,6 +39,7 @@ class Function:
         """
         self.node = node
         self.file = file
+        self._is_build_cfg = False
 
     def __str__(self) -> str:
         return self.signature
@@ -193,6 +195,32 @@ class Function:
     @abstractmethod
     def callers(self) -> dict[Function, list[Statement]]: ...
 
+    @abstractmethod
+    def build_cfg(self): ...
+
+    def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+        for stat in statments:
+            if stat.signature not in graph.nodes:
+                graph.add_node(stat.signature, label=stat.dot_text)
+            for post_stat in stat.post_controls:
+                graph.add_node(post_stat.signature, label=post_stat.dot_text)
+                graph.add_edge(stat.signature, post_stat.signature)
+            if isinstance(stat, BlockStatement):
+                self.__build_cfg_graph(graph, stat.statements)
+
+    def export_cfg_dot(self, path: str):
+        """
+        Exports the CFG of the function to a DOT file.
+
+        Args:
+            path (str): The path to save the DOT file.
+        """
+        if not self._is_build_cfg:
+            self.build_cfg()
+        graph = nx.DiGraph()
+        self.__build_cfg_graph(graph, self.statements)
+        nx.drawing.nx_pydot.write_dot(graph, path)
+
 
 class CFunction(Function):
     def __init__(self, node: Node, file):
@@ -229,6 +257,88 @@ class CFunction(Function):
         assert name_node is not None
         assert name_node.text is not None
         return name_node.text.decode()
+
+    def __find_next_nearest_stat(self, stat: Statement) -> Statement | None:
+        stat_type = stat.node.type
+        if stat_type == "return_statement":
+            return None
+
+        parent_statements = stat.parent.statements
+        index = parent_statements.index(stat)
+        if index < len(parent_statements) - 1:
+            return parent_statements[index + 1]
+        else:
+            if isinstance(stat.parent, Function):
+                return None
+            assert isinstance(stat.parent, BlockStatement)
+            if stat.parent.node.type in language.C.loop_statements:
+                return stat.parent
+            else:
+                return self.__find_next_nearest_stat(stat.parent)
+
+    def __build_post_cfg(self, statements: list[Statement]):
+        for i in range(len(statements)):
+            cur_stat = statements[i]
+            next_stat = self.__find_next_nearest_stat(cur_stat)
+            next_stat = [next_stat] if next_stat is not None else []
+
+            if isinstance(cur_stat, BlockStatement):
+                child_statements = cur_stat.statements
+                if len(child_statements) > 0:
+                    self.__build_post_cfg(child_statements)
+                    statements[i]._post_statements = [child_statements[0]] + next_stat
+                else:
+                    statements[i]._post_statements = next_stat
+            elif isinstance(cur_stat, SimpleStatement):
+                type = cur_stat.node.type
+                match type:
+                    case "continue_statement":
+                        # search for the nearest loop statement
+                        loop_stat = cur_stat
+                        while (
+                            loop_stat is not None
+                            and loop_stat.node.type not in language.C.loop_statements
+                            and isinstance(loop_stat, Statement)
+                        ):
+                            loop_stat = loop_stat.parent
+                        if loop_stat is not None:
+                            assert isinstance(loop_stat, BlockStatement)
+                            statements[i]._post_statements.append(loop_stat)
+                        else:
+                            statements[i]._post_statements = next_stat
+                    case "break_statement":
+                        # search for the nearest loop or switch statement
+                        loop_stat = cur_stat
+                        while (
+                            loop_stat is not None
+                            and loop_stat.node.type
+                            not in language.C.loop_statements + ["switch_statement"]
+                            and isinstance(loop_stat, Statement)
+                        ):
+                            loop_stat = loop_stat.parent
+                        if loop_stat is not None:
+                            assert isinstance(loop_stat, BlockStatement)
+                            next_loop_stat = self.__find_next_nearest_stat(loop_stat)
+                            statements[i]._post_statements = (
+                                [next_loop_stat] if next_loop_stat else []
+                            )
+                        else:
+                            statements[i]._post_statements = next_stat
+                    case _:
+                        statements[i]._post_statements = next_stat
+
+    def __build_pre_cfg(self, statements: list[Statement]):
+        for i in range(len(statements)):
+            cur_stat = statements[i]
+            for post_stat in cur_stat._post_statements:
+                post_stat._pre_statements.append(cur_stat)
+            if isinstance(cur_stat, BlockStatement):
+                self.__build_pre_cfg(cur_stat.statements)
+
+    def build_cfg(self):
+        self.__build_post_cfg(self.statements)
+        self.__build_pre_cfg(self.statements)
+        self._is_build_cfg = True
 
     @cached_property
     def statements(self) -> list[Statement]:

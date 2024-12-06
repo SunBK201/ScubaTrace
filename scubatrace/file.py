@@ -5,9 +5,12 @@ from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+from tree_sitter import Node
+
 from . import language
 from .function import CFunction, Function
 from .parser import c_parser
+from .statement import Statement
 from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
@@ -77,20 +80,32 @@ class File:
 
     @cached_property
     @abstractmethod
+    def node(self) -> Node: ...
+
+    @cached_property
+    @abstractmethod
     def imports(self) -> list[File]: ...
 
-    @property
+    @cached_property
     @abstractmethod
     def functions(self) -> list[Function]: ...
 
-    @property
+    @cached_property
     @abstractmethod
     def structs(self) -> list[Struct]: ...
+
+    @cached_property
+    @abstractmethod
+    def statements(self) -> list[Statement]: ...
 
 
 class CFile(File):
     def __init__(self, path: str, project: Project):
         super().__init__(path, project)
+
+    @cached_property
+    def node(self) -> Node:
+        return c_parser.parse(self.text)
 
     @cached_property
     def imports(self) -> list[File]:
@@ -114,12 +129,12 @@ class CFile(File):
                 import_files.append(file)
         return import_files
 
-    @property
+    @cached_property
     def functions(self) -> list[Function]:
         func_node = c_parser.query_all(self.text, language.C.query_function)
         return [CFunction(node, file=self) for node in func_node]
 
-    @property
+    @cached_property
     def structs(self) -> list[Struct]:
         struct_node = c_parser.query_all(self.text, language.C.query_struct)
         return [CStruct(node) for node in struct_node]

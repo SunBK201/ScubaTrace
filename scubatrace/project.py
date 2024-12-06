@@ -78,6 +78,15 @@ class CProject(Project):
         super().__int__(path, language.C)
 
 
-if __name__ == "__main__":
+def testPreControl():
     a_proj = CProject("../tests")
-    print(a_proj.files["test.c"])
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[0]
+    posts = func_main.statements[3].post_controls
+    print(posts)
+    for post in posts:
+        print(post.text)
+
+
+if __name__ == "__main__":
+    testPreControl()
