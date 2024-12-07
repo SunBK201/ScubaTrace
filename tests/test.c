@@ -1,10 +1,10 @@
-int ssh_packet_stop_discard(struct ssh* ssh)
-{
-    return 0;
-}
-
-int main(int argc, char const* argv[])
-{
-    ssh_packet_stop_discard(NULL);
+int main(){
+    if (a==1)
+        ssh->log = NULL;
+    else{
+        func1();
+        if (a==1)
+            return 0;
+    }
     return 0;
 }

@@ -30,6 +30,7 @@ class C(Language):
         "switch_statement",
         "case_statement",
         "default_statement",
+        "else_clause",
     ]
 
     simple_statements = [
@@ -52,6 +53,7 @@ class C(Language):
         "switch_statement",
         "labeled_statement",
         "condition_clause",
+        "else_clause",
     ]
 
     loop_statements = ["for_statement", "while_statement", "do_statement"]

@@ -69,7 +69,7 @@ def testPreControl():
     a_proj = scubatrace.CProject("../tests")
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[0]
-    print(func_main.statements[3].pre_controls[2].text)
+    # print(func_main.statements[3].pre_controls[2].text)
     func_main.export_cfg_dot("test.dot")
 
 
@@ -81,4 +81,4 @@ def testCallees():
 
 
 if __name__ == "__main__":
-    testCallees()
+    testPreControl()
