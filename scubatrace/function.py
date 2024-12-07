@@ -72,6 +72,16 @@ class Function:
         return self.node.text.decode()
 
     @property
+    def dot_text(self) -> str:
+        """
+        Escapes the text content of the node for use in DOT files.
+
+        Returns:
+            str: The escaped text content of the node.
+        """
+        return '"' + self.text.split("\n")[0].replace('"', '\\"') + '"'
+
+    @property
     def start_line(self) -> int:
         """
         Returns the starting line number of the node.
@@ -205,17 +215,23 @@ class Function:
                 if isinstance(cur_stat, BlockStatement):
                     stack.extend(reversed(cur_stat.statements))
 
-    def statements_by_type(self, type: str) -> list[Statement]:
+    def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         """
         Retrieves all statements of a given node type within the function.
 
         Args:
             type (str): The type of statement node to search for.
+            recursive (bool): A flag to indicate whether to search recursively within nested blocks
 
         Returns:
             list[Statement]: A list of statements of the given type.
         """
-        return [stat for stat in self.__traverse_statements() if stat.node.type == type]
+        if recursive:
+            return [
+                stat for stat in self.__traverse_statements() if stat.node.type == type
+            ]
+        else:
+            return [stat for stat in self.statements if stat.node.type == type]
 
     @abstractmethod
     def build_cfg(self): ...
@@ -240,6 +256,12 @@ class Function:
         if not self._is_build_cfg:
             self.build_cfg()
         graph = nx.DiGraph()
+        graph.add_node(
+            "node", fontname="SF Pro Rounded, system-ui", shape="box", style="rounded"
+        )
+        graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
+        graph.add_node(self.signature, label=self.dot_text, color="red")
+        graph.add_edge(self.signature, self.statements[0].signature)
         self.__build_cfg_graph(graph, self.statements)
         nx.nx_pydot.write_dot(graph, path)
 
@@ -280,14 +302,29 @@ class CFunction(Function):
         assert name_node.text is not None
         return name_node.text.decode()
 
-    def __find_next_nearest_stat(self, stat: Statement) -> Statement | None:
+    def __find_next_nearest_stat(
+        self, stat: Statement, jump: int = 0
+    ) -> Statement | None:
         stat_type = stat.node.type
         if stat_type == "return_statement":
             return None
 
+        if jump == -1:
+            jump = 0x3F3F3F
+        while (
+            jump > 0
+            and stat.parent is not None
+            and isinstance(stat.parent, BlockStatement)
+        ):
+            stat = stat.parent
+            jump -= 1
+
         parent_statements = stat.parent.statements
         index = parent_statements.index(stat)
-        if index < len(parent_statements) - 1:
+        if (
+            index < len(parent_statements) - 1
+            and parent_statements[index + 1].node.type != "else_clause"
+        ):
             return parent_statements[index + 1]
         else:
             if isinstance(stat.parent, Function):
@@ -301,18 +338,32 @@ class CFunction(Function):
     def __build_post_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
+            type = cur_stat.node.type
             next_stat = self.__find_next_nearest_stat(cur_stat)
             next_stat = [next_stat] if next_stat is not None else []
 
             if isinstance(cur_stat, BlockStatement):
                 child_statements = cur_stat.statements
+                self.__build_post_cfg(child_statements)
                 if len(child_statements) > 0:
-                    self.__build_post_cfg(child_statements)
-                    statements[i]._post_statements = [child_statements[0]] + next_stat
+                    match type:
+                        case "if_statement":
+                            else_clause = cur_stat.statements_by_type("else_clause")
+                            if len(else_clause) == 0:
+                                cur_stat._post_statements = [
+                                    child_statements[0]
+                                ] + next_stat
+                            else:
+                                cur_stat._post_statements = list(
+                                    set([child_statements[0], else_clause[0]])
+                                )
+                        case _:
+                            cur_stat._post_statements = [
+                                child_statements[0]
+                            ] + next_stat
                 else:
-                    statements[i]._post_statements = next_stat
+                    cur_stat._post_statements = next_stat
             elif isinstance(cur_stat, SimpleStatement):
-                type = cur_stat.node.type
                 match type:
                     case "continue_statement":
                         # search for the nearest loop statement
@@ -325,9 +376,9 @@ class CFunction(Function):
                             loop_stat = loop_stat.parent
                         if loop_stat is not None:
                             assert isinstance(loop_stat, BlockStatement)
-                            statements[i]._post_statements.append(loop_stat)
+                            cur_stat._post_statements.append(loop_stat)
                         else:
-                            statements[i]._post_statements = next_stat
+                            cur_stat._post_statements = next_stat
                     case "break_statement":
                         # search for the nearest loop or switch statement
                         loop_stat = cur_stat
@@ -341,17 +392,19 @@ class CFunction(Function):
                         if loop_stat is not None:
                             assert isinstance(loop_stat, BlockStatement)
                             next_loop_stat = self.__find_next_nearest_stat(loop_stat)
-                            statements[i]._post_statements = (
+                            cur_stat._post_statements = (
                                 [next_loop_stat] if next_loop_stat else []
                             )
                         else:
-                            statements[i]._post_statements = next_stat
+                            cur_stat._post_statements = next_stat
                     case "goto_statement":
                         goto_label = cur_stat.node.child_by_field_name("label")
                         assert goto_label is not None and goto_label.text is not None
                         label_name = goto_label.text.decode()
                         label_stat = None
-                        for stat in self.statements_by_type("labeled_statement"):
+                        for stat in self.statements_by_type(
+                            "labeled_statement", recursive=True
+                        ):
                             label_identifier_node = stat.node.child_by_field_name(
                                 "label"
                             )
@@ -364,11 +417,11 @@ class CFunction(Function):
                                 label_stat = stat
                                 break
                         if label_stat is not None:
-                            statements[i]._post_statements.append(label_stat)
+                            cur_stat._post_statements.append(label_stat)
                         else:
-                            statements[i]._post_statements = next_stat
+                            cur_stat._post_statements = next_stat
                     case _:
-                        statements[i]._post_statements = next_stat
+                        cur_stat._post_statements = next_stat
 
     def __build_pre_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):

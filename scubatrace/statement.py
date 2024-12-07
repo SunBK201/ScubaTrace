@@ -25,6 +25,9 @@ class Statement:
     def __eq__(self, value: object) -> bool:
         return isinstance(value, Statement) and self.signature == value.signature
 
+    def __hash__(self):
+        return hash(self.signature)
+
     @property
     def signature(self) -> str:
         return (
@@ -148,6 +151,19 @@ class BlockStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
+    def __getitem__(self, index: int) -> Statement:
+        return self.statements[index]
+
+    def __traverse_statements(self):
+        stack = []
+        for stat in self.statements:
+            stack.append(stat)
+            while stack:
+                cur_stat = stack.pop()
+                yield cur_stat
+                if isinstance(cur_stat, BlockStatement):
+                    stack.extend(reversed(cur_stat.statements))
+
     @property
     def dot_text(self) -> str:
         """
@@ -158,8 +174,11 @@ class BlockStatement(Statement):
     @cached_property
     def statements(self) -> list[Statement]: ...
 
-    def __getitem__(self, index: int) -> Statement:
-        return self.statements[index]
+    def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
+        if recursive:
+            return [s for s in self.__traverse_statements() if s.node.type == type]
+        else:
+            return [s for s in self.statements if s.node.type == type]
 
 
 class CSimpleStatement(SimpleStatement):
