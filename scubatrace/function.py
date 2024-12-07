@@ -468,16 +468,20 @@ class CFunction(Function):
         for call_node in calls:
             func = call_node.child_by_field_name("function")
             assert func is not None
-            for child in func.children:
-                if child.type == "identifier" and child.text is not None:
-                    call_funcs[call_node] = child.text.decode()
-                    break
-
+            if func.type == "identifier" and func.text is not None:
+                call_funcs[call_node] = func.text.decode()
+            else:
+                for child in func.children:
+                    if child.type == "identifier" and child.text is not None:
+                        call_funcs[call_node] = child.text.decode()
+                        break
+        call_funcs_Func = {}
         for call in call_funcs.copy():
             accessible = False
             for func in self.accessible_functions:
-                if func == call_funcs[call]:
+                if func.name == call_funcs[call]:
                     accessible = True
+                    call_funcs_Func[call_funcs[call]] = func
                     break
             if not accessible:
                 call_funcs.pop(call)
@@ -485,13 +489,14 @@ class CFunction(Function):
         for node in call_funcs:
             stmts = []
             for stmt in self.statements:
-                if (
-                    stmt.node.start_point[0] == node.start_point[0]
-                    and stmt.node.text == node.text
-                ):
-                    stmts.append(stmt)
+                if stmt.node.start_point[0] == node.start_point[0]:
+                    stmt_calls = c_parser.query_all(stmt.node, language.C.query_call)
+                    for stmt_call in stmt_calls:
+                        if stmt_call.text == node.text:
+                            stmts.append(stmt)
+                            break
                     break
-            callees[call_funcs[node]] = stmts
+            callees[call_funcs_Func[call_funcs[node]]] = stmts
 
         return callees
 
@@ -501,4 +506,6 @@ class CFunction(Function):
         for file in self.file.imports:
             for function in file.functions:
                 funcs.append(function)
+        for func in self.file.functions:
+            funcs.append(func)
         return funcs

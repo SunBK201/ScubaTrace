@@ -1,5 +1,7 @@
 import sys
 
+import test
+
 sys.path.append("..")
 
 import scubatrace
@@ -70,5 +72,13 @@ def testPreControl():
     print(func_main.statements[3].pre_controls[2].text)
     func_main.export_cfg_dot("test.dot")
 
+
+def testCallees():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    for func_main in test_c.functions:
+        print(func_main.name, func_main.callees, func_main.callers)
+
+
 if __name__ == "__main__":
-    testPreControl()
+    testCallees()
