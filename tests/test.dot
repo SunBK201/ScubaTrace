@@ -1,17 +1,17 @@
 strict digraph {
-"test.c#main#1#10line2-8col5-6" [label="if (a==1)", color=blue];
-"test.c#main#1#10line2-8col5-6line3-3col9-25" [label="ssh->log = NULL;", color=black];
-"test.c#main#1#10line9-9col5-14" [label="return 0;", color=black];
-"test.c#main#1#10line2-8col5-6line4-8col5-6" [label="else{", color=blue];
-"test.c#main#1#10line2-8col5-6line4-8col5-6line5-5col9-17" [label="func1();", color=black];
-"test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22" [label="if (a==1)", color=blue];
-"test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22line7-7col13-22" [label="return 0;", color=black];
-"test.c#main#1#10line2-8col5-6" -> "test.c#main#1#10line2-8col5-6line3-3col9-25";
-"test.c#main#1#10line2-8col5-6" -> "test.c#main#1#10line9-9col5-14";
-"test.c#main#1#10line2-8col5-6line3-3col9-25" -> "test.c#main#1#10line2-8col5-6line4-8col5-6";
-"test.c#main#1#10line2-8col5-6line4-8col5-6" -> "test.c#main#1#10line2-8col5-6line4-8col5-6line5-5col9-17";
-"test.c#main#1#10line2-8col5-6line4-8col5-6" -> "test.c#main#1#10line9-9col5-14";
-"test.c#main#1#10line2-8col5-6line4-8col5-6line5-5col9-17" -> "test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22";
-"test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22" -> "test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22line7-7col13-22";
-"test.c#main#1#10line2-8col5-6line4-8col5-6line6-7col9-22" -> "test.c#main#1#10line9-9col5-14";
+"test.c#main#1#11line2-9col5-6" [label="if (a==1){", color=blue];
+"test.c#main#1#11line2-9col5-6line3-3col9-25" [label="ssh->log = NULL;", color=black];
+"test.c#main#1#11line10-10col5-14" [label="return 0;", color=black];
+"test.c#main#1#11line2-9col5-6line5-9col5-6" [label="else{", color=blue];
+"test.c#main#1#11line2-9col5-6line5-9col5-6line6-6col9-17" [label="func1();", color=black];
+"test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22" [label="if (a==1)", color=blue];
+"test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22line8-8col13-22" [label="return 0;", color=black];
+"test.c#main#1#11line2-9col5-6" -> "test.c#main#1#11line2-9col5-6line3-3col9-25";
+"test.c#main#1#11line2-9col5-6" -> "test.c#main#1#11line10-10col5-14";
+"test.c#main#1#11line2-9col5-6line3-3col9-25" -> "test.c#main#1#11line2-9col5-6line5-9col5-6";
+"test.c#main#1#11line2-9col5-6line5-9col5-6" -> "test.c#main#1#11line2-9col5-6line5-9col5-6line6-6col9-17";
+"test.c#main#1#11line2-9col5-6line5-9col5-6" -> "test.c#main#1#11line10-10col5-14";
+"test.c#main#1#11line2-9col5-6line5-9col5-6line6-6col9-17" -> "test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22";
+"test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22" -> "test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22line8-8col13-22";
+"test.c#main#1#11line2-9col5-6line5-9col5-6line7-8col9-22" -> "test.c#main#1#11line10-10col5-14";
 }

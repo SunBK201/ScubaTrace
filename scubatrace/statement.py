@@ -125,8 +125,9 @@ class CStatement(Statement):
         node: Node, parent: BlockStatement | Function | File
     ) -> Generator[Statement, None, None]:
         cursor = node.walk()
-        if not cursor.goto_first_child():
-            yield from ()
+        if cursor.node is not None and cursor.node.type not in ["else_clause"]:
+            if not cursor.goto_first_child():
+                yield from ()
         while True:
             assert cursor.node is not None
             if c_parser.is_simple_statement(cursor.node):
@@ -172,10 +173,14 @@ class CBlockStatement(BlockStatement):
 
     @cached_property
     def statements(self) -> list[Statement]:
+        stats = []
         if self.node.type in ["compound_statement"]:
             return list(CStatement.generater(self.node, self))
         else:
             for child in self.node.children:
-                if child.type in ["compound_statement"]:
-                    return list(CStatement.generater(child, self))
-            return list(CStatement.generater(self.node, self))
+                if child.type in ["compound_statement", "else_clause"]:
+                    stats.extend(list(CStatement.generater(child, self)))
+            if stats == []:
+                return list(CStatement.generater(self.node, self))
+            else:
+                return stats
