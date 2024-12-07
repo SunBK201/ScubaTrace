@@ -256,6 +256,7 @@ class Function:
         if not self._is_build_cfg:
             self.build_cfg()
         graph = nx.DiGraph()
+        graph.add_node("graph", bgcolor="ivory", splines="curved")
         graph.add_node(
             "node", fontname="SF Pro Rounded, system-ui", shape="box", style="rounded"
         )
