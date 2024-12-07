@@ -195,6 +195,28 @@ class Function:
     @abstractmethod
     def callers(self) -> dict[Function, list[Statement]]: ...
 
+    def __traverse_statements(self):
+        stack = []
+        for stat in self.statements:
+            stack.append(stat)
+            while stack:
+                cur_stat = stack.pop()
+                yield cur_stat
+                if isinstance(cur_stat, BlockStatement):
+                    stack.extend(reversed(cur_stat.statements))
+
+    def statements_by_type(self, type: str) -> list[Statement]:
+        """
+        Retrieves all statements of a given node type within the function.
+
+        Args:
+            type (str): The type of statement node to search for.
+
+        Returns:
+            list[Statement]: A list of statements of the given type.
+        """
+        return [stat for stat in self.__traverse_statements() if stat.node.type == type]
+
     @abstractmethod
     def build_cfg(self): ...
 
@@ -322,6 +344,27 @@ class CFunction(Function):
                             statements[i]._post_statements = (
                                 [next_loop_stat] if next_loop_stat else []
                             )
+                        else:
+                            statements[i]._post_statements = next_stat
+                    case "goto_statement":
+                        goto_label = cur_stat.node.child_by_field_name("label")
+                        assert goto_label is not None and goto_label.text is not None
+                        label_name = goto_label.text.decode()
+                        label_stat = None
+                        for stat in self.statements_by_type("labeled_statement"):
+                            label_identifier_node = stat.node.child_by_field_name(
+                                "label"
+                            )
+                            assert (
+                                label_identifier_node is not None
+                                and label_identifier_node.text is not None
+                            )
+                            label_identifier = label_identifier_node.text.decode()
+                            if label_identifier == label_name:
+                                label_stat = stat
+                                break
+                        if label_stat is not None:
+                            statements[i]._post_statements.append(label_stat)
                         else:
                             statements[i]._post_statements = next_stat
                     case _:

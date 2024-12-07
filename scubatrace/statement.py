@@ -124,9 +124,6 @@ class CStatement(Statement):
     def generater(
         node: Node, parent: BlockStatement | Function | File
     ) -> Generator[Statement, None, None]:
-        if node is None:
-            yield from ()
-
         cursor = node.walk()
         if not cursor.goto_first_child():
             yield from ()

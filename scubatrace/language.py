@@ -41,6 +41,7 @@ class C(Language):
         "goto_statement",
         "binary_expression",
         "unary_expression",
+        "labeled_statement",
     ]
 
     control_statements = [
