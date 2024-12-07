@@ -200,8 +200,8 @@ class Function:
 
     def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
         for stat in statments:
-            if stat.signature not in graph.nodes:
-                graph.add_node(stat.signature, label=stat.dot_text)
+            color = "blue" if isinstance(stat, BlockStatement) else "black"
+            graph.add_node(stat.signature, label=stat.dot_text, color=color)
             for post_stat in stat.post_controls:
                 graph.add_node(post_stat.signature, label=post_stat.dot_text)
                 graph.add_edge(stat.signature, post_stat.signature)
@@ -219,7 +219,7 @@ class Function:
             self.build_cfg()
         graph = nx.DiGraph()
         self.__build_cfg_graph(graph, self.statements)
-        nx.drawing.nx_pydot.write_dot(graph, path)
+        nx.nx_pydot.write_dot(graph, path)
 
 
 class CFunction(Function):

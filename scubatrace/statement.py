@@ -29,10 +29,14 @@ class Statement:
     def signature(self) -> str:
         return (
             self.parent.signature
-            + "#"
+            + "line"
             + str(self.start_line)
-            + "#"
+            + "-"
             + str(self.end_line)
+            + "col"
+            + str(self.start_column)
+            + "-"
+            + str(self.end_column)
         )
 
     @property
@@ -46,7 +50,7 @@ class Statement:
         """
         escape the text ':' for dot
         """
-        return self.text.replace(":", "")
+        return '"' + self.text.replace('"', '\\"') + '"'
 
     @property
     def start_line(self) -> int:
@@ -55,6 +59,14 @@ class Statement:
     @property
     def end_line(self) -> int:
         return self.node.end_point[0] + 1
+
+    @property
+    def start_column(self) -> int:
+        return self.node.start_point[1] + 1
+
+    @property
+    def end_column(self) -> int:
+        return self.node.end_point[1] + 1
 
     @property
     def length(self):
@@ -137,6 +149,13 @@ class SimpleStatement(Statement):
 class BlockStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
+
+    @property
+    def dot_text(self) -> str:
+        """
+        return only the first line of the text
+        """
+        return '"' + self.text.split("\n")[0].replace('"', '\\"') + '"'
 
     @cached_property
     def statements(self) -> list[Statement]: ...
