@@ -6,7 +6,7 @@ sys.path.append("..")
 
 import scubatrace
 from scubatrace.parser import c_parser
-from scubatrace.statement import CBlockStatement
+from scubatrace.statement import CBlockStatement, CSimpleStatement
 
 
 def main():
@@ -37,32 +37,19 @@ def testIsSimpleStatement():
         file = a_proj.files[file_path]
         print(file_path)
         for func in file.functions:
-            for stmt in func.statements:
-                # print(stmt.text)
-                if c_parser.is_simple_statement(stmt.node):
-                    print("Simple Statement", stmt.text)
-                    continue
-                elif c_parser.is_block_statement(stmt.node):
-                    print("block statements", stmt.text)
-                    if isinstance(stmt, CBlockStatement):
-                        for s in stmt.statements:
-                            if isinstance(s, CBlockStatement):
-                                print("first layer block statements", s.text)
-                                for ss in s.statements:
-                                    if isinstance(ss, CBlockStatement):
-                                        for sss in ss.statements:
-                                            print(
-                                                "third layer block statements", sss.text
-                                            )
-                                        print("second layer block statements", ss.text)
-                                    else:
-                                        print("second layer simple statements", ss.text)
-                            else:
-                                print("first layer simple statements", s.text)
+            stmts = func.statements
+            i = 0
+            while stmts:
+                temp_stmts = []
+                i += 1
+                for stmt in stmts:
+                    if isinstance(stmt, CSimpleStatement):
+                        print(f"{i} layer simple statments: {stmt.text}")
+                    elif isinstance(stmt, CBlockStatement):
+                        temp_stmts.extend(stmt.statements)
+                        print(f"{i} layer block statements: {stmt.text}")
 
-                    continue
-                else:
-                    print(stmt.text, stmt.node.type)
+                stmts = temp_stmts
 
 
 def testPreControl():
@@ -81,4 +68,4 @@ def testCallees():
 
 
 if __name__ == "__main__":
-    testPreControl()
+    testIsSimpleStatement()

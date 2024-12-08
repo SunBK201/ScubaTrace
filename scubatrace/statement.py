@@ -128,7 +128,7 @@ class CStatement(Statement):
         node: Node, parent: BlockStatement | Function | File
     ) -> Generator[Statement, None, None]:
         cursor = node.walk()
-        if cursor.node is not None and cursor.node.type not in ["else_clause"]:
+        if cursor.node is not None:
             if not cursor.goto_first_child():
                 yield from ()
         while True:
@@ -197,8 +197,10 @@ class CBlockStatement(BlockStatement):
             return list(CStatement.generater(self.node, self))
         else:
             for child in self.node.children:
-                if child.type in ["compound_statement", "else_clause"]:
+                if child.type in ["compound_statement"]:
                     stats.extend(list(CStatement.generater(child, self)))
+                elif child.type in ["else_clause"]:
+                    stats.extend([CBlockStatement(child, self)])
             if stats == []:
                 return list(CStatement.generater(self.node, self))
             else:
