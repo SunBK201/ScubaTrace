@@ -22,7 +22,6 @@ class C(Language):
     query_include = "(preproc_include)@name"
 
     block_statements = [
-        "compound_statement",
         "if_statement",
         "for_statement",
         "while_statement",
