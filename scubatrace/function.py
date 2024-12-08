@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .file import File
 
 
-class Function:
+class Function(BlockStatement):
     """
     Represents a function in the source code with various properties and methods to access its details.
 
@@ -30,15 +30,7 @@ class Function:
     """
 
     def __init__(self, node: Node, file: File):
-        """
-        Initializes a new instance of the class.
-
-        Args:
-            node (Node): The node associated with this instance.
-            file (File): The file associated with this instance.
-        """
-        self.node = node
-        self.file = file
+        super().__init__(node, file)
         self._is_build_cfg = False
 
     def __str__(self) -> str:
@@ -258,7 +250,11 @@ class Function:
         graph = nx.DiGraph()
         graph.add_node("graph", bgcolor="ivory", splines="curved")
         graph.add_node(
-            "node", fontname="SF Pro Rounded, system-ui", shape="box", style="rounded"
+            "node",
+            fontname="SF Pro Rounded, system-ui",
+            shape="box",
+            style="rounded",
+            margin="0.5,0.1",
         )
         graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
         graph.add_node(self.signature, label=self.dot_text, color="red")
@@ -435,6 +431,7 @@ class CFunction(Function):
     def build_cfg(self):
         self.__build_post_cfg(self.statements)
         self.__build_pre_cfg(self.statements)
+        self.statements[0]._pre_statements.insert(0, self)
         self._is_build_cfg = True
 
     @cached_property

@@ -77,9 +77,9 @@ class Statement:
 
     @property
     def file(self) -> File:
-        if isinstance(self.parent, File):
-            return self.parent
-        return self.parent.file
+        if "File" in self.parent.__class__.__name__:
+            return self.parent  # type: ignore
+        return self.parent.file  # type: ignore
 
     @property
     def function(self):
