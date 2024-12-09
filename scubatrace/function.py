@@ -11,7 +11,7 @@ from . import language
 from .parser import c_parser
 from .statement import (
     BlockStatement,
-    CStatement,
+    CBlockStatement,
     SimpleStatement,
     Statement,
 )
@@ -263,7 +263,7 @@ class Function(BlockStatement):
         nx.nx_pydot.write_dot(graph, path)
 
 
-class CFunction(Function):
+class CFunction(Function, CBlockStatement):
     def __init__(self, node: Node, file):
         super().__init__(node, file)
 
@@ -438,7 +438,7 @@ class CFunction(Function):
     def statements(self) -> list[Statement]:
         if self.body_node is None:
             return []
-        return list(CStatement.generater(self.body_node, self))
+        return list(self._statements_builder(self.body_node, self))
 
     @property
     def identifiers(self) -> dict[Node, str]:

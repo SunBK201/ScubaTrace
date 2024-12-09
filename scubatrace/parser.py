@@ -65,25 +65,5 @@ class CParser(Parser):
     def __init__(self):
         super().__init__(language.C.tslanguage)
 
-    @staticmethod
-    def is_block_statement(node: Node) -> bool:
-        return node.type in language.C.block_statements
-
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool:
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.C.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.C.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.C.simple_statements
-
 
 c_parser = CParser()

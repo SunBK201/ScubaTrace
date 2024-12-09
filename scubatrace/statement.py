@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from email.policy import default
 from functools import cached_property
 from typing import TYPE_CHECKING, Generator
 
-from h11 import SWITCHED_PROTOCOL
 from tree_sitter import Node
 
-from .parser import c_parser
+from . import language
 
 if TYPE_CHECKING:
     from .file import File
@@ -121,29 +119,6 @@ class Statement:
         self._pre_statements = stats
 
 
-class CStatement(Statement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-    @staticmethod
-    def generater(
-        node: Node, parent: BlockStatement | Function | File
-    ) -> Generator[Statement, None, None]:
-        cursor = node.walk()
-        if cursor.node is not None:
-            if not cursor.goto_first_child():
-                yield from ()
-        while True:
-            assert cursor.node is not None
-            if c_parser.is_simple_statement(cursor.node):
-                yield CSimpleStatement(cursor.node, parent)
-            elif c_parser.is_block_statement(cursor.node):
-                yield CBlockStatement(cursor.node, parent)
-
-            if not cursor.goto_next_sibling():
-                break
-
-
 class SimpleStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
@@ -192,6 +167,45 @@ class CBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
+    @staticmethod
+    def is_block_statement(node: Node) -> bool:
+        return node.type in language.C.block_statements
+
+    @staticmethod
+    def is_simple_statement(node: Node) -> bool:
+        if node.parent is None:
+            return False
+        else:
+            if node.parent.type in language.C.simple_statements:
+                return False
+            elif (
+                node.parent.type in language.C.control_statements
+                and node.parent.child_by_field_name("body") != node
+                and node.parent.child_by_field_name("consequence") != node
+            ):
+                return False
+            else:
+                return node.type in language.C.simple_statements
+
+    def _statements_builder(
+        self,
+        node: Node,
+        parent: BlockStatement | Function | File,
+    ) -> Generator[Statement, None, None]:
+        cursor = node.walk()
+        if cursor.node is not None:
+            if not cursor.goto_first_child():
+                yield from ()
+        while True:
+            assert cursor.node is not None
+            if self.is_simple_statement(cursor.node):
+                yield CSimpleStatement(cursor.node, parent)
+            elif self.is_block_statement(cursor.node):
+                yield CBlockStatement(cursor.node, parent)
+
+            if not cursor.goto_next_sibling():
+                break
+
     @cached_property
     def statements(self) -> list[Statement]:
         stats = []
@@ -202,46 +216,46 @@ class CBlockStatement(BlockStatement):
                 if consequence_node is not None and consequence_node.type in [
                     "compound_statement"
                 ]:
-                    stats.extend(list(CStatement.generater(consequence_node, self)))
+                    stats.extend(list(self._statements_builder(consequence_node, self)))
                 elif consequence_node is not None:
                     stats.extend([CSimpleStatement(consequence_node, self)])
                 else_clause_node = self.node.child_by_field_name("alternative")
                 if else_clause_node is not None:
                     stats.extend([CBlockStatement(else_clause_node, self)])
             case "else_clause":
-                stats.extend(list(CStatement.generater(self.node, self)))
+                stats.extend(list(self._statements_builder(self.node, self)))
             case "for_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(CStatement.generater(body_node, self)))
+                    stats.extend(list(self._statements_builder(body_node, self)))
                 elif body_node is not None:
-                    if c_parser.is_simple_statement(body_node):
+                    if self.is_simple_statement(body_node):
                         stats.extend([CSimpleStatement(body_node, self)])
-                    elif c_parser.is_block_statement(body_node):
+                    elif self.is_block_statement(body_node):
                         stats.extend([CBlockStatement(body_node, self)])
             case "while_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(CStatement.generater(body_node, self)))
+                    stats.extend(list(self._statements_builder(body_node, self)))
                 elif body_node is not None:
-                    if c_parser.is_simple_statement(body_node):
+                    if self.is_simple_statement(body_node):
                         stats.extend([CSimpleStatement(body_node, self)])
-                    elif c_parser.is_block_statement(body_node):
+                    elif self.is_block_statement(body_node):
                         stats.extend([CBlockStatement(body_node, self)])
             case "switch_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(CStatement.generater(body_node, self)))
+                    stats.extend(list(self._statements_builder(body_node, self)))
                 elif body_node is not None:
                     stats.extend([CSimpleStatement(body_node, self)])
             case "case_statement":
                 get_compound = False
                 for child in self.node.children:
                     if child.type in ["compound_statement"]:
-                        stats.extend(list(CStatement.generater(child, self)))
+                        stats.extend(list(self._statements_builder(child, self)))
                         get_compound = True
                 if not get_compound:
-                    stats.extend(list(CStatement.generater(self.node, self)))
+                    stats.extend(list(self._statements_builder(self.node, self)))
             case _:
-                stats.extend(list(CStatement.generater(self.node, self)))
+                stats.extend(list(self._statements_builder(self.node, self)))
         return stats
