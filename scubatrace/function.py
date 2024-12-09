@@ -351,9 +351,16 @@ class CFunction(Function, CBlockStatement):
                                     child_statements[0]
                                 ] + next_stat
                             else:
-                                cur_stat._post_statements = list(
-                                    set([child_statements[0], else_clause[0]])
-                                )
+                                if len(child_statements) == 1:
+                                    cur_stat._post_statements = list(
+                                        set([else_clause[0]] + next_stat)
+                                    )
+                                else:
+                                    cur_stat._post_statements = list(
+                                        set([child_statements[0], else_clause[0]])
+                                    )
+                        case "else_clause":
+                            cur_stat._post_statements = [child_statements[0]]
                         case _:
                             cur_stat._post_statements = [
                                 child_statements[0]

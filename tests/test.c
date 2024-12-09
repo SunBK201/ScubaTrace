@@ -1,24 +1,12 @@
 int main()
 {
-    while (i<43){
-        if (a==1) 
-            b+=2;
-        else
-            b+=3;
+    if (a==1)
+        a += 1;
+    else if (a==2){
+        a += 2;
+        return 1;
     }
-    while (i<43)
-        if (a==1) 
-            b+=2;
-        else
-            b+=3;
-    
-    while (i<43);
-    for (int i=0;i<n;i++){
-        if (a==1) 
-            b+=2;
-        else
-            b+=3;
-    }
-    for (int i=0;i<n;i++);
-    return 0;
+    else 
+        a += 3;
+    return 2;
 }
