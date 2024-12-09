@@ -1,12 +1,24 @@
 int main()
 {
-    if (a == 1) {
-        ssh->log = NULL;
-    } else if (a==2){
-        func1();
-        if (a == 1)
-            return 2;
-    } else if (a==3){
+    while (i<43){
+        if (a==1) 
+            b+=2;
+        else
+            b+=3;
     }
+    while (i<43)
+        if (a==1) 
+            b+=2;
+        else
+            b+=3;
+    
+    while (i<43);
+    for (int i=0;i<n;i++){
+        if (a==1) 
+            b+=2;
+        else
+            b+=3;
+    }
+    for (int i=0;i<n;i++);
     return 0;
 }

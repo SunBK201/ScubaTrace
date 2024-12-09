@@ -52,7 +52,6 @@ class C(Language):
         "switch_statement",
         "labeled_statement",
         "condition_clause",
-        "else_clause",
     ]
 
     loop_statements = ["for_statement", "while_statement", "do_statement"]
