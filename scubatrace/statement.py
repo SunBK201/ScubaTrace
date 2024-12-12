@@ -223,7 +223,14 @@ class CBlockStatement(BlockStatement):
                 if else_clause_node is not None:
                     stats.extend([CBlockStatement(else_clause_node, self)])
             case "else_clause":
-                stats.extend(list(self._statements_builder(self.node, self)))
+                compound_node = None
+                for child in self.node.children:
+                    if child.type == "compound_statement":
+                        compound_node = child
+                if compound_node is not None:
+                    stats.extend(list(self._statements_builder(compound_node, self)))
+                else:
+                    stats.extend(list(self._statements_builder(self.node, self)))
             case "for_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
