@@ -146,7 +146,7 @@ class BlockStatement(Statement):
         """
         return only the first line of the text
         """
-        return '"' + self.text.split("\n")[0].replace('"', '\\"') + '"'
+        return '"' + self.text.split("\n")[0].replace('"', '\\"') + '..."'
 
     @cached_property
     def statements(self) -> list[Statement]: ...
