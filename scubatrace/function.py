@@ -261,6 +261,7 @@ class Function(BlockStatement):
         graph.add_edge(self.signature, self.statements[0].signature)
         self.__build_cfg_graph(graph, self.statements)
         nx.nx_pydot.write_dot(graph, path)
+        return graph
 
 
 class CFunction(Function, CBlockStatement):
