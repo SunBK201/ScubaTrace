@@ -49,68 +49,6 @@ class Function(BlockStatement):
         )
 
     @property
-    def text(self) -> str:
-        """
-        Returns the text content of the node.
-
-        Raises:
-            ValueError: If the node's text is None.
-
-        Returns:
-            str: The decoded text content of the node.
-        """
-        if self.node.text is None:
-            raise ValueError("Node text is None")
-        return self.node.text.decode()
-
-    @property
-    def dot_text(self) -> str:
-        """
-        Escapes the text content of the node for use in DOT files.
-
-        Returns:
-            str: The escaped text content of the node.
-        """
-        return '"' + self.text.split("\n")[0].replace('"', '\\"') + '"'
-
-    @property
-    def start_line(self) -> int:
-        """
-        Returns the starting line number of the node.
-
-        The line number is determined by the node's start point and is incremented by 1
-        to convert from a zero-based index to a one-based index.
-
-        Returns:
-            int: The starting line number of the node.
-        """
-        return self.node.start_point[0] + 1
-
-    @property
-    def end_line(self) -> int:
-        """
-        Returns the ending line number of the node.
-
-        The line number is derived from the node's end_point attribute and is
-        incremented by 1 to convert from a zero-based index to a one-based index.
-
-        Returns:
-            int: The ending line number of the node.
-        """
-        return self.node.end_point[0] + 1
-
-    @property
-    def length(self):
-        """
-        Calculate the length of the range.
-
-        Returns:
-            int: The length of the range, calculated as the difference between
-            end_line and start_line, plus one.
-        """
-        return self.end_line - self.start_line + 1
-
-    @property
     def lines(self) -> dict[int, str]:
         """
         Generates a dictionary mapping line numbers to their corresponding lines of text.
