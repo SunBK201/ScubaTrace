@@ -286,26 +286,26 @@ class CFunction(Function, CBlockStatement):
                         case "if_statement":
                             else_clause = cur_stat.statements_by_type("else_clause")
                             if len(else_clause) == 0:
-                                cur_stat._post_statements = [
+                                cur_stat._post_control_statements = [
                                     child_statements[0]
                                 ] + next_stat
                             else:
                                 if len(child_statements) == 1:
-                                    cur_stat._post_statements = list(
+                                    cur_stat._post_control_statements = list(
                                         set([else_clause[0]] + next_stat)
                                     )
                                 else:
-                                    cur_stat._post_statements = list(
+                                    cur_stat._post_control_statements = list(
                                         set([child_statements[0], else_clause[0]])
                                     )
                         case "else_clause":
-                            cur_stat._post_statements = [child_statements[0]]
+                            cur_stat._post_control_statements = [child_statements[0]]
                         case _:
-                            cur_stat._post_statements = [
+                            cur_stat._post_control_statements = [
                                 child_statements[0]
                             ] + next_stat
                 else:
-                    cur_stat._post_statements = next_stat
+                    cur_stat._post_control_statements = next_stat
             elif isinstance(cur_stat, SimpleStatement):
                 match type:
                     case "continue_statement":
@@ -319,9 +319,9 @@ class CFunction(Function, CBlockStatement):
                             loop_stat = loop_stat.parent
                         if loop_stat is not None:
                             assert isinstance(loop_stat, BlockStatement)
-                            cur_stat._post_statements.append(loop_stat)
+                            cur_stat._post_control_statements.append(loop_stat)
                         else:
-                            cur_stat._post_statements = next_stat
+                            cur_stat._post_control_statements = next_stat
                     case "break_statement":
                         # search for the nearest loop or switch statement
                         loop_stat = cur_stat
@@ -335,11 +335,11 @@ class CFunction(Function, CBlockStatement):
                         if loop_stat is not None:
                             assert isinstance(loop_stat, BlockStatement)
                             next_loop_stat = self.__find_next_nearest_stat(loop_stat)
-                            cur_stat._post_statements = (
+                            cur_stat._post_control_statements = (
                                 [next_loop_stat] if next_loop_stat else []
                             )
                         else:
-                            cur_stat._post_statements = next_stat
+                            cur_stat._post_control_statements = next_stat
                     case "goto_statement":
                         goto_label = cur_stat.node.child_by_field_name("label")
                         assert goto_label is not None and goto_label.text is not None
@@ -360,24 +360,24 @@ class CFunction(Function, CBlockStatement):
                                 label_stat = stat
                                 break
                         if label_stat is not None:
-                            cur_stat._post_statements.append(label_stat)
+                            cur_stat._post_control_statements.append(label_stat)
                         else:
-                            cur_stat._post_statements = next_stat
+                            cur_stat._post_control_statements = next_stat
                     case _:
-                        cur_stat._post_statements = next_stat
+                        cur_stat._post_control_statements = next_stat
 
     def __build_pre_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
-            for post_stat in cur_stat._post_statements:
-                post_stat._pre_statements.append(cur_stat)
+            for post_stat in cur_stat._post_control_statements:
+                post_stat._pre_control_statements.append(cur_stat)
             if isinstance(cur_stat, BlockStatement):
                 self.__build_pre_cfg(cur_stat.statements)
 
     def build_cfg(self):
         self.__build_post_cfg(self.statements)
         self.__build_pre_cfg(self.statements)
-        self.statements[0]._pre_statements.insert(0, self)
+        self.statements[0]._pre_control_statements.insert(0, self)
         self._is_build_cfg = True
 
     @cached_property

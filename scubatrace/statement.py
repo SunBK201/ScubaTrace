@@ -16,8 +16,8 @@ class Statement:
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         self.node = node
         self.parent = parent
-        self._post_statements = []
-        self._pre_statements = []
+        self._pre_control_statements = []
+        self._post_control_statements = []
 
     def __str__(self) -> str:
         return f"{self.signature}: {self.text}"
@@ -98,11 +98,11 @@ class Statement:
         assert "Function" in func.__class__.__name__
         if not func._is_build_cfg:  # type: ignore
             func.build_cfg()  # type: ignore
-        return self._post_statements
+        return self._post_control_statements
 
     @post_controls.setter
     def post_controls(self, stats: list[Statement]):
-        self._post_statements = stats
+        self._post_control_statements = stats
 
     @property
     def pre_controls(self) -> list[Statement]:
@@ -112,11 +112,11 @@ class Statement:
         assert "Function" in func.__class__.__name__
         if not func._is_build_cfg:  # type: ignore
             func.build_cfg()  # type: ignore
-        return self._pre_statements
+        return self._pre_control_statements
 
     @pre_controls.setter
     def pre_controls(self, stats: list[Statement]):
-        self._pre_statements = stats
+        self._pre_control_statements = stats
 
 
 class SimpleStatement(Statement):
