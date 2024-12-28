@@ -172,11 +172,21 @@ class Function(BlockStatement):
             graph.add_node(stat.signature, label=stat.dot_text, color=color)
             for post_stat in stat.post_controls:
                 graph.add_node(post_stat.signature, label=post_stat.dot_text)
-                graph.add_edge(stat.signature, post_stat.signature)
+                graph.add_edge(stat.signature, post_stat.signature, label="CFG")
             if isinstance(stat, BlockStatement):
                 self.__build_cfg_graph(graph, stat.statements)
 
-    def export_cfg_dot(self, path: str):
+    def __build_cdg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+        for stat in statments:
+            color = "blue" if isinstance(stat, BlockStatement) else "black"
+            graph.add_node(stat.signature, label=stat.dot_text, color=color)
+            for post_stat in stat.post_control_dependents:
+                graph.add_node(post_stat.signature, label=post_stat.dot_text)
+                graph.add_edge(stat.signature, post_stat.signature, label="CDG")
+            if isinstance(stat, BlockStatement):
+                self.__build_cdg_graph(graph, stat.statements)
+
+    def export_cfg_dot(self, path: str, with_cdg: bool = False) -> nx.DiGraph:
         """
         Exports the CFG of the function to a DOT file.
 
@@ -196,8 +206,10 @@ class Function(BlockStatement):
         )
         graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
         graph.add_node(self.signature, label=self.dot_text, color="red")
-        graph.add_edge(self.signature, self.statements[0].signature)
+        graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
         self.__build_cfg_graph(graph, self.statements)
+        if with_cdg:
+            self.__build_cdg_graph(graph, self.statements)
         nx.nx_pydot.write_dot(graph, path)
         return graph
 

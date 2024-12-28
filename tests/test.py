@@ -1,11 +1,8 @@
 import sys
 
-import test
-
 sys.path.append("..")
 
 import scubatrace
-from scubatrace.parser import c_parser
 from scubatrace.statement import CBlockStatement, CSimpleStatement
 
 
@@ -55,9 +52,16 @@ def testIsSimpleStatement():
 def testPreControl():
     a_proj = scubatrace.CProject("../tests")
     test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[0]
+    func_main = test_c.functions[1]
     # print(func_main.statements[3].pre_controls[2].text)
-    func_main.export_cfg_dot("test.dot")
+    func_main.export_cfg_dot("test.dot", with_cdg=True)
+
+
+def testPreControlDep():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    print(func_main.statements[3].pre_control_dependents[0].text)
 
 
 def testCallees():
@@ -68,4 +72,4 @@ def testCallees():
 
 
 if __name__ == "__main__":
-    testPreControl()
+    testPreControlDep()

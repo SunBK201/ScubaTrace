@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING, Generator
 
@@ -27,6 +28,10 @@ class Statement:
 
     def __hash__(self):
         return hash(self.signature)
+
+    @property
+    @abstractmethod
+    def is_jump_statement(self) -> bool: ...
 
     @property
     def signature(self) -> str:
@@ -118,6 +123,29 @@ class Statement:
     def pre_controls(self, stats: list[Statement]):
         self._pre_control_statements = stats
 
+    @property
+    def post_control_dependents(self) -> list[Statement]:
+        if isinstance(self, SimpleStatement):
+            return []
+        assert isinstance(self, BlockStatement)
+        dependents = []
+        for child in self.statements:
+            # post_control_dependent node is child node of self node in AST
+            dependents.append(child)
+            if child.is_jump_statement:
+                break
+        return dependents
+
+    @property
+    def pre_control_dependents(self) -> list[Statement]:
+        parent = self.parent
+        if not isinstance(parent, Statement):
+            return []
+        for post in parent.post_control_dependents:
+            if post == self:
+                return [parent]
+        return []
+
 
 class SimpleStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
@@ -162,6 +190,10 @@ class CSimpleStatement(SimpleStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
+    @property
+    def is_jump_statement(self) -> bool:
+        return self.node.type in language.C.jump_statements
+
 
 class CBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
@@ -186,6 +218,15 @@ class CBlockStatement(BlockStatement):
                 return False
             else:
                 return node.type in language.C.simple_statements
+
+    @property
+    def is_jump_statement(self) -> bool:
+        if self.node.type in language.C.loop_statements:
+            return False
+        for child in self.statements:
+            if child.is_jump_statement:
+                return True
+        return False
 
     def _statements_builder(
         self,

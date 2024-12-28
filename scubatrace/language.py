@@ -54,6 +54,13 @@ class C(Language):
         "condition_clause",
     ]
 
+    jump_statements = [
+        "break_statement",
+        "continue_statement",
+        "goto_statement",
+        "return_statement",
+    ]
+
     loop_statements = ["for_statement", "while_statement", "do_statement"]
 
     def language(self):
