@@ -53,6 +53,7 @@ class Function(BlockStatement):
         """
         Generates a dictionary mapping line numbers to their corresponding lines of text.
 
+
         Returns:
             dict[int, str]: A dictionary where the keys are line numbers (starting from `self.start_line`)
                             and the values are the lines of text from `self.text`.
