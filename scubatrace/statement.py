@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Generator
 from tree_sitter import Node
 
 from . import language
+from .identifier import Identifier
+from .parser import c_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -28,6 +30,14 @@ class Statement:
 
     def __hash__(self):
         return hash(self.signature)
+
+    @cached_property
+    @abstractmethod
+    def identifiers(self) -> list[Identifier]: ...
+
+    @cached_property
+    @abstractmethod
+    def variables(self) -> list[Identifier]: ...
 
     @property
     @abstractmethod
@@ -194,10 +204,57 @@ class CSimpleStatement(SimpleStatement):
     def is_jump_statement(self) -> bool:
         return self.node.type in language.C.jump_statements
 
+    @cached_property
+    def identifiers(self) -> list[Identifier]:
+        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        identifiers = [
+            Identifier(node, self) for node in nodes if node.text is not None
+        ]
+        return identifiers
+
+    @cached_property
+    def variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
+
 
 class CBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
+
+    @cached_property
+    def identifiers(self) -> list[Identifier]:
+        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        identifiers = set(
+            [Identifier(node, self) for node in nodes if node.text is not None]
+        )
+        identifiers_in_children = set()
+        for stat in self.statements:
+            identifiers_in_children.update(stat.identifiers)
+        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
+        identifiers |= identifiers_in_children
+        return list(identifiers)
+
+    @cached_property
+    def variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
 
     @staticmethod
     def is_block_statement(node: Node) -> bool:

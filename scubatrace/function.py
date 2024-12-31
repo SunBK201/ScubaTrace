@@ -112,14 +112,6 @@ class Function(BlockStatement):
     @abstractmethod
     def name(self) -> str: ...
 
-    @property
-    @abstractmethod
-    def identifiers(self) -> dict[Node, str]: ...
-
-    @property
-    @abstractmethod
-    def variables(self) -> dict[Node, str]: ...
-
     @cached_property
     @abstractmethod
     def accessible_functions(self) -> list[Function]: ...
@@ -398,25 +390,6 @@ class CFunction(Function, CBlockStatement):
         if self.body_node is None:
             return []
         return list(self._statements_builder(self.body_node, self))
-
-    @property
-    def identifiers(self) -> dict[Node, str]:
-        nodes = c_parser.query_all(self.node, language.C.query_identifier)
-        identifiers = {
-            node: node.text.decode() for node in nodes if node.text is not None
-        }
-        return identifiers
-
-    @property
-    def variables(self) -> dict[Node, str]:
-        variables = self.identifiers
-        for node in self.identifiers:
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declarator",
-            ]:
-                variables.pop(node)
-        return variables
 
     @cached_property
     def calls(self) -> list[Statement]:

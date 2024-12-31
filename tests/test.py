@@ -71,5 +71,24 @@ def testCallees():
         print(func_main.name, func_main.callees, func_main.callers)
 
 
+def testIdentifiers():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    for func in test_c.functions:
+        print(func.name)
+        for stmt in func.statements:
+            for id in stmt.identifiers:
+                print(id.text, id.signature)
+
+def testReferences():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    stat = func_main.statements[5]
+    print(stat)
+    print(stat.identifiers[0])
+    for ref in stat.identifiers[0].references:
+        print(ref)
+
 if __name__ == "__main__":
-    testPreControlDep()
+    testReferences()

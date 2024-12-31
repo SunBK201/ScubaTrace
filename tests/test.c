@@ -20,9 +20,10 @@ int main()
         }
         a -= 1;
     }
+    int i = 1;
     b = add(a, b);
     for (int i = 0; i < count; i++) {
-        a += 1;
+        a += i;
         break;
     }
     return 0;

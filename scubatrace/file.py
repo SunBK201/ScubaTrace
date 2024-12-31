@@ -9,6 +9,7 @@ from tree_sitter import Node
 
 from . import language
 from .function import CFunction, Function
+from .identifier import Identifier
 from .parser import c_parser
 from .statement import Statement
 from .structure import CStruct, Struct
@@ -98,6 +99,14 @@ class File:
     @abstractmethod
     def statements(self) -> list[Statement]: ...
 
+    @cached_property
+    @abstractmethod
+    def identifiers(self) -> list[Identifier]: ...
+
+    @cached_property
+    @abstractmethod
+    def variables(self) -> list[Identifier]: ...
+
 
 class CFile(File):
     def __init__(self, path: str, project: Project):
@@ -138,6 +147,20 @@ class CFile(File):
     def structs(self) -> list[Struct]:
         struct_node = c_parser.query_all(self.text, language.C.query_struct)
         return [CStruct(node) for node in struct_node]
+
+    @cached_property
+    def statements(self) -> list[Statement]:
+        stats = []
+        for func in self.functions:
+            stats.extend(func.statements)
+        return stats
+
+    @cached_property
+    def identifiers(self) -> list[Identifier]:
+        identifiers = []
+        for stmt in self.statements:
+            identifiers.extend(stmt.identifiers)
+        return identifiers
 
 
 class CPPFile(File): ...
