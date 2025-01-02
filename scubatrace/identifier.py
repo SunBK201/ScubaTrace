@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator
+from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 from tree_sitter import Node
+
+from .parser import c_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -83,11 +86,46 @@ class Identifier:
         return self.statement.function
 
     @property
-    def references(self) -> Generator[Identifier, None, None]:
+    def references(self) -> list[Identifier]:
         func = self.function
         assert func is not None
+        identifiers = []
         for identifier in func.identifiers:
             if identifier == self:
                 continue
             if identifier.text == self.text:
-                yield identifier
+                identifiers.append(identifier)
+        return identifiers
+
+    @property
+    @abstractmethod
+    def is_left_value(self) -> bool: ...
+
+    @property
+    @abstractmethod
+    def is_right_value(self) -> bool: ...
+
+
+class CIdentifier(Identifier):
+    @property
+    def is_left_value(self) -> bool:
+        stat = self.statement
+        query = f"""
+            (assignment_expression
+                left: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+            (init_declarator
+                declarator: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+        """
+        nodes = c_parser.query_all(stat.node, query)
+        for node in nodes:
+            if node.start_point == self.node.start_point:
+                return True
+        return False
+
+    @property
+    def is_right_value(self) -> bool:
+        return not self.is_left_value

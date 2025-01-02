@@ -80,6 +80,7 @@ def testIdentifiers():
             for id in stmt.identifiers:
                 print(id.text, id.signature)
 
+
 def testReferences():
     a_proj = scubatrace.CProject("../tests")
     test_c = a_proj.files["test.c"]
@@ -90,5 +91,38 @@ def testReferences():
     for ref in stat.identifiers[0].references:
         print(ref)
 
+
+def testPreDataDependency():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    stat = func_main.statements[5]
+    print(f"statement: {stat.text}")
+    for var, stat in stat.pre_data_dependents.items():
+        print(f"variable: {var}")
+        for s in stat:
+            print(f"statement: {s.text}")
+
+
+def testPostDataDependency():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    stat = func_main.statements[3]
+    print(f"statement: {stat.text}")
+    for var, stat in stat.post_data_dependents.items():
+        print(f"variable: {var}")
+        for s in stat:
+            print(f"statement: {s.text}")
+
+
+def testPDG():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    # print(func_main.statements[3].pre_controls[2].text)
+    func_main.export_cfg_dot("test.dot", with_ddg=True, with_cdg=True)
+
+
 if __name__ == "__main__":
-    testReferences()
+    testPDG()

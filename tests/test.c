@@ -11,7 +11,7 @@ int main()
     while (a < 10) {
         a += 1;
         if (b > 5) {
-            b -= 1;
+            a -= 1;
         } else {
             a += 2;
         }
@@ -19,6 +19,8 @@ int main()
             break;
         }
         a -= 1;
+        count -= a;
+        count += a;
     }
     int i = 1;
     b = add(a, b);

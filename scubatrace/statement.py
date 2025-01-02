@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections import defaultdict, deque
 from functools import cached_property
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Callable, Generator
 
 from tree_sitter import Node
 
 from . import language
-from .identifier import Identifier
+from .identifier import CIdentifier, Identifier
 from .parser import c_parser
 
 if TYPE_CHECKING:
@@ -156,6 +157,104 @@ class Statement:
                 return [parent]
         return []
 
+    @property
+    def pre_data_dependents(self) -> dict[Identifier, list[Statement]]:
+        dependents = defaultdict(list)
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        for var in variables:
+
+            def is_data_dependents(stat: Statement) -> bool:
+                if stat.signature == self.signature:
+                    return False
+                if isinstance(stat, BlockStatement):
+                    stat_vars = stat.block_variables
+                else:
+                    stat_vars = stat.variables
+                for stat_var in stat_vars:
+                    if stat_var.text != var.text:
+                        continue
+                    if stat_var.is_left_value:
+                        return True
+                return False
+
+            for pre in self.walk_backward(
+                filter=is_data_dependents, stop_by=is_data_dependents
+            ):
+                dependents[var].append(pre)
+
+        return dependents
+
+    @property
+    def post_data_dependents(self) -> dict[Identifier, list[Statement]]:
+        dependents = defaultdict(list)
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        for var in variables:
+            if var.is_right_value:
+                continue
+
+            def is_data_dependents(stat: Statement) -> bool:
+                if stat.signature == self.signature:
+                    return False
+                if isinstance(stat, BlockStatement):
+                    stat_vars = stat.block_variables
+                else:
+                    stat_vars = stat.variables
+                for stat_var in stat_vars:
+                    if stat_var.text != var.text:
+                        continue
+                    return True
+                return False
+
+            for post in self.walk_forward(
+                filter=is_data_dependents, stop_by=is_data_dependents
+            ):
+                dependents[var].append(post)
+        return dependents
+
+    def walk_backward(
+        self,
+        filter: Callable[[Statement], bool] | None = None,
+        stop_by: Callable[[Statement], bool] | None = None,
+    ) -> Generator[Statement, None, None]:
+        dq: deque[Statement] = deque([self])
+        visited: set[Statement] = set([self])
+        while len(dq) > 0:
+            cur_stat = dq.pop()
+            if filter is not None and filter(cur_stat):
+                yield cur_stat
+            if stop_by is not None and stop_by(cur_stat):
+                continue
+            for pre in cur_stat.pre_controls:
+                if pre in visited:
+                    continue
+                visited.add(pre)
+                dq.appendleft(pre)
+
+    def walk_forward(
+        self,
+        filter: Callable[[Statement], bool] | None = None,
+        stop_by: Callable[[Statement], bool] | None = None,
+    ) -> Generator[Statement, None, None]:
+        dq: deque[Statement] = deque([self])
+        visited: set[Statement] = set([self])
+        while len(dq) > 0:
+            cur_stat = dq.pop()
+            if filter is not None and filter(cur_stat):
+                yield cur_stat
+            if stop_by is not None and stop_by(cur_stat):
+                continue
+            for post in cur_stat.post_controls:
+                if post in visited:
+                    continue
+                visited.add(post)
+                dq.appendleft(post)
+
 
 class SimpleStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
@@ -189,6 +288,14 @@ class BlockStatement(Statement):
     @cached_property
     def statements(self) -> list[Statement]: ...
 
+    @cached_property
+    @abstractmethod
+    def block_identifiers(self) -> list[Identifier]: ...
+
+    @cached_property
+    @abstractmethod
+    def block_variables(self) -> list[Identifier]: ...
+
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         if recursive:
             return [s for s in self.__traverse_statements() if s.node.type == type]
@@ -208,9 +315,9 @@ class CSimpleStatement(SimpleStatement):
     def identifiers(self) -> list[Identifier]:
         nodes = c_parser.query_all(self.node, language.C.query_identifier)
         identifiers = [
-            Identifier(node, self) for node in nodes if node.text is not None
+            CIdentifier(node, self) for node in nodes if node.text is not None
         ]
-        return identifiers
+        return list(identifiers)
 
     @cached_property
     def variables(self) -> list[Identifier]:
@@ -234,7 +341,7 @@ class CBlockStatement(BlockStatement):
     def identifiers(self) -> list[Identifier]:
         nodes = c_parser.query_all(self.node, language.C.query_identifier)
         identifiers = set(
-            [Identifier(node, self) for node in nodes if node.text is not None]
+            [CIdentifier(node, self) for node in nodes if node.text is not None]
         )
         identifiers_in_children = set()
         for stat in self.statements:
@@ -244,9 +351,33 @@ class CBlockStatement(BlockStatement):
         return list(identifiers)
 
     @cached_property
+    def block_identifiers(self) -> list[Identifier]:
+        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        identifiers = set(
+            CIdentifier(node, self) for node in nodes if node.text is not None
+        )
+        identifiers_in_children = set()
+        for stat in self.statements:
+            identifiers_in_children.update(stat.identifiers)
+        return list(identifiers - identifiers_in_children)
+
+    @cached_property
     def variables(self) -> list[Identifier]:
         variables = []
         for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
+
+    @cached_property
+    def block_variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.block_identifiers:
             node = identifier.node
             if node.parent is not None and node.parent.type in [
                 "call_expression",

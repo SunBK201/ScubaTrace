@@ -175,11 +175,34 @@ class Function(BlockStatement):
             graph.add_node(stat.signature, label=stat.dot_text, color=color)
             for post_stat in stat.post_control_dependents:
                 graph.add_node(post_stat.signature, label=post_stat.dot_text)
-                graph.add_edge(stat.signature, post_stat.signature, label="CDG")
+                graph.add_edge(
+                    stat.signature,
+                    post_stat.signature,
+                    label="CDG",
+                    color="green",
+                )
             if isinstance(stat, BlockStatement):
                 self.__build_cdg_graph(graph, stat.statements)
 
-    def export_cfg_dot(self, path: str, with_cdg: bool = False) -> nx.DiGraph:
+    def __build_ddg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+        for stat in statments:
+            color = "blue" if isinstance(stat, BlockStatement) else "black"
+            graph.add_node(stat.signature, label=stat.dot_text, color=color)
+            for identifier, post_stats in stat.post_data_dependents.items():
+                for post_stat in post_stats:
+                    graph.add_node(post_stat.signature, label=post_stat.dot_text)
+                    graph.add_edge(
+                        stat.signature,
+                        post_stat.signature,
+                        label=f"DDG [{identifier.text}]",
+                        color="red",
+                    )
+            if isinstance(stat, BlockStatement):
+                self.__build_ddg_graph(graph, stat.statements)
+
+    def export_cfg_dot(
+        self, path: str, with_cdg: bool = False, with_ddg: bool = False
+    ) -> nx.DiGraph:
         """
         Exports the CFG of the function to a DOT file.
 
@@ -188,7 +211,7 @@ class Function(BlockStatement):
         """
         if not self._is_build_cfg:
             self.build_cfg()
-        graph = nx.DiGraph()
+        graph = nx.MultiDiGraph()
         graph.add_node("graph", bgcolor="ivory", splines="true")
         graph.add_node(
             "node",
@@ -203,6 +226,8 @@ class Function(BlockStatement):
         self.__build_cfg_graph(graph, self.statements)
         if with_cdg:
             self.__build_cdg_graph(graph, self.statements)
+        if with_ddg:
+            self.__build_ddg_graph(graph, self.statements)
         nx.nx_pydot.write_dot(graph, path)
         return graph
 
