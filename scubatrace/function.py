@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections import deque
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -8,6 +9,7 @@ import networkx as nx
 from tree_sitter import Node
 
 from . import language
+from .identifier import Identifier
 from .parser import c_parser
 from .statement import (
     BlockStatement,
@@ -155,6 +157,47 @@ class Function(BlockStatement):
             ]
         else:
             return [stat for stat in self.statements if stat.node.type == type]
+
+    def slice_by_statements(
+        self,
+        statements: list[Statement],
+        *,
+        control_depth: int = 1,
+        data_dependent_depth: int = 1,
+        control_dependent_depth: int = 1,
+    ) -> list[Statement]:
+        """
+        Slices the function into statements based on the provided statements.
+
+        Args:
+            statements (list[Statement]): A list of statements to slice the function by.
+
+        Returns:
+            list[Statement]: A list of statements that fall within the specified statements.
+        """
+        res = set()
+        for stat in statements:
+            for s in stat.walk_backward(depth=control_depth, base="control"):
+                res.add(s)
+            for s in stat.walk_forward(depth=control_depth, base="control"):
+                res.add(s)
+            for s in stat.walk_backward(
+                depth=data_dependent_depth, base="data_dependent"
+            ):
+                res.add(s)
+            for s in stat.walk_forward(
+                depth=data_dependent_depth, base="data_dependent"
+            ):
+                res.add(s)
+            for s in stat.walk_backward(
+                depth=control_dependent_depth, base="control_dependent"
+            ):
+                res.add(s)
+            for s in stat.walk_forward(
+                depth=control_dependent_depth, base="control_dependent"
+            ):
+                res.add(s)
+        return sorted(list(res), key=lambda x: x.node.start_byte)
 
     @abstractmethod
     def build_cfg(self): ...

@@ -150,6 +150,8 @@ class Statement:
     @property
     def pre_control_dependents(self) -> list[Statement]:
         parent = self.parent
+        if "Function" in parent.__class__.__name__:
+            return []
         if not isinstance(parent, Statement):
             return []
         for post in parent.post_control_dependents:
@@ -221,39 +223,73 @@ class Statement:
         self,
         filter: Callable[[Statement], bool] | None = None,
         stop_by: Callable[[Statement], bool] | None = None,
+        depth: int = -1,
+        base: str = "control",
     ) -> Generator[Statement, None, None]:
+        depth = 0x3F3F3F3F if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
-        while len(dq) > 0:
-            cur_stat = dq.pop()
-            if filter is not None and filter(cur_stat):
-                yield cur_stat
-            if stop_by is not None and stop_by(cur_stat):
-                continue
-            for pre in cur_stat.pre_controls:
-                if pre in visited:
+        while len(dq) > 0 and depth >= 0:
+            size = len(dq)
+            for _ in range(size):
+                cur_stat = dq.pop()
+                if filter is not None and filter(cur_stat) or filter is None:
+                    yield cur_stat
+                if stop_by is not None and stop_by(cur_stat):
                     continue
-                visited.add(pre)
-                dq.appendleft(pre)
+                match base:
+                    case "control":
+                        nexts = cur_stat.pre_controls
+                    case "data_dependent":
+                        nexts = []
+                        for stats in cur_stat.pre_data_dependents.values():
+                            nexts.extend(stats)
+                    case "control_dependent":
+                        nexts = cur_stat.pre_control_dependents
+                    case _:
+                        nexts = cur_stat.pre_controls
+                for pre in nexts:
+                    if pre in visited:
+                        continue
+                    visited.add(pre)
+                    dq.appendleft(pre)
+            depth -= 1
 
     def walk_forward(
         self,
         filter: Callable[[Statement], bool] | None = None,
         stop_by: Callable[[Statement], bool] | None = None,
+        depth: int = -1,
+        base: str = "control",
     ) -> Generator[Statement, None, None]:
+        depth = 0x3F3F3F3F if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
-        while len(dq) > 0:
-            cur_stat = dq.pop()
-            if filter is not None and filter(cur_stat):
-                yield cur_stat
-            if stop_by is not None and stop_by(cur_stat):
-                continue
-            for post in cur_stat.post_controls:
-                if post in visited:
+        while len(dq) > 0 and depth >= 0:
+            size = len(dq)
+            for _ in range(size):
+                cur_stat = dq.pop()
+                if filter is not None and filter(cur_stat) or filter is None:
+                    yield cur_stat
+                if stop_by is not None and stop_by(cur_stat):
                     continue
-                visited.add(post)
-                dq.appendleft(post)
+                match base:
+                    case "control":
+                        nexts = cur_stat.post_controls
+                    case "data_dependent":
+                        nexts = []
+                        for stats in cur_stat.post_data_dependents.values():
+                            nexts.extend(stats)
+                    case "control_dependent":
+                        nexts = cur_stat.post_control_dependents
+                    case _:
+                        nexts = cur_stat.post_controls
+                for post in nexts:
+                    if post in visited:
+                        continue
+                    visited.add(post)
+                    dq.appendleft(post)
+            depth -= 1
 
 
 class SimpleStatement(Statement):
