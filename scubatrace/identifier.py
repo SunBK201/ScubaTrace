@@ -119,6 +119,10 @@ class CIdentifier(Identifier):
                 declarator: (identifier)@left
                 (#eq? @left "{self.text}")
             )
+            (parameter_declaration
+                declarator: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
         """
         nodes = c_parser.query_all(stat.node, query)
         for node in nodes:

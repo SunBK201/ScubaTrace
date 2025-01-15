@@ -169,7 +169,7 @@ class Function(BlockStatement):
             if isinstance(stat, BlockStatement):
                 self.__build_cfg_graph(graph, stat.statements)
 
-    def __build_cdg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+    def __build_cdg_graph(self, graph: nx.MultiDiGraph, statments: list[Statement]):
         for stat in statments:
             color = "blue" if isinstance(stat, BlockStatement) else "black"
             graph.add_node(stat.signature, label=stat.dot_text, color=color)
@@ -184,7 +184,7 @@ class Function(BlockStatement):
             if isinstance(stat, BlockStatement):
                 self.__build_cdg_graph(graph, stat.statements)
 
-    def __build_ddg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+    def __build_ddg_graph(self, graph: nx.MultiDiGraph, statments: list[Statement]):
         for stat in statments:
             color = "blue" if isinstance(stat, BlockStatement) else "black"
             graph.add_node(stat.signature, label=stat.dot_text, color=color)
@@ -224,10 +224,22 @@ class Function(BlockStatement):
         graph.add_node(self.signature, label=self.dot_text, color="red")
         graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
         self.__build_cfg_graph(graph, self.statements)
+
         if with_cdg:
             self.__build_cdg_graph(graph, self.statements)
+
         if with_ddg:
+            for identifier, post_stats in self.post_data_dependents.items():
+                for post_stat in post_stats:
+                    graph.add_node(post_stat.signature, label=post_stat.dot_text)
+                    graph.add_edge(
+                        self.signature,
+                        post_stat.signature,
+                        label=f"DDG [{identifier.text}]",
+                        color="red",
+                    )
             self.__build_ddg_graph(graph, self.statements)
+
         nx.nx_pydot.write_dot(graph, path)
         return graph
 
@@ -408,6 +420,9 @@ class CFunction(Function, CBlockStatement):
         self.__build_post_cfg(self.statements)
         self.__build_pre_cfg(self.statements)
         self.statements[0]._pre_control_statements.insert(0, self)
+        self._post_control_statements = [
+            self.statements[0] if len(self.statements) > 0 else []
+        ]
         self._is_build_cfg = True
 
     @cached_property
