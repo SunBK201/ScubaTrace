@@ -67,14 +67,55 @@ class C(Language):
         return C
 
 
-class CPP(Language):
+class CPP(C):
     extensions = C.extensions + ["cpp", "hpp", "cxx"]
     tslanguage = TSLanguage(tscpp.language())
+    query_class = "(class_specifier)@name"
+    query_method = "(function_definition)@name"
+    query_field = "(field_declaration)@name"
 
 
 class JAVA(Language):
     extensions = ["java"]
     tslanguage = TSLanguage(tsjava.language())
+    query_import = "(import_declaration(scoped_identifier)@name)"
+    query_package = "(package_declaration)@name"
+    query_class = "(class_declaration)@name"
+    query_method = "(method_declaration)@name"
+    query_identifier = "(identifier)@name"
+
+    jump_statements = [
+        "break_statement",
+        "continue_statement",
+        "return_statement",
+    ]
+
+    block_statements = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "do_statement",
+        "switch_expression",
+        "switch_block_statement_group",
+    ]
+
+    simple_statements = [
+        "expression_statement",
+        "return_statement",
+        "local_variable_declaration",
+        "break_statement",
+        "continue_statement",
+    ]
+
+    control_statements = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "do_statement",
+        "switch_statement",
+    ]
+
+    loop_statements = ["for_statement", "while_statement", "do_statement"]
 
 
 class PYTHON(Language):

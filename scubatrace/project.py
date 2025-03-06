@@ -35,19 +35,7 @@ class Project:
             dict[str, File]: A dictionary where the keys are relative file paths and the values are instances
                              of the corresponding file class (CFile, CPPFile, JavaFile).
         """
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.C:
-                        file_lists[key] = CFile(file_path, self)
-                    elif self.language == language.CPP:
-                        file_lists[key] = CPPFile(file_path, self)
-                    elif self.language == language.JAVA:
-                        file_lists[key] = JavaFile(file_path, self)
-        return file_lists
+        ...
 
     @cached_property
     def functions(self) -> list[Function]:
@@ -67,15 +55,58 @@ class Project:
 
 
 class CProject(Project):
-    """
-    Representing a C language project.
-
-    Attributes:
-        path (str): The file path to the project.
-    """
-
     def __init__(self, path: str):
         super().__int__(path, language.C)
+
+    @cached_property
+    def files(self) -> dict[str, File]:
+        file_lists = {}
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                if file.split(".")[-1] in self.language.extensions:
+                    file_path = os.path.join(root, file)
+                    key = file_path.replace(self.path + "/", "")
+                    if self.language == language.C:
+                        file_lists[key] = CFile(file_path, self)
+        return file_lists
+
+
+class CPPProject(Project):
+    def __init__(self, path: str):
+        super().__int__(path, language.CPP)
+
+    @cached_property
+    def files(self) -> dict[str, File]:
+        file_lists = {}
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                if file.split(".")[-1] in self.language.extensions:
+                    file_path = os.path.join(root, file)
+                    key = file_path.replace(self.path + "/", "")
+                    if self.language == language.CPP:
+                        file_lists[key] = CPPFile(file_path, self)
+        return file_lists
+
+
+class JavaProject(Project):
+    def __init__(self, path: str):
+        super().__int__(path, language.JAVA)
+
+    @cached_property
+    def files(self) -> dict[str, File]:
+        file_lists = {}
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                if file.split(".")[-1] in self.language.extensions:
+                    file_path = os.path.join(root, file)
+                    key = file_path.replace(self.path + "/", "")
+                    if self.language == language.JAVA:
+                        file_lists[key] = JavaFile(file_path, self)
+        return file_lists
+
+    @property
+    def class_path(self) -> str:
+        return self.path
 
 
 def testPreControl():

@@ -3,12 +3,17 @@ import sys
 sys.path.append("..")
 
 import scubatrace
+from scubatrace.parser import c_parser
 from scubatrace.statement import CBlockStatement, CSimpleStatement
 
 
 def main():
     a_proj = scubatrace.CProject("../tests")
-    print(a_proj.files)
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[0]
+    with open("ast.dot", "w") as f:
+        c_parser.parser.print_dot_graphs(f)
+        c_parser.parser.parse(bytes(func_main.text, "utf-8"))
 
 
 def testImports():
@@ -55,6 +60,13 @@ def testPreControl():
     func_main = test_c.functions[1]
     # print(func_main.statements[3].pre_controls[2].text)
     func_main.export_cfg_dot("test.dot", with_cdg=True)
+
+
+def testPostControl():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[0]
+    print(func_main.statements[0].pre_data_dependents)
 
 
 def testPreControlDep():
@@ -124,5 +136,22 @@ def testPDG():
     func_main.export_cfg_dot("test.dot", with_ddg=True, with_cdg=True)
 
 
+def test_slice_by_statements():
+    a_proj = scubatrace.CProject("../tests")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    slice_criteria = [func_main.statements[4]]
+    for stat in slice_criteria:
+        print("slice criteria: ", stat.text)
+    stats = func_main.slice_by_statements(
+        slice_criteria,
+        control_depth=1,
+        data_dependent_depth=1,
+        control_dependent_depth=0,
+    )
+    for stat in stats:
+        print(stat.text)
+
+
 if __name__ == "__main__":
-    testPDG()
+    main()

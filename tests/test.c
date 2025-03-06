@@ -3,11 +3,11 @@ int add(int a, int b)
     return a + b;
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    int count = 10;
     int a = 1;
     int b = 2;
+    int count = argc;
     while (a < 10) {
         a += 1;
         if (b > 5) {

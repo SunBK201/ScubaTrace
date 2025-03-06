@@ -66,4 +66,16 @@ class CParser(Parser):
         super().__init__(language.C.tslanguage)
 
 
+class CPPParser(Parser):
+    def __init__(self):
+        super().__init__(language.CPP.tslanguage)
+
+
+class JavaParser(Parser):
+    def __init__(self):
+        super().__init__(language.JAVA.tslanguage)
+
+
 c_parser = CParser()
+cpp_parser = CPPParser()
+java_parser = JavaParser()

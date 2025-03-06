@@ -200,7 +200,24 @@ class Function(BlockStatement):
         return sorted(list(res), key=lambda x: x.node.start_byte)
 
     @abstractmethod
-    def build_cfg(self): ...
+    def __build_post_cfg(self, statements: list[Statement]): ...
+
+    def __build_pre_cfg(self, statements: list[Statement]):
+        for i in range(len(statements)):
+            cur_stat = statements[i]
+            for post_stat in cur_stat._post_control_statements:
+                post_stat._pre_control_statements.append(cur_stat)
+            if isinstance(cur_stat, BlockStatement):
+                self.__build_pre_cfg(cur_stat.statements)
+
+    def build_cfg(self):
+        self.__build_post_cfg(self.statements)
+        self.__build_pre_cfg(self.statements)
+        self.statements[0]._pre_control_statements.insert(0, self)
+        self._post_control_statements = [
+            self.statements[0] if len(self.statements) > 0 else []
+        ]
+        self._is_build_cfg = True
 
     def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
         for stat in statments:
@@ -450,23 +467,6 @@ class CFunction(Function, CBlockStatement):
                             cur_stat._post_control_statements = next_stat
                     case _:
                         cur_stat._post_control_statements = next_stat
-
-    def __build_pre_cfg(self, statements: list[Statement]):
-        for i in range(len(statements)):
-            cur_stat = statements[i]
-            for post_stat in cur_stat._post_control_statements:
-                post_stat._pre_control_statements.append(cur_stat)
-            if isinstance(cur_stat, BlockStatement):
-                self.__build_pre_cfg(cur_stat.statements)
-
-    def build_cfg(self):
-        self.__build_post_cfg(self.statements)
-        self.__build_pre_cfg(self.statements)
-        self.statements[0]._pre_control_statements.insert(0, self)
-        self._post_control_statements = [
-            self.statements[0] if len(self.statements) > 0 else []
-        ]
-        self._is_build_cfg = True
 
     @cached_property
     def statements(self) -> list[Statement]:

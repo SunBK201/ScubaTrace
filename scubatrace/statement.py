@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Callable, Generator
 from tree_sitter import Node
 
 from . import language
-from .identifier import CIdentifier, Identifier
-from .parser import c_parser
+from .identifier import CIdentifier, Identifier, JavaIdentifier
+from .parser import c_parser, java_parser
 
 if TYPE_CHECKING:
+    from .clazz import Class
     from .file import File
     from .function import Function
+    from .method import Method
 
 
 class Statement:
@@ -100,7 +102,10 @@ class Statement:
     @property
     def function(self):
         cur = self
-        while "Function" not in cur.__class__.__name__:
+        while (
+            "Function" not in cur.__class__.__name__
+            or "Method" not in cur.__class__.__name__
+        ):
             cur = cur.parent  # type: ignore
             if "File" in cur.__class__.__name__:
                 return None
@@ -111,7 +116,9 @@ class Statement:
         func = self.function
         if func is None:
             return []
-        assert "Function" in func.__class__.__name__
+        assert (
+            "Function" in func.__class__.__name__ or "Method" in func.__class__.__name__
+        )
         if not func._is_build_cfg:  # type: ignore
             func.build_cfg()  # type: ignore
         return self._post_control_statements
@@ -125,7 +132,9 @@ class Statement:
         func = self.function
         if func is None:
             return []
-        assert "Function" in func.__class__.__name__
+        assert (
+            "Function" in func.__class__.__name__ or "Method" in func.__class__.__name__
+        )
         if not func._is_build_cfg:  # type: ignore
             func.build_cfg()  # type: ignore
         return self._pre_control_statements
@@ -150,7 +159,10 @@ class Statement:
     @property
     def pre_control_dependents(self) -> list[Statement]:
         parent = self.parent
-        if "Function" in parent.__class__.__name__:
+        if (
+            "Function" in parent.__class__.__name__
+            or "Method" in parent.__class__.__name__
+        ):
             return []
         if not isinstance(parent, Statement):
             return []
@@ -533,6 +545,198 @@ class CBlockStatement(BlockStatement):
                 get_compound = False
                 for child in self.node.children:
                     if child.type in ["compound_statement"]:
+                        stats.extend(list(self._statements_builder(child, self)))
+                        get_compound = True
+                if not get_compound:
+                    stats.extend(list(self._statements_builder(self.node, self)))
+            case _:
+                stats.extend(list(self._statements_builder(self.node, self)))
+        return stats
+
+
+class JavaSimpleStatement(SimpleStatement):
+    def __init__(self, node: Node, parent: BlockStatement | Method):
+        super().__init__(node, parent)
+
+    @property
+    def is_jump_statement(self) -> bool:
+        return self.node.type in language.JAVA.jump_statements
+
+    @cached_property
+    def identifiers(self) -> list[Identifier]:
+        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
+        identifiers = [
+            JavaIdentifier(node, self) for node in nodes if node.text is not None
+        ]
+        return list(identifiers)
+
+    @cached_property
+    def variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "method_invocation",
+                "method_declaration",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
+
+
+class JavaBlockStatement(BlockStatement):
+    def __init__(self, node: Node, parent: BlockStatement | Method):
+        super().__init__(node, parent)
+
+    @cached_property
+    def identifiers(self) -> list[Identifier]:
+        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
+        identifiers = set(
+            [JavaIdentifier(node, self) for node in nodes if node.text is not None]
+        )
+        identifiers_in_children = set()
+        for stat in self.statements:
+            identifiers_in_children.update(stat.identifiers)
+        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
+        identifiers |= identifiers_in_children
+        return list(identifiers)
+
+    @cached_property
+    def block_identifiers(self) -> list[Identifier]:
+        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
+        identifiers = set(
+            JavaIdentifier(node, self) for node in nodes if node.text is not None
+        )
+        identifiers_in_children = set()
+        for stat in self.statements:
+            identifiers_in_children.update(stat.identifiers)
+        return list(identifiers - identifiers_in_children)
+
+    @cached_property
+    def variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "method_invocation",
+                "method_declaration",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
+
+    @cached_property
+    def block_variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.block_identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "method_invocation",
+                "method_declaration",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
+
+    @staticmethod
+    def is_block_statement(node: Node) -> bool:
+        return node.type in language.JAVA.block_statements
+
+    @staticmethod
+    def is_simple_statement(node: Node) -> bool:
+        if node.parent is None:
+            return False
+        else:
+            if node.parent.type in language.JAVA.simple_statements:
+                return False
+            elif (
+                node.parent.type in language.JAVA.control_statements
+                and node.parent.child_by_field_name("body") != node
+                and node.parent.child_by_field_name("consequence") != node
+            ):
+                return False
+            else:
+                return node.type in language.JAVA.simple_statements
+
+    @property
+    def is_jump_statement(self) -> bool:
+        if self.node.type in language.JAVA.loop_statements:
+            return False
+        for child in self.statements:
+            if child.is_jump_statement:
+                return True
+        return False
+
+    def _statements_builder(
+        self,
+        node: Node,
+        parent: BlockStatement | Method,
+    ) -> Generator[Statement, None, None]:
+        cursor = node.walk()
+        if cursor.node is not None:
+            if not cursor.goto_first_child():
+                yield from ()
+        while True:
+            assert cursor.node is not None
+            if self.is_simple_statement(cursor.node):
+                yield JavaSimpleStatement(cursor.node, parent)
+            elif self.is_block_statement(cursor.node):
+                yield JavaSimpleStatement(cursor.node, parent)
+
+            if not cursor.goto_next_sibling():
+                break
+
+    @cached_property
+    def statements(self) -> list[Statement]:
+        stats = []
+        type = self.node.type
+        match type:
+            case "if_statement":
+                consequence_node = self.node.child_by_field_name("consequence")
+                if consequence_node is not None and consequence_node.type in ["block"]:
+                    stats.extend(list(self._statements_builder(consequence_node, self)))
+                elif consequence_node is not None:
+                    stats.extend([JavaSimpleStatement(consequence_node, self)])
+                else_clause_node = self.node.child_by_field_name("alternative")
+                if else_clause_node is not None:
+                    stats.extend([JavaBlockStatement(else_clause_node, self)])
+            case "for_statement":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["block"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    if self.is_simple_statement(body_node):
+                        stats.extend([JavaSimpleStatement(body_node, self)])
+                    elif self.is_block_statement(body_node):
+                        stats.extend([JavaBlockStatement(body_node, self)])
+            case "while_statement":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["block"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    if self.is_simple_statement(body_node):
+                        stats.extend([JavaSimpleStatement(body_node, self)])
+                    elif self.is_block_statement(body_node):
+                        stats.extend([JavaBlockStatement(body_node, self)])
+            case "do_statement":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["block"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    if self.is_simple_statement(body_node):
+                        stats.extend([JavaSimpleStatement(body_node, self)])
+                    elif self.is_block_statement(body_node):
+                        stats.extend([JavaBlockStatement(body_node, self)])
+            case "switch_statement":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["switch_block"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    stats.extend([JavaSimpleStatement(body_node, self)])
+            case "switch_block_statement_group":
+                get_compound = False
+                for child in self.node.children:
+                    if child.type in ["block"]:
                         stats.extend(list(self._statements_builder(child, self)))
                         get_compound = True
                 if not get_compound:

@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
+from . import language
+from .method import CPPMethod, JavaMethod
+from .parser import cpp_parser, java_parser
+
 if TYPE_CHECKING:
     from .file import File
     from .method import Method
@@ -59,3 +63,36 @@ class Class:
     @property
     @abstractmethod
     def fields(self) -> list[str]: ...
+
+
+class CPPClass(Class):
+    @property
+    def name(self) -> str:
+        class_name = self.node.child_by_field_name("name")
+        assert class_name is not None
+        assert class_name.text is not None
+        return class_name.text.decode()
+
+    @property
+    def methods(self) -> list[Method]:
+        method_nodes = cpp_parser.query_all(self.node, language.CPP.query_method)
+        return [CPPMethod(node, self) for node in method_nodes]
+
+    @property
+    def fields(self) -> list[str]:
+        field_nodes = cpp_parser.query_all(self.node, language.CPP.query_field)
+        return [node.text.decode() for node in field_nodes]  # type: ignore
+
+
+class JavaClass(Class):
+    @property
+    def name(self) -> str:
+        class_name = self.node.child_by_field_name("name")
+        assert class_name is not None
+        assert class_name.text is not None
+        return class_name.text.decode()
+
+    @property
+    def methods(self) -> list[Method]:
+        method_nodes = java_parser.query_all(self.node, language.JAVA.query_method)
+        return [JavaMethod(node, self) for node in method_nodes]
