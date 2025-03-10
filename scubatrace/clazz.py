@@ -6,12 +6,11 @@ from typing import TYPE_CHECKING
 from tree_sitter import Node
 
 from . import language
-from .method import CPPMethod, JavaMethod
 from .parser import cpp_parser, java_parser
 
 if TYPE_CHECKING:
     from .file import File
-    from .method import Method
+    from .method import CPPMethod, JavaMethod, Method
 
 
 class Class:
