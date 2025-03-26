@@ -148,6 +148,12 @@ class JavaIdentifier(Identifier):
                 declarator: (variable_declarator)@left
                 (#eq? @left "{self.text}")
             )
+            (local_variable_declaration
+                declarator: (variable_declarator
+                    name: (identifier)@left
+                )
+                (#eq? @left "{self.text}")
+            )
         """
         nodes = java_parser.query_all(stat.node, query)
         for node in nodes:

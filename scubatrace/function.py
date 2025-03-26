@@ -14,6 +14,7 @@ from .parser import c_parser
 from .statement import (
     BlockStatement,
     CBlockStatement,
+    JavaBlockStatement,
     SimpleStatement,
     Statement,
 )
@@ -106,10 +107,6 @@ class Function(BlockStatement):
         else:
             return self.body_node.end_point[0] + 1
 
-    @cached_property
-    @abstractmethod
-    def statements(self) -> list[Statement]: ...
-
     @property
     @abstractmethod
     def name(self) -> str: ...
@@ -200,19 +197,19 @@ class Function(BlockStatement):
         return sorted(list(res), key=lambda x: x.node.start_byte)
 
     @abstractmethod
-    def __build_post_cfg(self, statements: list[Statement]): ...
+    def _build_post_cfg(self, statements: list[Statement]): ...
 
-    def __build_pre_cfg(self, statements: list[Statement]):
+    def _build_pre_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
             for post_stat in cur_stat._post_control_statements:
                 post_stat._pre_control_statements.append(cur_stat)
             if isinstance(cur_stat, BlockStatement):
-                self.__build_pre_cfg(cur_stat.statements)
+                self._build_pre_cfg(cur_stat.statements)
 
     def build_cfg(self):
-        self.__build_post_cfg(self.statements)
-        self.__build_pre_cfg(self.statements)
+        self._build_post_cfg(self.statements)
+        self._build_pre_cfg(self.statements)
         self.statements[0]._pre_control_statements.insert(0, self)
         self._post_control_statements = [
             self.statements[0] if len(self.statements) > 0 else []
@@ -373,7 +370,7 @@ class CFunction(Function, CBlockStatement):
             else:
                 return self.__find_next_nearest_stat(stat.parent)
 
-    def __build_post_cfg(self, statements: list[Statement]):
+    def _build_post_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
             type = cur_stat.node.type
@@ -382,7 +379,7 @@ class CFunction(Function, CBlockStatement):
 
             if isinstance(cur_stat, BlockStatement):
                 child_statements = cur_stat.statements
-                self.__build_post_cfg(child_statements)
+                self._build_post_cfg(child_statements)
                 if len(child_statements) > 0:
                     match type:
                         case "if_statement":
@@ -575,3 +572,4 @@ class CFunction(Function, CBlockStatement):
         for func in self.file.functions:
             funcs.append(func)
         return funcs
+

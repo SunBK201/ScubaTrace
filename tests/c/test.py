@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("..")
+sys.path.append("../../")
 
 import scubatrace
 from scubatrace.parser import c_parser
@@ -12,7 +12,6 @@ def main():
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[0]
     with open("ast.dot", "w") as f:
-        c_parser.parser.print_dot_graphs(f)
         c_parser.parser.parse(bytes(func_main.text, "utf-8"))
 
 
@@ -55,11 +54,11 @@ def testIsSimpleStatement():
 
 
 def testPreControl():
-    a_proj = scubatrace.CProject("../tests")
+    a_proj = scubatrace.CProject("../c")
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     # print(func_main.statements[3].pre_controls[2].text)
-    func_main.export_cfg_dot("test.dot", with_cdg=True)
+    func_main.export_cfg_dot("test.dot", with_cdg=True, with_ddg=True)
 
 
 def testPostControl():
@@ -154,4 +153,4 @@ def test_slice_by_statements():
 
 
 if __name__ == "__main__":
-    main()
+    testPreControl()

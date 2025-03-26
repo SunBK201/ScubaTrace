@@ -94,6 +94,10 @@ class File:
 
     @cached_property
     @abstractmethod
+    def classes(self) -> list[Class]: ...
+
+    @cached_property
+    @abstractmethod
     def structs(self) -> list[Struct]: ...
 
     @cached_property
@@ -252,5 +256,5 @@ class JavaFile(File):
 
     @cached_property
     def classes(self) -> list[Class]:
-        class_node = cpp_parser.query_all(self.text, language.JAVA.query_class)
+        class_node = java_parser.query_all(self.text, language.JAVA.query_class)
         return [JavaClass(node, file=self) for node in class_node]

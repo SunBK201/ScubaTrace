@@ -1,13 +1,9 @@
 from functools import cached_property
-from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
 from . import language
-from .clazz import Class
 from .function import CFunction, Function
-from .identifier import Identifier
-from .parser import c_parser, java_parser
 from .statement import (
     BlockStatement,
     JavaBlockStatement,
@@ -15,18 +11,15 @@ from .statement import (
     Statement,
 )
 
-if TYPE_CHECKING:
-    from .file import File
-
 
 class Method(Function):
-    def __init__(self, node: Node, clazz: Class) -> None:
+    def __init__(self, node: Node, clazz) -> None:
         super().__init__(node, clazz.file)
         self.clazz = clazz
 
 
 class CPPMethod(Method, CFunction):
-    def __init__(self, node: Node, clazz: Class) -> None:
+    def __init__(self, node: Node, clazz) -> None:
         super().__init__(node, clazz)
         self.clazz = clazz
 
@@ -44,7 +37,7 @@ class CPPMethod(Method, CFunction):
 
 
 class JavaMethod(Method, JavaBlockStatement):
-    def __init__(self, node: Node, clazz: Class) -> None:
+    def __init__(self, node: Node, clazz) -> None:
         super().__init__(node, clazz)
         self.clazz = clazz
 
@@ -103,7 +96,7 @@ class JavaMethod(Method, JavaBlockStatement):
             else:
                 return self.__find_next_nearest_stat(stat.parent)
 
-    def __build_post_cfg(self, statements: list[Statement]):
+    def _build_post_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
             type = cur_stat.node.type
@@ -112,7 +105,7 @@ class JavaMethod(Method, JavaBlockStatement):
 
             if isinstance(cur_stat, BlockStatement):
                 child_statements = cur_stat.statements
-                self.__build_post_cfg(child_statements)
+                self._build_post_cfg(child_statements)
                 if len(child_statements) > 0:
                     match type:
                         case "if_statement":

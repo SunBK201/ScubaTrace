@@ -104,7 +104,7 @@ class Statement:
         cur = self
         while (
             "Function" not in cur.__class__.__name__
-            or "Method" not in cur.__class__.__name__
+            and "Method" not in cur.__class__.__name__
         ):
             cur = cur.parent  # type: ignore
             if "File" in cur.__class__.__name__:
@@ -222,11 +222,24 @@ class Statement:
                 for stat_var in stat_vars:
                     if stat_var.text != var.text:
                         continue
-                    return True
+                    return stat_var.is_right_value
+                return False
+
+            def is_right_value(stat: Statement) -> bool:
+                if stat.signature == self.signature:
+                    return False
+                if isinstance(stat, BlockStatement):
+                    stat_vars = stat.block_variables
+                else:
+                    stat_vars = stat.variables
+                for stat_var in stat_vars:
+                    if stat_var.text != var.text:
+                        continue
+                    return stat_var.is_left_value
                 return False
 
             for post in self.walk_forward(
-                filter=is_data_dependents, stop_by=is_data_dependents
+                filter=is_data_dependents, stop_by=is_right_value
             ):
                 dependents[var].append(post)
         return dependents
@@ -334,6 +347,7 @@ class BlockStatement(Statement):
         return '"' + self.text.split("\n")[0].replace('"', '\\"') + '..."'
 
     @cached_property
+    @abstractmethod
     def statements(self) -> list[Statement]: ...
 
     @cached_property
@@ -681,7 +695,7 @@ class JavaBlockStatement(BlockStatement):
             if self.is_simple_statement(cursor.node):
                 yield JavaSimpleStatement(cursor.node, parent)
             elif self.is_block_statement(cursor.node):
-                yield JavaSimpleStatement(cursor.node, parent)
+                yield JavaBlockStatement(cursor.node, parent)
 
             if not cursor.goto_next_sibling():
                 break
@@ -701,6 +715,15 @@ class JavaBlockStatement(BlockStatement):
                 if else_clause_node is not None:
                     stats.extend([JavaBlockStatement(else_clause_node, self)])
             case "for_statement":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["block"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    if self.is_simple_statement(body_node):
+                        stats.extend([JavaSimpleStatement(body_node, self)])
+                    elif self.is_block_statement(body_node):
+                        stats.extend([JavaBlockStatement(body_node, self)])
+            case "enhanced_for_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["block"]:
                     stats.extend(list(self._statements_builder(body_node, self)))

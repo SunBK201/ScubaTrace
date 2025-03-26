@@ -93,6 +93,7 @@ class JAVA(Language):
     block_statements = [
         "if_statement",
         "for_statement",
+        "enhanced_for_statement",
         "while_statement",
         "do_statement",
         "switch_expression",
@@ -110,6 +111,7 @@ class JAVA(Language):
     control_statements = [
         "if_statement",
         "for_statement",
+        "enhanced_for_statement",
         "while_statement",
         "do_statement",
         "switch_statement",
