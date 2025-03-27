@@ -2,7 +2,7 @@ import os
 from functools import cached_property
 
 from . import language
-from .file import CFile, CPPFile, File, JavaFile
+from .file import CFile, CPPFile, File, JavaFile, PythonFile
 from .function import Function
 
 
@@ -107,6 +107,23 @@ class JavaProject(Project):
     @property
     def class_path(self) -> str:
         return self.path
+
+
+class PythonProject(Project):
+    def __init__(self, path: str):
+        super().__int__(path, language.PYTHON)
+
+    @cached_property
+    def files(self) -> dict[str, File]:
+        file_lists = {}
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                if file.split(".")[-1] in self.language.extensions:
+                    file_path = os.path.join(root, file)
+                    key = file_path.replace(self.path + "/", "")
+                    if self.language == language.PYTHON:
+                        file_lists[key] = PythonFile(file_path, self)
+        return file_lists
 
 
 def testPreControl():

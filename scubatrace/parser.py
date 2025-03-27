@@ -76,6 +76,12 @@ class JavaParser(Parser):
         super().__init__(language.JAVA.tslanguage)
 
 
+class PythonParser(Parser):
+    def __init__(self):
+        super().__init__(language.PYTHON.tslanguage)
+
+
 c_parser = CParser()
 cpp_parser = CPPParser()
 java_parser = JavaParser()
+python_parser = PythonParser()

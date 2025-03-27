@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from tree_sitter import Node
 
 from . import language
-from .method import CPPMethod, JavaMethod
-from .parser import cpp_parser, java_parser
+from .method import CPPMethod, JavaMethod, PythonMethod
+from .parser import cpp_parser, java_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -96,3 +96,19 @@ class JavaClass(Class):
     def methods(self) -> list[Method]:
         method_nodes = java_parser.query_all(self.node, language.JAVA.query_method)
         return [JavaMethod(node, self) for node in method_nodes]
+
+
+class PythonClass(Class):
+    @property
+    def name(self) -> str:
+        class_name = self.node.child_by_field_name("name")
+        assert class_name is not None
+        assert class_name.text is not None
+        return class_name.text.decode()
+
+    @property
+    def methods(self) -> list[Method]:
+        method_nodes = python_parser.query_all(
+            self.node, language.PYTHON.query_function
+        )
+        return [PythonMethod(node, self) for node in method_nodes]

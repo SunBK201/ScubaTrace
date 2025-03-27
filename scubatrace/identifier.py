@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
-from .parser import c_parser, java_parser
+from .parser import c_parser, java_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -156,6 +156,35 @@ class JavaIdentifier(Identifier):
             )
         """
         nodes = java_parser.query_all(stat.node, query)
+        for node in nodes:
+            if node.start_point == self.node.start_point:
+                return True
+        return False
+
+    @property
+    def is_right_value(self) -> bool:
+        return not self.is_left_value
+
+
+class PythonIdentifier(Identifier):
+    @property
+    def is_left_value(self) -> bool:
+        stat = self.statement
+        query = f"""
+            (assignment
+                left: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+            (for_statement
+                left: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+            (augmented_assignment
+                left: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+        """
+        nodes = python_parser.query_all(stat.node, query)
         for node in nodes:
             if node.start_point == self.node.start_point:
                 return True

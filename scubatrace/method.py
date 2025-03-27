@@ -3,10 +3,11 @@ from functools import cached_property
 from tree_sitter import Node
 
 from . import language
-from .function import CFunction, Function
+from .function import CFunction, Function, PythonFunction
 from .statement import (
     BlockStatement,
     JavaBlockStatement,
+    PythonBlockStatement,
     SimpleStatement,
     Statement,
 )
@@ -165,3 +166,9 @@ class JavaMethod(Method, JavaBlockStatement):
                             cur_stat._post_control_statements = next_stat
                     case _:
                         cur_stat._post_control_statements = next_stat
+
+
+class PythonMethod(Method, PythonFunction):
+    def __init__(self, node: Node, clazz) -> None:
+        super().__init__(node, clazz)
+        self.clazz = clazz

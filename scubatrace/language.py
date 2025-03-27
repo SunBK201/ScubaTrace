@@ -1,6 +1,7 @@
 import tree_sitter_c as tsc
 import tree_sitter_cpp as tscpp
 import tree_sitter_java as tsjava
+import tree_sitter_python as tspython
 from tree_sitter import Language as TSLanguage
 
 
@@ -122,6 +123,42 @@ class JAVA(Language):
 
 class PYTHON(Language):
     extensions = ["py"]
+    tslanguage = TSLanguage(tspython.language())
+
+    query_function = "(function_definition)@name"
+    query_identifier = "(identifier)@name"
+    query_class = "(class_definition)@name"
+    query_import = "(import_statement)@name"
+
+    jump_statements = [
+        "break_statement",
+        "continue_statement",
+        "return_statement",
+    ]
+
+    block_statements = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "match_statement",
+        "case_clause",
+    ]
+
+    simple_statements = [
+        "expression_statement",
+        "return_statement",
+        "break_statement",
+        "continue_statement",
+    ]
+
+    control_statements = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "match_statement",
+    ]
+
+    loop_statements = ["for_statement", "while_statement"]
 
 
 class JAVASCRIPT(Language):

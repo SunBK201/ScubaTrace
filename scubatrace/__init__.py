@@ -1,3 +1,3 @@
 from .file import File
 from .function import Function
-from .project import CPPProject, CProject, JavaProject
+from .project import CPPProject, CProject, JavaProject, PythonProject

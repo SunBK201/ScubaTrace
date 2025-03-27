@@ -8,15 +8,15 @@ from typing import TYPE_CHECKING
 from tree_sitter import Node
 
 from . import language
-from .clazz import Class, CPPClass, JavaClass
-from .function import CFunction, Function
+from .clazz import Class, CPPClass, JavaClass, PythonClass
+from .function import CFunction, Function, PythonFunction
 from .identifier import Identifier
-from .parser import c_parser, cpp_parser, java_parser
+from .parser import c_parser, cpp_parser, java_parser, python_parser
 from .statement import Statement
 from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
-    from .project import JavaProject, Project
+    from .project import JavaProject, Project, PythonProject
 
 
 class File:
@@ -258,3 +258,22 @@ class JavaFile(File):
     def classes(self) -> list[Class]:
         class_node = java_parser.query_all(self.text, language.JAVA.query_class)
         return [JavaClass(node, file=self) for node in class_node]
+
+
+class PythonFile(File):
+    def __init__(self, path: str, project: PythonProject):
+        super().__init__(path, project)
+
+    @cached_property
+    def node(self) -> Node:
+        return python_parser.parse(self.text)
+
+    @cached_property
+    def functions(self) -> list[Function]:
+        func_node = python_parser.query_all(self.text, language.PYTHON.query_function)
+        return [PythonFunction(node, file=self) for node in func_node]
+
+    @cached_property
+    def classes(self) -> list[Class]:
+        class_node = python_parser.query_all(self.text, language.PYTHON.query_class)
+        return [PythonClass(node, file=self) for node in class_node]
