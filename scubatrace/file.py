@@ -8,15 +8,15 @@ from typing import TYPE_CHECKING
 from tree_sitter import Node
 
 from . import language
-from .clazz import Class, CPPClass, JavaClass, PythonClass
-from .function import CFunction, Function, PythonFunction
+from .clazz import Class, CPPClass, JavaClass, JavaScriptClass, PythonClass
+from .function import CFunction, Function, JavaScriptFunction, PythonFunction
 from .identifier import Identifier
-from .parser import c_parser, cpp_parser, java_parser, python_parser
+from .parser import c_parser, cpp_parser, java_parser, javascript_parser, python_parser
 from .statement import Statement
 from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
-    from .project import JavaProject, Project, PythonProject
+    from .project import JavaProject, JavaScriptProject, Project, PythonProject
 
 
 class File:
@@ -277,3 +277,26 @@ class PythonFile(File):
     def classes(self) -> list[Class]:
         class_node = python_parser.query_all(self.text, language.PYTHON.query_class)
         return [PythonClass(node, file=self) for node in class_node]
+
+
+class JavaScriptFile(File):
+    def __init__(self, path: str, project: JavaScriptProject):
+        super().__init__(path, project)
+
+    @cached_property
+    def node(self) -> Node:
+        return javascript_parser.parse(self.text)
+
+    @cached_property
+    def functions(self) -> list[Function]:
+        func_node = javascript_parser.query_all(
+            self.text, language.JAVASCRIPT.query_function
+        )
+        return [JavaScriptFunction(node, file=self) for node in func_node]
+
+    @cached_property
+    def classes(self) -> list[Class]:
+        class_node = javascript_parser.query_all(
+            self.text, language.JAVASCRIPT.query_class
+        )
+        return [JavaScriptClass(node, file=self) for node in class_node]

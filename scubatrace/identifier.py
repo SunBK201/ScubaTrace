@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
-from .parser import c_parser, java_parser, python_parser
+from .parser import c_parser, java_parser, javascript_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -185,6 +185,31 @@ class PythonIdentifier(Identifier):
             )
         """
         nodes = python_parser.query_all(stat.node, query)
+        for node in nodes:
+            if node.start_point == self.node.start_point:
+                return True
+        return False
+
+    @property
+    def is_right_value(self) -> bool:
+        return not self.is_left_value
+
+
+class JavaScriptIdentifier(Identifier):
+    @property
+    def is_left_value(self) -> bool:
+        stat = self.statement
+        query = f"""
+            (assignment_expression
+                left: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+            (variable_declarator
+                name: (identifier)@left
+                (#eq? @left "{self.text}")
+            )
+        """
+        nodes = javascript_parser.query_all(stat.node, query)
         for node in nodes:
             if node.start_point == self.node.start_point:
                 return True
