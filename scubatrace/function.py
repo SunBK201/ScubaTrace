@@ -550,17 +550,38 @@ class CFunction(Function, CBlockStatement):
 
         for node in call_funcs:
             stmts = []
-            for stmt in self.statements:
-                if stmt.node.start_point[0] == node.start_point[0]:
-                    stmt_calls = c_parser.query_all(stmt.node, language.C.query_call)
-                    for stmt_call in stmt_calls:
-                        if stmt_call.text == node.text:
-                            stmts.append(stmt)
-                            break
-                    break
-            callees[call_funcs_Func[call_funcs[node]]] = stmts
+            if self.get_callee_stmt(self.statements, node) is not None:
+                stmts.append(self.get_callee_stmt(self.statements, node))
+            try:
+                callees[call_funcs_Func[call_funcs[node]]].extend(stmts)
+            except Exception:
+                callees[call_funcs_Func[call_funcs[node]]] = stmts
 
         return callees
+
+    def get_callee_stmt(self, statements, callee):
+        for stmt in statements:
+            if isinstance(stmt, SimpleStatement):
+                if stmt.node.start_point[0] == callee.start_point[0]:
+                    stmt_calls = c_parser.query_all(stmt.node, language.C.query_call)
+                    for stmt_call in stmt_calls:
+                        if stmt_call.text == callee.text:
+                            return stmt
+            elif isinstance(stmt, BlockStatement):
+                if (
+                    stmt.node.start_point[0] <= callee.start_point[0]
+                    and stmt.node.end_point[0] >= callee.end_point[0]
+                ):
+                    if stmt.node.start_point[0] == callee.start_point[0]:
+                        stmt_calls = c_parser.query_all(
+                            stmt.node, language.C.query_call
+                        )
+                        for stmt_call in stmt_calls:
+                            if stmt_call.text == callee.text:
+                                return stmt
+                    else:
+                        return self.get_callee_stmt(stmt.statements, callee)
+        return None
 
     @cached_property
     def accessible_functions(self) -> list[Function]:

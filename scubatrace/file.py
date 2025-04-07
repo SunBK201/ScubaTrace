@@ -134,6 +134,10 @@ class CFile(File):
                 continue
             include_path = include_path.strip('"')
 
+            if not os.path.exists(
+                os.path.join(os.path.dirname(self._path), include_path)
+            ):
+                continue
             import_file = CFile(
                 os.path.join(os.path.dirname(self._path), include_path),
                 self.project,
