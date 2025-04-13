@@ -112,6 +112,12 @@ class File:
     @abstractmethod
     def variables(self) -> list[Identifier]: ...
 
+    def function_by_line(self, line: int) -> Function | None:
+        for func in self.functions:
+            if func.start_line <= line <= func.end_line:
+                return func
+        return None
+
 
 class CFile(File):
     def __init__(self, path: str, project: Project):

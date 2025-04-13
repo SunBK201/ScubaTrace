@@ -195,6 +195,25 @@ class Function(BlockStatement):
                 res.add(s)
         return sorted(list(res), key=lambda x: x.node.start_byte)
 
+    def slice_by_lines(
+        self,
+        lines: list[int],
+        *,
+        control_depth: int = 1,
+        data_dependent_depth: int = 1,
+        control_dependent_depth: int = 1,
+    ) -> list[Statement]:
+        statements = set()
+        for line in lines:
+            statements.add(self.statement_by_line(line))
+
+        return self.slice_by_statements(
+            sorted(list(statements), key=lambda x: x.start_line),
+            control_depth=control_depth,
+            data_dependent_depth=data_dependent_depth,
+            control_dependent_depth=control_dependent_depth,
+        )
+
     @abstractmethod
     def _build_post_cfg(self, statements: list[Statement]): ...
 

@@ -363,6 +363,16 @@ class BlockStatement(Statement):
     @abstractmethod
     def block_variables(self) -> list[Identifier]: ...
 
+    def statement_by_line(self, line: int) -> Statement | None:
+        target = None
+        for stat in self.statements:
+            if stat.start_line <= line <= stat.end_line:
+                target = stat
+                if isinstance(stat, BlockStatement):
+                    target = stat.statement_by_line(line)
+                break
+        return target
+
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         if recursive:
             return [s for s in self.__traverse_statements() if s.node.type == type]
