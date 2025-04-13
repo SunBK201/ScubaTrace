@@ -1,9 +1,14 @@
 import os
 from functools import cached_property
 
+from multilspy import SyncLanguageServer
+from multilspy.multilspy_config import MultilspyConfig
+from multilspy.multilspy_logger import MultilspyLogger
+
 from . import language
 from .file import CFile, CPPFile, File, JavaFile, JavaScriptFile, PythonFile
 from .function import Function
+from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
 
 
 class Project:
@@ -11,7 +16,9 @@ class Project:
     Represents a programming project with a specified path and language.
     """
 
-    def __int__(self, path: str, language: type[language.Language]):
+    def __int__(
+        self, path: str, language: type[language.Language], enable_lsp: bool = False
+    ):
         """
         Initialize the project with the given path and language.
 
@@ -21,6 +28,23 @@ class Project:
         """
         self.path = path
         self.language = language
+        if enable_lsp:
+            if language == C or language == CPP:
+                lsp_language = "cpp"
+            elif language == JAVA:
+                lsp_language = "java"
+            elif language == PYTHON:
+                lsp_language = "python"
+            elif language == JAVASCRIPT:
+                lsp_language = "javascript"
+            else:
+                raise ValueError("Unsupported language")
+            self.lsp = SyncLanguageServer.create(
+                MultilspyConfig.from_dict({"code_language": lsp_language}),
+                MultilspyLogger(),
+                os.path.abspath(path),
+            )
+            self.lsp.sync_start_server()
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -55,8 +79,8 @@ class Project:
 
 
 class CProject(Project):
-    def __init__(self, path: str):
-        super().__int__(path, language.C)
+    def __init__(self, path: str, enable_lsp: bool = False):
+        super().__int__(path, language.C, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -72,8 +96,8 @@ class CProject(Project):
 
 
 class CPPProject(Project):
-    def __init__(self, path: str):
-        super().__int__(path, language.CPP)
+    def __init__(self, path: str, enable_lsp: bool = False):
+        super().__int__(path, language.CPP, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -89,8 +113,8 @@ class CPPProject(Project):
 
 
 class JavaProject(Project):
-    def __init__(self, path: str):
-        super().__int__(path, language.JAVA)
+    def __init__(self, path: str, enable_lsp: bool = False):
+        super().__int__(path, language.JAVA, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -110,8 +134,8 @@ class JavaProject(Project):
 
 
 class PythonProject(Project):
-    def __init__(self, path: str):
-        super().__int__(path, language.PYTHON)
+    def __init__(self, path: str, enable_lsp: bool = False):
+        super().__int__(path, language.PYTHON, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -127,8 +151,8 @@ class PythonProject(Project):
 
 
 class JavaScriptProject(Project):
-    def __init__(self, path: str):
-        super().__int__(path, language.JAVASCRIPT)
+    def __init__(self, path: str, enable_lsp: bool = False):
+        super().__int__(path, language.JAVASCRIPT, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
