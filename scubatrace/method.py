@@ -3,7 +3,7 @@ from functools import cached_property
 from tree_sitter import Node
 
 from . import language
-from .function import CFunction, Function, JavaScriptFunction, PythonFunction
+from .function import CPPFunction, Function, JavaScriptFunction, PythonFunction
 from .statement import (
     BlockStatement,
     JavaBlockStatement,
@@ -19,7 +19,7 @@ class Method(Function):
         self.clazz = clazz
 
 
-class CPPMethod(Method, CFunction):
+class CPPMethod(Method, CPPFunction):
     def __init__(self, node: Node, clazz) -> None:
         super().__init__(node, clazz)
         self.clazz = clazz
