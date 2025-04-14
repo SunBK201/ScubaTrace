@@ -5,6 +5,7 @@ from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+import chardet
 from tree_sitter import Node
 
 from . import language
@@ -70,7 +71,19 @@ class File:
         Returns:
             str: The content of the file.
         """
-        with open(self._path, "r") as f:
+        with open(
+            self._path,
+            "rb",
+        ) as f:
+            data = f.read()
+            encoding = chardet.detect(data)["encoding"]
+            if encoding is None:
+                encoding = "utf-8"
+        with open(
+            self._path,
+            "r",
+            encoding=encoding,
+        ) as f:
             return f.read()
 
     def __str__(self) -> str:

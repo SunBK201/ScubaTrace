@@ -12,6 +12,7 @@ dependencies = [
     "tree_sitter_java==0.23.2",
     "networkx>=3.3",
     "pydot>=3.0.3",
+    "chardet>=5.2.0",
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]
 description = "Next-generation codebase analysis toolkit."
