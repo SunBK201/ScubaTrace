@@ -8,6 +8,7 @@ import networkx as nx
 from tree_sitter import Node
 
 from . import language
+from .call import Call
 from .parser import c_parser
 from .statement import (
     BlockStatement,
@@ -31,12 +32,19 @@ class Function(BlockStatement):
         file (File): The file in which the function is defined.
     """
 
-    def __init__(self, node: Node, file: File):
+    def __init__(self, node: Node, file: File, joern_id: str | None = None):
         super().__init__(node, file)
+        self.joern_id = joern_id
         self._is_build_cfg = False
+
+        self.callers: list[Call] = []
+        self.callees: list[Call] = []
 
     def __str__(self) -> str:
         return self.signature
+
+    def set_joernid(self, joern_id: str):
+        self.joern_id = joern_id
 
     @property
     def signature(self) -> str:
@@ -118,13 +126,29 @@ class Function(BlockStatement):
     @abstractmethod
     def calls(self) -> list[Statement]: ...
 
-    @cached_property
-    @abstractmethod
-    def callees(self) -> dict[Function, list[Statement]]: ...
+    # @cached_property
+    # @abstractmethod
+    # def callees(self) -> dict[Function, list[Statement]]:
+    #     lsp = self.file.project.lsp
+    #     lsp.request_document_symbols(self.file.relpath)  # preload symbols
+    #     caller = lsp.request_prepare_call_hierarchy(
+    #         self.file.relpath,
+    #         self.start_line - 1,
+    #         self.start_column - 1,
+    #     )
+    #     if len(caller) == 0:
+    #         return {}
+    #     caller = caller[0]
+    #     calls = lsp.request_outgoing_calls(caller)
+    #     for call in calls:
+    #         to = call["to"]
+    #         fromRanges = call["fromRanges"]
+    #         uri = to["uri"]
+    #         callee_line = to["range"]["start"]["line"]
 
-    @cached_property
-    @abstractmethod
-    def callers(self) -> dict[Function, list[Statement]]: ...
+    # @cached_property
+    # @abstractmethod
+    # def callers(self) -> dict[Function, list[Statement]]: ...
 
     def __traverse_statements(self):
         stack = []
@@ -205,7 +229,9 @@ class Function(BlockStatement):
     ) -> list[Statement]:
         statements = set()
         for line in lines:
-            statements.add(self.statement_by_line(line))
+            stat = self.statement_by_line(line)
+            if stat is not None:
+                statements.add(stat)
 
         return self.slice_by_statements(
             sorted(list(statements), key=lambda x: x.start_line),
@@ -490,7 +516,7 @@ class CFunction(Function, CBlockStatement):
         return list(self._statements_builder(self.body_node, self))
 
     @cached_property
-    def calls(self) -> list[Statement]:
+    def calls(self):  # -> list[Statement]:
         nodes = c_parser.query_all(self.node, language.C.query_call)
         calls: dict[Node, str] = {
             node: node.text.decode() for node in nodes if node.text is not None
@@ -525,85 +551,85 @@ class CFunction(Function, CBlockStatement):
 
         return stmts
 
-    @cached_property
-    def callers(self) -> dict[Function, list[Statement]]:
-        callers = {}
-        for file in self.file.project.files:
-            for func in self.file.project.files[file].functions:
-                if self in func.callees:
-                    for stmt in func.callees[self]:
-                        try:
-                            callers[func].append(stmt)
-                        except Exception:
-                            callers[func] = [stmt]
-        return callers
+    # @cached_property
+    # def callers(self):  # -> dict[Function, list[Statement]]
+    #     callers = {}
+    #     for file in self.file.project.files:
+    #         for func in self.file.project.files[file].functions:
+    #             if self in func.callees:
+    #                 for stmt in func.callees[self]:
+    #                     try:
+    #                         callers[func].append(stmt)
+    #                     except Exception:
+    #                         callers[func] = [stmt]
+    #     return callers
 
-    @cached_property
-    def callees(self) -> dict[Function, list[Statement]]:
-        def get_callee_stmt(statements, callee):
-            for stmt in statements:
-                if isinstance(stmt, SimpleStatement):
-                    if stmt.node.start_point[0] == callee.start_point[0]:
-                        stmt_calls = c_parser.query_all(
-                            stmt.node, language.C.query_call
-                        )
-                        for stmt_call in stmt_calls:
-                            if stmt_call.text == callee.text:
-                                return stmt
-                elif isinstance(stmt, BlockStatement):
-                    if (
-                        stmt.node.start_point[0] <= callee.start_point[0]
-                        and stmt.node.end_point[0] >= callee.end_point[0]
-                    ):
-                        if stmt.node.start_point[0] == callee.start_point[0]:
-                            stmt_calls = c_parser.query_all(
-                                stmt.node, language.C.query_call
-                            )
-                            for stmt_call in stmt_calls:
-                                if stmt_call.text == callee.text:
-                                    return stmt
-                        else:
-                            return get_callee_stmt(stmt.statements, callee)
-            return None
-
-        callees = {}
-        nodes = c_parser.query_all(self.node, language.C.query_call)
-        calls: dict[Node, str] = {
-            node: node.text.decode() for node in nodes if node.text is not None
-        }
-        call_funcs: dict[Node, str] = {}
-        for call_node in calls:
-            func = call_node.child_by_field_name("function")
-            assert func is not None
-            if func.type == "identifier" and func.text is not None:
-                call_funcs[call_node] = func.text.decode()
-            else:
-                for child in func.children:
-                    if child.type == "identifier" and child.text is not None:
-                        call_funcs[call_node] = child.text.decode()
-                        break
-        call_funcs_Func = {}
-        for call in call_funcs.copy():
-            accessible = False
-            for func in self.accessible_functions:
-                if func.name == call_funcs[call]:
-                    accessible = True
-                    call_funcs_Func[call_funcs[call]] = func
-                    break
-            if not accessible:
-                call_funcs.pop(call)
-
-        for node in call_funcs:
-            stmts = []
-            callee_stmt = get_callee_stmt(self.statements, node)
-            if callee_stmt is not None:
-                stmts.append(callee_stmt)
-            try:
-                callees[call_funcs_Func[call_funcs[node]]].extend(stmts)
-            except Exception:
-                callees[call_funcs_Func[call_funcs[node]]] = stmts
-
-        return callees
+    # @cached_property
+    # def callees(self):  # -> dict[Function, list[Statement]]
+    #     def get_callee_stmt(statements, callee):
+    #         for stmt in statements:
+    #             if isinstance(stmt, SimpleStatement):
+    #                 if stmt.node.start_point[0] == callee.start_point[0]:
+    #                     stmt_calls = c_parser.query_all(
+    #                         stmt.node, language.C.query_call
+    #                     )
+    #                     for stmt_call in stmt_calls:
+    #                         if stmt_call.text == callee.text:
+    #                             return stmt
+    #             elif isinstance(stmt, BlockStatement):
+    #                 if (
+    #                     stmt.node.start_point[0] <= callee.start_point[0]
+    #                     and stmt.node.end_point[0] >= callee.end_point[0]
+    #                 ):
+    #                     if stmt.node.start_point[0] == callee.start_point[0]:
+    #                         stmt_calls = c_parser.query_all(
+    #                             stmt.node, language.C.query_call
+    #                         )
+    #                         for stmt_call in stmt_calls:
+    #                             if stmt_call.text == callee.text:
+    #                                 return stmt
+    #                     else:
+    #                         return get_callee_stmt(stmt.statements, callee)
+    #         return None
+    #
+    #     callees = {}
+    #     nodes = c_parser.query_all(self.node, language.C.query_call)
+    #     calls: dict[Node, str] = {
+    #         node: node.text.decode() for node in nodes if node.text is not None
+    #     }
+    #     call_funcs: dict[Node, str] = {}
+    #     for call_node in calls:
+    #         func = call_node.child_by_field_name("function")
+    #         assert func is not None
+    #         if func.type == "identifier" and func.text is not None:
+    #             call_funcs[call_node] = func.text.decode()
+    #         else:
+    #             for child in func.children:
+    #                 if child.type == "identifier" and child.text is not None:
+    #                     call_funcs[call_node] = child.text.decode()
+    #                     break
+    #     call_funcs_Func = {}
+    #     for call in call_funcs.copy():
+    #         accessible = False
+    #         for func in self.accessible_functions:
+    #             if func.name == call_funcs[call]:
+    #                 accessible = True
+    #                 call_funcs_Func[call_funcs[call]] = func
+    #                 break
+    #         if not accessible:
+    #             call_funcs.pop(call)
+    #
+    #     for node in call_funcs:
+    #         stmts = []
+    #         callee_stmt = get_callee_stmt(self.statements, node)
+    #         if callee_stmt is not None:
+    #             stmts.append(callee_stmt)
+    #         try:
+    #             callees[call_funcs_Func[call_funcs[node]]].extend(stmts)
+    #         except Exception:
+    #             callees[call_funcs_Func[call_funcs[node]]] = stmts
+    #
+    #     return callees
 
     @cached_property
     def accessible_functions(self) -> list[Function]:

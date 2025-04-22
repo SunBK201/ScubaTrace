@@ -1,11 +1,13 @@
 import os
 from functools import cached_property
 
+import networkx as nx
 from multilspy import SyncLanguageServer
 from multilspy.multilspy_config import MultilspyConfig
 from multilspy.multilspy_logger import MultilspyLogger
 
-from . import language
+from . import joern, language
+from .call import Call
 from .file import CFile, CPPFile, File, JavaFile, JavaScriptFile, PythonFile
 from .function import Function
 from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
@@ -16,18 +18,31 @@ class Project:
     Represents a programming project with a specified path and language.
     """
 
-    def __int__(
-        self, path: str, language: type[language.Language], enable_lsp: bool = False
+    def __init__(
+        self,
+        path: str,
+        language: type[language.Language],
+        enable_lsp: bool = False,
+        enable_joern: bool = True,
     ):
-        """
-        Initialize the project with the given path and language.
-
-        Args:
-            path (str): The file path of the project.
-            language (type[language.Language]): The programming language used in the project.
-        """
         self.path = path
         self.language = language
+        if enable_joern:
+            if language == C or language == CPP:
+                joern_language = joern.Language.C
+            elif language == JAVA:
+                joern_language = joern.Language.JAVA
+            elif language == PYTHON:
+                joern_language = joern.Language.PYTHON
+            elif language == JAVASCRIPT:
+                joern_language = joern.Language.JAVASCRIPT
+            else:
+                raise ValueError("Joern unsupported language")
+            self.joern = joern.Joern(
+                path,
+                joern_language,
+            )
+            self.joern.export_with_preprocess()
         if enable_lsp:
             if language == C or language == CPP:
                 lsp_language = "cpp"
@@ -45,6 +60,13 @@ class Project:
                 os.path.abspath(path),
             )
             self.lsp.sync_start_server()
+
+    def close(self):
+        if self.joern is not None:
+            self.joern.close()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -77,10 +99,82 @@ class Project:
             functions.extend(file.functions)
         return functions
 
+    @cached_property
+    def callgraph(self) -> nx.MultiDiGraph:
+        joern_cg = self.joern.callgraph
+        cg = nx.MultiDiGraph()
+        for node in joern_cg.nodes:
+            if joern_cg.nodes[node]["NODE_TYPE"] != "METHOD":
+                continue
+            if joern_cg.nodes[node]["IS_EXTERNAL"] == "true":
+                continue
+            func = self.search_function(
+                joern_cg.nodes[node]["FILENAME"],
+                int(joern_cg.nodes[node]["LINE_NUMBER"]),
+            )
+            if func is None:
+                continue
+            func.set_joernid(node)
+            cg.add_node(
+                func,
+                label=func.dot_text,
+            )
+        for u, v, data in joern_cg.edges(data=True):
+            if joern_cg.nodes[u]["NODE_TYPE"] != "METHOD":
+                continue
+            if joern_cg.nodes[v]["NODE_TYPE"] != "METHOD":
+                continue
+
+            # search by joern_id
+            src_func: Function | None = None
+            dst_func: Function | None = None
+            for node in cg.nodes:
+                if node.joern_id == u:
+                    src_func = node
+                if node.joern_id == v:
+                    dst_func = node
+            if src_func is None or dst_func is None:
+                continue
+            if src_func == dst_func:
+                continue
+            src_func.callees.append(
+                Call(
+                    src_func,
+                    dst_func,
+                    int(data["LINE_NUMBER"]),
+                    int(data["COLUMN_NUMBER"]),
+                )
+            )
+            dst_func.callers.append(
+                Call(
+                    src_func,
+                    dst_func,
+                    int(data["LINE_NUMBER"]),
+                    int(data["COLUMN_NUMBER"]),
+                )
+            )
+            cg.add_edge(
+                src_func,
+                dst_func,
+                **data,
+            )
+        return cg
+
+    def export_callgraph(self, output_path: str):
+        os.makedirs(output_path, exist_ok=True)
+        callgraph_path = os.path.join(output_path, "callgraph.dot")
+        nx.nx_agraph.write_dot(self.callgraph, callgraph_path)
+
+    def search_function(self, file: str, start_line: int) -> Function | None:
+        for func in self.files[file].functions:
+            if func.start_line <= start_line <= func.end_line:
+                return func
+        return None
+
 
 class CProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
-        super().__int__(path, language.C, enable_lsp)
+        super().__init__(path, language.C, enable_lsp=enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -97,7 +191,7 @@ class CProject(Project):
 
 class CPPProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
-        super().__int__(path, language.CPP, enable_lsp)
+        super().__init__(path, language.CPP, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -114,7 +208,7 @@ class CPPProject(Project):
 
 class JavaProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
-        super().__int__(path, language.JAVA, enable_lsp)
+        super().__init__(path, language.JAVA, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -135,7 +229,7 @@ class JavaProject(Project):
 
 class PythonProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
-        super().__int__(path, language.PYTHON, enable_lsp)
+        super().__init__(path, language.PYTHON, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -152,7 +246,7 @@ class PythonProject(Project):
 
 class JavaScriptProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
-        super().__int__(path, language.JAVASCRIPT, enable_lsp)
+        super().__init__(path, language.JAVASCRIPT, enable_lsp)
 
     @cached_property
     def files(self) -> dict[str, File]:

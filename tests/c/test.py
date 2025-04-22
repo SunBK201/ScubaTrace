@@ -152,5 +152,11 @@ def test_slice_by_statements():
         print(stat.text)
 
 
+def test_cg():
+    a_proj = scubatrace.CProject(".")
+    a_proj.export_callgraph(".")
+    a_proj.close()
+
+
 if __name__ == "__main__":
-    testPreControl()
+    test_cg()
