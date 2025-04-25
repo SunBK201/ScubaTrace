@@ -1,178 +1,188 @@
 # ScubaTrace
 
+Next-Generation Codebase Analysis Toolkit.
+
 ![ScubaTrace](./docs/scubatrace.png "ScubaTrace")
+
+# Install
+
+```bash
+pip install scubatrace
+```
+
+# Features
+
+- **Multi-Language Support (C, C++, Java, Python, JavaScript, Go)**
+- **No Need To Compile**
+- **Statement-Based AST Abstraction**
+- **Code Call Graph**
+- **Code Control Flow Graph**
+- **Code Data/Control Dependency Graph**
+- **References Inference**
+- **CPG Based Multi-Granularity Slicing**
 
 # Usage
 
+## Project-Level Analysis
+
+### Load a project (codebase)
+
 ```py
-import scubatrace
-a_proj = scubatrace.CProject("../tests")
-print(a_proj.files["src/test.c"].structs[0].name)
-print(a_proj.files["src/test.c"].functions[0].name)
-print(a_proj.files["src/test.c"].functions[0].calls)
-print(a_proj.files["src/test.c"].functions[0].callee)
-print(a_proj.files["src/test.c"].functions[0].caller)
-print(a_proj.files["src/test.c"].functions[0].statements[0].variables[0].ref_statements)
-print(a_proj.files["src/test.c"].functions[0].statements[0].variables[0].defination)
-print(a_proj.dependencies)
-print(a_proj.licences)
+proj = scubatrace.CProject("path/to/your/codebase")
 ```
 
-# Development
+### Call Graph
 
-# Project
-
-```python
-def files(self) -> dict[str, File]:
-def functions(self) -> list[Function]:
-def classes(self) -> list[Function]:
-def methods(self) -> list[Function]:
+```py
+# Get the call graph of the project
+callgraph = proj.callgraph
+# Export call graph to a dot file
+proj.export_callgraph("callgraph.dot")
 ```
 
-# File
+### Code Search
 
-```python
-def abspath(self) -> str:
-def relpath(self) -> str:
-def text(self) -> str:
-
-def imports(self) -> list[File]: ...
-def accessible_files(self) -> list[File]: ...
-
-def functions(self) -> list[Function]: ...
-def functions(self) -> list[Function]: ...
+```py
+stat = proj.search_function("relative/path/to/your/file.c", start_line=20)
 ```
 
-# Function
+## File-Level Analysis
 
-```python
-def text(self) -> str:
-def start_line(self) -> int:
-def end_line(self) -> int:
-def length(self):
-def lines(self) -> dict[int, str]:
-def body_node(self) -> Node | None:
-def body_start_line(self) -> int:
-def body_end_line(self) -> int:
-def name(self) -> str: ...
+### Load a file from a project
 
-def accessible_functions(self) -> list[Function]: ...
-def callees(self) -> list[Function]: ...
-def callers(self) -> list[Function]: ...
-def calls(self) -> dictlist[Statement]: ...
-def statements(self) -> list[Statement]: ...
+```py
+file = proj.files["relative/path/to/your/file.c"]
 ```
 
-# Class
+## Function-Level Analysis
 
-```python
-def text(self) -> str:
-def start_line(self) -> int:
-def end_line(self) -> int:
-def length(self):
-def name(self) -> str: ...
+### Load a function from a file
 
-def methods(self) -> list[Method]: ...
-def fields(self) -> list[str]: ...
-def parents(self) -> list[Class]
-def children(self) -> list[Class]
+```py
+the_first_func = file.functions[0]
+func_in_tenth_line = file.function_by_line(10)
 ```
 
-# Method
+### Call Relationships
 
-```python
-def name(self) -> str: ...
-def text(self) -> str:
-def start_line(self) -> int:
-def end_line(self) -> int:
-def length(self):
-def lines(self) -> dict[int, str]:
-def body_node(self) -> Node | None:
-def body_start_line(self) -> int:
-def body_end_line(self) -> int:
-def name(self) -> str: ...
-
-def accessible_functions(self) -> list[Function]: ...
-def callees(self) -> list[Function]: ...
-def callers(self) -> list[Function]: ...
-def calls(self) -> list[Statement]: ...
-def statements(self) -> list[Statement]: ...
+```py
+callers = func.callers
+callfrom, callto, callsite_line, callsite_column = (
+    callers[0].src,
+    callers[0].dst,
+    callers[0].line,
+    callers[0].column,
+)
+callees = func.callees
+callfrom, callto, callsite_line, callsite_column = (
+    callees[0].src,
+    callees[0].dst,
+    callees[0].line,
+    callees[0].column,
+)
 ```
 
-# Statement
+### Function Control Flow Graph
 
-```python
-def text(self) -> str:
-def start_line(self) -> int:
-def end_line(self) -> int:
-def length(self) -> int:
-
-def forward_controls(self) -> list[Statement]:
-def backward_controls(self) -> list[Statement]:
-def forward_datas(self, identifier: str) -> list[Statement]:
-def backward_datas(self, identifier: str) -> list[Statement]:
+```py
+# Export the control flow graph to a dot file
+func.export_cfg_dot("cfg.dot")
 ```
 
-# Patch(Commit)
+### Function Data Dependency Graph
 
-```python
-def message(self) -> str:
-def author(self) -> str:
-def commit_date(self) -> datetime:
-def author_date(self) -> datetime:
-def next_commit(self) -> Commit:
-def pre_commmit(self) -> Commit:
-
-def added_files(self) -> list[File]:
-def deleted_files(self) -> list[File]:
-
-def added_imports(self) -> list[Import]:
-def deleted_imports(self) -> list[Import]:
-
-def added_classes(self) -> list[Class]:
-def deleted_classes(self) -> list[Class]:
-
-def added_methods(self) -> list[Method]:
-def changed_methods(self) -> list[Method]:
-def deleted_methods(self) -> list[Method]:
-
-def added_fields(self) -> list[Field]:
-def deleted_fields(self) -> list[Field]:
-def changed_files(self) -> list[File]:
-
-def merge():
+```py
+# Export the data dependency graph to a dot file
+func.export_cfg_dot("ddg.dot", with_ddg=True)
 ```
 
-# Slicer
+### Function Control Dependency Graph
 
-```python
-def slice(
-        self,
-        criteria_lines: set[int],
-        criteria_identifier: dict[int, set[str]],
-        backward_slice_level: int,
-        forward_slice_level: int,
-        ignore_control: bool
-        ingore_data: bool
-) -> list[int]:
+```py
+# Export the control dependency graph to a dot file
+func.export_cfg_dot("cdg.dot", with_cdg=True)
+```
 
-def backward_slice(
-        criteria_lines: set[int],
-        criteria_nodes: list[PDGNode],
-        criteria_identifier: dict[int, set[str]],
-        all_nodes: dict[int, list[PDGNode]],
-        level: int,
-        ignore_control: bool
-        ingore_data: bool
-) -> list[int]:
+### Function Code Walk
 
-def forward_slice(
-        criteria_lines: set[int],
-        criteria_nodes: list[PDGNode],
-        criteria_identifier: dict[int, set[str]],
-        all_nodes: dict[int, list[PDGNode]],
-        level: int,
-        ignore_control: bool
-        ingore_data: bool
-) -> list[int]:
+```py
+statements_you_interest = list(
+    func.walk_backward(
+        filter=lambda x: x.is_jump_statement,
+        stop_by=lambda x: x.is_jump_statement,
+        depth=-1,
+        base="control",
+    )
+)
+statements_you_interest = list(
+    func.walk_forward(
+        filter=lambda x: x.is_jump_statement,
+        stop_by=lambda x: x.is_jump_statement,
+        depth=-1,
+        base="control",
+    )
+)
+```
+
+### Multi-Granularity Slicing
+
+```py
+# Slicing by lines
+lines_you_interest = [4, 5, 19]
+slice_statements = func.slice_by_lines(
+    lines=lines_you_interest,
+    control_depth=3,
+    data_dependent_depth=5,
+    control_dependent_depth=2,
+)
+
+# Slicing by statements
+statements_you_interest = func.statements[0:3]
+slice_statements = func.slice_by_statements(
+    statements=statements_you_interest,
+    control_depth=3,
+    data_dependent_depth=5,
+    control_dependent_depth=2,
+)
+```
+
+## Statement-Level Analysis
+
+### Load a statement from a function
+
+```py
+the_first_stmt = the_first_func.statements[0]
+stmt_in_second_line = the_first_func.statement_by_line(2)
+stmt_by_type = func.statements_by_type('tree-sitter Queries', recursive=True)
+```
+
+### Statement Controls
+
+```
+pre_controls: list[Statement] = stat.pre_controls
+post_controls: list[Statement] = stat.post_controls
+```
+
+### Statement Data Dependencies
+
+```py
+pre_data_dependents: dict[Identifier, list[Statement]] = stat.pre_data_dependents
+post_data_dependents: dict[Identifier, list[Statement]] = stat.post_data_dependents
+```
+
+### Statement Control Dependencies
+
+```py
+pre_control_dependents: list[Statement] = stat.pre_control_dependents
+post_control_dependents: list[Statement] = stat.post_control_dependents
+```
+
+## AST Node
+
+You can also get the AST node from a file, function, or statement.
+
+```py
+file_ast = file.node
+func_ast = func.node
+stmt_ast = stat.node
 ```
