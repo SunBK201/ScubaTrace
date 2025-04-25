@@ -186,3 +186,7 @@ file_ast = file.node
 func_ast = func.node
 stmt_ast = stat.node
 ```
+
+# ScubaTrace Landscape
+
+![ScubaTrace Landscape](./docs/scubatrace-landscape.png "ScubaTrace Landscape")
