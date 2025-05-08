@@ -2,7 +2,7 @@
 
 Next-Generation Codebase Analysis Toolkit.
 
-![ScubaTrace](./docs/scubatrace.png "ScubaTrace")
+![ScubaTrace](./docs/ScubaTrace.png "ScubaTrace")
 
 # Install
 
