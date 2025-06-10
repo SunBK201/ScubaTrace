@@ -9,3 +9,4 @@ pydot>=3.0.3
 sphinx
 chardet>=5.2.0
 multilspy==0.0.15
+tqdm>=4.66.1
