@@ -23,7 +23,7 @@ class Project:
         path: str,
         language: type[language.Language],
         enable_lsp: bool = False,
-        enable_joern: bool = True,
+        enable_joern: bool = False,
     ):
         self.path = path
         self.language = language
