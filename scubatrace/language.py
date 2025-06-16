@@ -5,11 +5,20 @@ import tree_sitter_javascript as tsjavascript
 import tree_sitter_python as tspython
 from tree_sitter import Language as TSLanguage
 
+# from multilspy import multilspy_config
+
 
 class Language:
     extensions: list[str]
 
     query_error = "(ERROR)@error"
+
+    # C = multilspy_config.Language.CPP
+    # CPP = multilspy_config.Language.CPP
+    # JAVA = multilspy_config.Language.JAVA
+    # PYTHON = multilspy_config.Language.PYTHON
+    # JAVASCRIPT = multilspy_config.Language.JAVASCRIPT
+    # GO = multilspy_config.Language.GO
 
 
 class C(Language):
