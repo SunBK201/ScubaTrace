@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scubatrace"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
     "tree_sitter==0.23.2",
     "tree_sitter_c==0.23.1",
