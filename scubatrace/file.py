@@ -12,7 +12,7 @@ from . import language
 from .clazz import Class, CPPClass, JavaClass, JavaScriptClass, PythonClass
 from .function import CFunction, Function, JavaScriptFunction, PythonFunction
 from .identifier import Identifier
-from .parser import c_parser, cpp_parser, java_parser, javascript_parser, python_parser
+from .parser import cpp_parser, java_parser, javascript_parser, python_parser
 from .statement import Statement
 from .structure import CStruct, Struct
 
@@ -138,11 +138,11 @@ class CFile(File):
 
     @cached_property
     def node(self) -> Node:
-        return c_parser.parse(self.text)
+        return cpp_parser.parse(self.text)
 
     @cached_property
     def imports(self) -> list[File]:
-        include_node = c_parser.query_all(self.text, language.C.query_include)
+        include_node = cpp_parser.query_all(self.text, language.C.query_include)
         import_files = []
         for node in include_node:
             include_path = node.child_by_field_name("path")
@@ -168,12 +168,12 @@ class CFile(File):
 
     @cached_property
     def functions(self) -> list[Function]:
-        func_node = c_parser.query_all(self.text, language.C.query_function)
+        func_node = cpp_parser.query_all(self.text, language.C.query_function)
         return [CFunction(node, file=self) for node in func_node]
 
     @cached_property
     def structs(self) -> list[Struct]:
-        struct_node = c_parser.query_all(self.text, language.C.query_struct)
+        struct_node = cpp_parser.query_all(self.text, language.C.query_struct)
         return [CStruct(node) for node in struct_node]
 
     @cached_property

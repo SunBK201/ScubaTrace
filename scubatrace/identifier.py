@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
-from .parser import c_parser, java_parser, javascript_parser, python_parser
+from .parser import cpp_parser, java_parser, javascript_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -124,7 +124,7 @@ class CIdentifier(Identifier):
                 (#eq? @left "{self.text}")
             )
         """
-        nodes = c_parser.query_all(stat.node, query)
+        nodes = cpp_parser.query_all(stat.node, query)
         for node in nodes:
             if node.start_point == self.node.start_point:
                 return True

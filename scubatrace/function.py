@@ -9,7 +9,7 @@ from tree_sitter import Node
 
 from . import language
 from .call import Call
-from .parser import c_parser
+from .parser import cpp_parser
 from .statement import (
     BlockStatement,
     CBlockStatement,
@@ -517,7 +517,7 @@ class CFunction(Function, CBlockStatement):
 
     @cached_property
     def calls(self):  # -> list[Statement]:
-        nodes = c_parser.query_all(self.node, language.C.query_call)
+        nodes = cpp_parser.query_all(self.node, language.C.query_call)
         calls: dict[Node, str] = {
             node: node.text.decode() for node in nodes if node.text is not None
         }

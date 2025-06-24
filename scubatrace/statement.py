@@ -15,7 +15,7 @@ from .identifier import (
     JavaScriptIdentifier,
     PythonIdentifier,
 )
-from .parser import c_parser, java_parser, javascript_parser, python_parser
+from .parser import cpp_parser, java_parser, javascript_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -390,7 +390,7 @@ class CSimpleStatement(SimpleStatement):
 
     @cached_property
     def identifiers(self) -> list[Identifier]:
-        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
         identifiers = [
             CIdentifier(node, self) for node in nodes if node.text is not None
         ]
@@ -416,7 +416,7 @@ class CBlockStatement(BlockStatement):
 
     @cached_property
     def identifiers(self) -> list[Identifier]:
-        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
         identifiers = set(
             [CIdentifier(node, self) for node in nodes if node.text is not None]
         )
@@ -429,7 +429,7 @@ class CBlockStatement(BlockStatement):
 
     @cached_property
     def block_identifiers(self) -> list[Identifier]:
-        nodes = c_parser.query_all(self.node, language.C.query_identifier)
+        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
         identifiers = set(
             CIdentifier(node, self) for node in nodes if node.text is not None
         )
