@@ -123,6 +123,12 @@ class CIdentifier(Identifier):
                 declarator: (identifier)@left
                 (#eq? @left "{self.text}")
             )
+            (parameter_declaration
+                declarator: (pointer_declarator
+                    (identifier)@id
+                )
+                (#eq? @left "{self.text}")
+            )
         """
         nodes = cpp_parser.query_all(stat.node, query)
         for node in nodes:
