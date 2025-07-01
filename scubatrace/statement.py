@@ -363,21 +363,29 @@ class BlockStatement(Statement):
     @abstractmethod
     def block_variables(self) -> list[Identifier]: ...
 
-    def statement_by_line(self, line: int) -> Statement | None:
-        target = None
+    def statements_by_line(self, line: int) -> list[Statement]:
+        targets = []
         for stat in self.statements:
             if stat.start_line <= line <= stat.end_line:
-                target = stat
                 if isinstance(stat, BlockStatement):
-                    target = stat.statement_by_line(line)
-                break
-        return target
+                    if stat.__is_line_in_block(line):
+                        targets.append(stat)
+                    targets.extend(stat.statements_by_line(line))
+                    if len(targets) == 0:
+                        targets.append(stat)
+                elif isinstance(stat, SimpleStatement):
+                    targets.append(stat)
+        return targets
 
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         if recursive:
             return [s for s in self.__traverse_statements() if s.node.type == type]
         else:
             return [s for s in self.statements if s.node.type == type]
+
+    def __is_line_in_block(self, line: int) -> bool:
+        # TODO
+        return self.start_line == line
 
 
 class CSimpleStatement(SimpleStatement):

@@ -3,16 +3,16 @@ import sys
 sys.path.append("../../")
 
 import scubatrace
-from scubatrace.parser import c_parser
+from scubatrace.parser import cpp_parser
 from scubatrace.statement import CBlockStatement, CSimpleStatement
 
 
 def main():
-    a_proj = scubatrace.CProject("../tests")
+    a_proj = scubatrace.CProject("../tests/c")
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[0]
     with open("ast.dot", "w") as f:
-        c_parser.parser.parse(bytes(func_main.text, "utf-8"))
+        cpp_parser.parser.parse(bytes(func_main.text, "utf-8"))
 
 
 def testImports():
@@ -104,10 +104,10 @@ def testReferences():
 
 
 def testPreDataDependency():
-    a_proj = scubatrace.CProject("../tests")
-    test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[1]
-    stat = func_main.statements[5]
+    a_proj = scubatrace.CPPProject("../cpp")
+    test_c = a_proj.files["other.c"]
+    func_main = test_c.functions[0]
+    stat = func_main.statements[0]
     print(f"statement: {stat.text}")
     for var, stat in stat.pre_data_dependents.items():
         print(f"variable: {var}")
@@ -157,6 +157,19 @@ def test_cg():
     a_proj.export_callgraph(".")
     a_proj.close()
 
+def test_statements_by_line():
+    a_proj = scubatrace.CProject(".")
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    for line in range(7, 20):
+        statements = func_main.statements_by_line(line)
+        if statements:
+            print(f"Line {line}:")
+            for stat in statements:
+                print(f"  {stat.text}")
+        else:
+            print(f"Line {line}: No statements found.")
+
 
 if __name__ == "__main__":
-    test_cg()
+    test_statements_by_line()

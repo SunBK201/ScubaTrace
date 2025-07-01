@@ -229,9 +229,9 @@ class Function(BlockStatement):
     ) -> list[Statement]:
         statements = set()
         for line in lines:
-            stat = self.statement_by_line(line)
-            if stat is not None:
-                statements.add(stat)
+            stats: list[Statement] = self.statements_by_line(line)
+            if stats:
+                statements.update(stats)
 
         return self.slice_by_statements(
             sorted(list(statements), key=lambda x: x.start_line),
