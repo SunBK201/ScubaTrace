@@ -35,6 +35,7 @@ class C(Language):
     block_statements = [
         "if_statement",
         "for_statement",
+        "for_range_loop",
         "while_statement",
         "do_statement",
         "switch_statement",
@@ -58,6 +59,7 @@ class C(Language):
     control_statements = [
         "if_statement",
         "for_statement",
+        "for_range_loop",
         "while_statement",
         "do_statement",
         "switch_statement",
@@ -72,7 +74,7 @@ class C(Language):
         "return_statement",
     ]
 
-    loop_statements = ["for_statement", "while_statement", "do_statement"]
+    loop_statements = ["for_statement", "while_statement", "do_statement", "for_range_loop"]
 
     def language(self):
         return C

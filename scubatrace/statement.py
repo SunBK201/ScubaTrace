@@ -545,6 +545,15 @@ class CBlockStatement(BlockStatement):
                     stats.extend(list(self._statements_builder(compound_node, self)))
                 else:
                     stats.extend(list(self._statements_builder(self.node, self)))
+            case "for_range_loop":
+                body_node = self.node.child_by_field_name("body")
+                if body_node is not None and body_node.type in ["compound_statement"]:
+                    stats.extend(list(self._statements_builder(body_node, self)))
+                elif body_node is not None:
+                    if self.is_simple_statement(body_node):
+                        stats.extend([CSimpleStatement(body_node, self)])
+                    elif self.is_block_statement(body_node):
+                        stats.extend([CBlockStatement(body_node, self)])
             case "for_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
