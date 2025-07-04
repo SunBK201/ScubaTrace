@@ -256,7 +256,7 @@ class Statement:
         depth: int = -1,
         base: str = "control",
     ) -> Generator[Statement, None, None]:
-        depth = 0x3F3F3F3F if depth == -1 else depth
+        depth = 2048 if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
         while len(dq) > 0 and depth >= 0:
@@ -292,7 +292,7 @@ class Statement:
         depth: int = -1,
         base: str = "control",
     ) -> Generator[Statement, None, None]:
-        depth = 0x3F3F3F3F if depth == -1 else depth
+        depth = 2048 if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
         while len(dq) > 0 and depth >= 0:
