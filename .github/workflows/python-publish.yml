@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SunBK201/ScubaTrace
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ACTION }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
