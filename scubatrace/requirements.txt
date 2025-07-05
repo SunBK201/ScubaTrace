@@ -1,7 +1,7 @@
 chardet==5.2.0
 multilspy==0.0.15
 networkx==3.3
-pygraphviz==1.13
+pygraphviz>=1.13
 tqdm==4.66.1
 tree_sitter==0.23.2
 tree_sitter_c==0.23.1
