@@ -39,6 +39,7 @@ class File:
         """
         self._path = path
         self.project = project
+        self.__lsp_preload = False
 
     @property
     def abspath(self) -> str:
@@ -125,11 +126,19 @@ class File:
     @abstractmethod
     def variables(self) -> list[Identifier]: ...
 
+    def lsp_preload(self):
+        if self.project.lsp is None or self.__lsp_preload:
+            return
+        self.project.lsp.request_document_symbols(self.relpath)
+        self.__lsp_preload = True
+
     def function_by_line(self, line: int) -> Function | None:
         for func in self.functions:
             if func.start_line <= line <= func.end_line:
                 return func
         return None
+
+    def statements_by_line(self, line: int) -> list[Statement]: ...
 
 
 class CFile(File):

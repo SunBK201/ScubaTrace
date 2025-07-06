@@ -257,7 +257,7 @@ class Statement:
         else:
             variables = self.variables
         lsp = self.file.project.lsp
-        lsp.request_document_symbols(self.file.relpath)
+        self.file.lsp_preload()
         for var in variables:
             ref_stats: set[Statement] = set()
             ref_locs = lsp.request_references(
@@ -289,7 +289,7 @@ class Statement:
         else:
             variables = self.variables
         lsp = self.file.project.lsp
-        lsp.request_document_symbols(self.file.relpath)
+        self.file.lsp_preload()
         for var in variables:
             def_stats: set[Statement] = set()
             def_locs = lsp.request_definition(
@@ -308,6 +308,31 @@ class Statement:
                 def_stats.update(def_func.statements_by_line(def_line))
             defs[var] = sorted(def_stats, key=lambda s: (s.start_line, s.start_column))
         return defs
+
+    @cached_property
+    def is_taint_from_entry(self) -> bool:
+        refs: dict[Identifier, list[Statement]] = self.references
+        backword_refs: dict[Identifier, list[Statement]] = defaultdict(list)
+        for var, statements in refs.items():
+            for stat in statements:
+                if stat.start_line < self.start_line:
+                    backword_refs[var].append(stat)
+        if len(backword_refs) == 0:
+            return False
+
+        for var, statements in backword_refs.items():
+            for stat in statements:
+                if (
+                    "Function" in stat.__class__.__name__
+                    or "Method" in stat.__class__.__name__
+                ):
+                    return True
+                for stat_var in stat.variables:
+                    if stat_var.text != var.text:
+                        continue
+                    if stat_var.is_left_value and stat.is_taint_from_entry:
+                        return True
+        return False
 
     def walk_backward(
         self,
@@ -435,6 +460,9 @@ class BlockStatement(Statement):
                         targets.append(stat)
                 elif isinstance(stat, SimpleStatement):
                     targets.append(stat)
+        if len(targets) == 0:
+            if self.start_line <= line <= self.end_line:
+                targets.append(self)
         return targets
 
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:

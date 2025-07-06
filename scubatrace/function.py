@@ -114,6 +114,10 @@ class Function(BlockStatement):
         else:
             return self.body_node.end_point[0] + 1
 
+    @cached_property
+    @abstractmethod
+    def parameter_lines(self) -> list[int]: ...
+
     @property
     @abstractmethod
     def name(self) -> str: ...
@@ -380,6 +384,18 @@ class CFunction(Function, CBlockStatement):
         assert name_node is not None
         assert name_node.text is not None
         return name_node.text.decode()
+
+    @cached_property
+    def parameter_lines(self) -> list[int]:
+        declarator_node = self.node.child_by_field_name("declarator")
+        if declarator_node is None:
+            return [self.start_line]
+        param_node = declarator_node.child_by_field_name("parameters")
+        if param_node is None:
+            return [self.start_line]
+        param_node_start_line = param_node.start_point[0] + 1
+        param_node_end_line = param_node.end_point[0] + 1
+        return list(range(param_node_start_line, param_node_end_line + 1))
 
     def __find_next_nearest_stat(
         self, stat: Statement, jump: int = 0

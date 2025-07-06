@@ -193,6 +193,11 @@ def test_statement_references():
         for statement in statements:
             print(f"  Referenced at: {statement.text} (Line {statement.start_line})")
 
+def test_is_taint_from_entry():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    print(func_main.statements[5].is_taint_from_entry)
 
 if __name__ == "__main__":
     test_statements_by_line()
