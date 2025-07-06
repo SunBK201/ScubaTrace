@@ -41,7 +41,7 @@ pip install scubatrace
 ### Load a project (codebase)
 
 ```py
-proj = scubatrace.CProject("path/to/your/codebase")
+proj = scubatrace.CProject("path/to/your/codebase", enable_lsp=True)
 ```
 
 ### Call Graph
