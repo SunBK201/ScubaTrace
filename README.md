@@ -3,7 +3,7 @@
 Next-Generation Codebase Analysis Toolkit.
 
 <br>
-<img src="./docs/ScubaTrace.png" width="61.8%">
+<img src="https://sunbk201.oss-cn-beijing.aliyuncs.com/img/ScubaTrace.png" width="61.8%">
 
 # Install
 
