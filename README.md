@@ -190,6 +190,25 @@ pre_control_dependents: list[Statement] = stat.pre_control_dependents
 post_control_dependents: list[Statement] = stat.post_control_dependents
 ```
 
+### Statement References
+
+```py
+references: dict[Identifier, list[Statement]] = stat.references
+```
+
+### Statement Definitions
+
+```py
+definitions: dict[Identifier, list[Statement]] = stat.definitions
+```
+
+### Taint Analysis
+
+```py
+# Check if the statement is tainted from function entry
+is_taint_from_entry: bool = stat.is_taint_from_entry
+```
+
 ## AST Node
 
 You can also get the AST node from a file, function, or statement.
