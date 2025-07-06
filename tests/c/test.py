@@ -157,6 +157,7 @@ def test_cg():
     a_proj.export_callgraph(".")
     a_proj.close()
 
+
 def test_statements_by_line():
     a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["test.c"]
@@ -169,6 +170,28 @@ def test_statements_by_line():
                 print(f"  {stat.text}")
         else:
             print(f"Line {line}: No statements found.")
+
+
+def test_statement_definitions():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    defs = func_main.statements[5].definitions
+    for var, statements in defs.items():
+        print(f"Variable: {var.text}")
+        for statement in statements:
+            print(f"  Defined at: {statement.text} (Line {statement.start_line})")
+
+
+def test_statement_references():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    refs = func_main.statements[5].references
+    for var, statements in refs.items():
+        print(f"Variable: {var.text}")
+        for statement in statements:
+            print(f"  Referenced at: {statement.text} (Line {statement.start_line})")
 
 
 if __name__ == "__main__":

@@ -249,6 +249,66 @@ class Statement:
                 dependents[var].append(post)
         return dependents
 
+    @property
+    def references(self) -> dict[Identifier, list[Statement]]:
+        refs = defaultdict(list)
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        lsp = self.file.project.lsp
+        lsp.request_document_symbols(self.file.relpath)
+        for var in variables:
+            ref_stats: set[Statement] = set()
+            ref_locs = lsp.request_references(
+                self.file.relpath, var.start_line - 1, var.start_column - 1
+            )
+            def_locs = lsp.request_definition(
+                self.file.relpath, var.start_line - 1, var.start_column - 1
+            )
+            ref_locs.extend(def_locs)  # add definition locations to references
+            for loc in ref_locs:
+                ref_path = loc["relativePath"]
+                if ref_path is None:
+                    continue
+                if (ref_file := self.file.project.files[ref_path]) is None:
+                    continue
+                ref_line = loc["range"]["start"]["line"] + 1
+                ref_func = ref_file.function_by_line(ref_line)
+                if ref_func is None:
+                    continue
+                ref_stats.update(ref_func.statements_by_line(ref_line))
+            refs[var] = sorted(ref_stats, key=lambda s: (s.start_line, s.start_column))
+        return refs
+
+    @property
+    def definitions(self) -> dict[Identifier, list[Statement]]:
+        defs = defaultdict(list)
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        lsp = self.file.project.lsp
+        lsp.request_document_symbols(self.file.relpath)
+        for var in variables:
+            def_stats: set[Statement] = set()
+            def_locs = lsp.request_definition(
+                self.file.relpath, var.start_line - 1, var.start_column - 1
+            )
+            for loc in def_locs:
+                def_path = loc["relativePath"]
+                if def_path is None:
+                    continue
+                if (def_file := self.file.project.files[def_path]) is None:
+                    continue
+                def_line = loc["range"]["start"]["line"] + 1
+                def_func = def_file.function_by_line(def_line)
+                if def_func is None:
+                    continue
+                def_stats.update(def_func.statements_by_line(def_line))
+            defs[var] = sorted(def_stats, key=lambda s: (s.start_line, s.start_column))
+        return defs
+
     def walk_backward(
         self,
         filter: Callable[[Statement], bool] | None = None,
