@@ -152,6 +152,24 @@ def test_slice_by_statements():
         print(stat.text)
 
 
+def test_slice_by_lines():
+    a_proj = scubatrace.CPPProject(".")
+    test_c = a_proj.files["engine.cpp"]
+    func_main = test_c.function_by_line(181)
+    assert func_main is not None, "Function not found at line 181"
+    slice_criteria = [2542]
+    for line in slice_criteria:
+        print("slice criteria: ", line)
+    stats = func_main.slice_by_lines(
+        slice_criteria,
+        control_depth=3,
+        data_dependent_depth=3,
+        control_dependent_depth=2,
+    )
+    for stat in stats:
+        print(stat.text)
+
+
 def test_cg():
     a_proj = scubatrace.CProject(".")
     a_proj.export_callgraph(".")

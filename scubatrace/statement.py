@@ -184,6 +184,8 @@ class Statement:
         else:
             variables = self.variables
         for var in variables:
+            if var.is_left_value:
+                continue
 
             def is_data_dependents(stat: Statement) -> bool:
                 if stat.signature == self.signature:
