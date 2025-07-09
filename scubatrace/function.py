@@ -258,10 +258,11 @@ class Function(BlockStatement):
     def build_cfg(self):
         self._build_post_cfg(self.statements)
         self._build_pre_cfg(self.statements)
-        self.statements[0]._pre_control_statements.insert(0, self)
-        self._post_control_statements = [
-            self.statements[0] if len(self.statements) > 0 else []
-        ]
+        if len(self.statements) > 0:
+            self.statements[0]._pre_control_statements.insert(0, self)
+            self._post_control_statements = [self.statements[0]]
+        else:
+            self._post_control_statements = []
         self._is_build_cfg = True
 
     def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
