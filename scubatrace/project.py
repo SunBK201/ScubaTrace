@@ -2,9 +2,9 @@ import os
 from functools import cached_property
 
 import networkx as nx
-from multilspy import SyncLanguageServer
-from multilspy.multilspy_config import MultilspyConfig
-from multilspy.multilspy_logger import MultilspyLogger
+from scubalspy import SyncLanguageServer
+from scubalspy.scubalspy_config import ScubalspyConfig
+from scubalspy.scubalspy_logger import ScubalspyLogger
 
 from . import joern, language
 from .call import Call
@@ -55,8 +55,8 @@ class Project:
             else:
                 raise ValueError("Unsupported language")
             self.lsp = SyncLanguageServer.create(
-                MultilspyConfig.from_dict({"code_language": lsp_language}),
-                MultilspyLogger(),
+                ScubalspyConfig.from_dict({"code_language": lsp_language}),
+                ScubalspyLogger(),
                 os.path.abspath(path),
             )
             self.lsp.sync_start_server()

@@ -16,7 +16,7 @@ dependencies = [
     "pygraphviz>=1.13",
     "pydot>=3.0.3",
     "chardet>=5.2.0",
-    "multilspy==0.0.15",
+    "scubalspy>=0.0.18",
     "tqdm>=4.66.1",
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]

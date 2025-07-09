@@ -5,7 +5,7 @@ import tree_sitter_javascript as tsjavascript
 import tree_sitter_python as tspython
 from tree_sitter import Language as TSLanguage
 
-# from multilspy import multilspy_config
+# from scubalspy import scubalspy_config
 
 
 class Language:
@@ -13,12 +13,12 @@ class Language:
 
     query_error = "(ERROR)@error"
 
-    # C = multilspy_config.Language.CPP
-    # CPP = multilspy_config.Language.CPP
-    # JAVA = multilspy_config.Language.JAVA
-    # PYTHON = multilspy_config.Language.PYTHON
-    # JAVASCRIPT = multilspy_config.Language.JAVASCRIPT
-    # GO = multilspy_config.Language.GO
+    # C = scubalspy_config.Language.CPP
+    # CPP = scubalspy_config.Language.CPP
+    # JAVA = scubalspy_config.Language.JAVA
+    # PYTHON = scubalspy_config.Language.PYTHON
+    # JAVASCRIPT = scubalspy_config.Language.JAVASCRIPT
+    # GO = scubalspy_config.Language.GO
 
 
 class C(Language):
