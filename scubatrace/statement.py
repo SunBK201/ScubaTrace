@@ -273,13 +273,11 @@ class Statement:
                 ref_path = loc["relativePath"]
                 if ref_path is None:
                     continue
-                if (ref_file := self.file.project.files[ref_path]) is None:
+                if ref_path not in self.file.project.files:
                     continue
+                ref_file = self.file.project.files[ref_path]
                 ref_line = loc["range"]["start"]["line"] + 1
-                ref_func = ref_file.function_by_line(ref_line)
-                if ref_func is None:
-                    continue
-                ref_stats.update(ref_func.statements_by_line(ref_line))
+                ref_stats.update(ref_file.statements_by_line(ref_line))
             refs[var] = sorted(ref_stats, key=lambda s: (s.start_line, s.start_column))
         return refs
 
@@ -301,13 +299,11 @@ class Statement:
                 def_path = loc["relativePath"]
                 if def_path is None:
                     continue
-                if (def_file := self.file.project.files[def_path]) is None:
+                if def_path not in self.file.project.files:
                     continue
+                def_file = self.file.project.files[def_path]
                 def_line = loc["range"]["start"]["line"] + 1
-                def_func = def_file.function_by_line(def_line)
-                if def_func is None:
-                    continue
-                def_stats.update(def_func.statements_by_line(def_line))
+                def_stats.update(def_file.statements_by_line(def_line))
             defs[var] = sorted(def_stats, key=lambda s: (s.start_line, s.start_column))
         return defs
 

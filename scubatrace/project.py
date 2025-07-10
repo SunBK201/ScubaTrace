@@ -1,4 +1,5 @@
 import os
+from abc import abstractmethod
 from functools import cached_property
 
 import networkx as nx
@@ -11,6 +12,7 @@ from .call import Call
 from .file import CFile, CPPFile, File, JavaFile, JavaScriptFile, PythonFile
 from .function import Function
 from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
+from .parser import Parser, cpp_parser, java_parser, javascript_parser, python_parser
 
 
 class Project:
@@ -67,6 +69,10 @@ class Project:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+    @property
+    @abstractmethod
+    def parser(self) -> Parser: ...
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -176,6 +182,10 @@ class CProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
         super().__init__(path, language.C, enable_lsp=enable_lsp)
 
+    @property
+    def parser(self) -> Parser:
+        return cpp_parser
+
     @cached_property
     def files(self) -> dict[str, File]:
         file_lists = {}
@@ -193,6 +203,10 @@ class CPPProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
         super().__init__(path, language.CPP, enable_lsp)
 
+    @property
+    def parser(self) -> Parser:
+        return cpp_parser
+
     @cached_property
     def files(self) -> dict[str, File]:
         file_lists = {}
@@ -209,6 +223,10 @@ class CPPProject(Project):
 class JavaProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
         super().__init__(path, language.JAVA, enable_lsp)
+
+    @property
+    def parser(self) -> Parser:
+        return java_parser
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -231,6 +249,10 @@ class PythonProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
         super().__init__(path, language.PYTHON, enable_lsp)
 
+    @property
+    def parser(self) -> Parser:
+        return python_parser
+
     @cached_property
     def files(self) -> dict[str, File]:
         file_lists = {}
@@ -248,6 +270,10 @@ class JavaScriptProject(Project):
     def __init__(self, path: str, enable_lsp: bool = False):
         super().__init__(path, language.JAVASCRIPT, enable_lsp)
 
+    @property
+    def parser(self) -> Parser:
+        return javascript_parser
+
     @cached_property
     def files(self) -> dict[str, File]:
         file_lists = {}
@@ -259,17 +285,3 @@ class JavaScriptProject(Project):
                     if self.language == language.JAVASCRIPT:
                         file_lists[key] = JavaScriptFile(file_path, self)
         return file_lists
-
-
-def testPreControl():
-    a_proj = CProject("../tests")
-    test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[0]
-    posts = func_main.statements[3].post_controls
-    print(posts)
-    for post in posts:
-        print(post.text)
-
-
-if __name__ == "__main__":
-    testPreControl()

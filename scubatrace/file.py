@@ -87,6 +87,16 @@ class File:
         ) as f:
             return f.read()
 
+    @property
+    def lines(self) -> list[str]:
+        """
+        Reads the content of the file and returns it as a list of lines.
+
+        Returns:
+            list[str]: The content of the file split into lines.
+        """
+        return self.text.splitlines()
+
     def __str__(self) -> str:
         return self.signature
 
@@ -138,7 +148,23 @@ class File:
                 return func
         return None
 
-    def statements_by_line(self, line: int) -> list[Statement]: ...
+    def statements_by_line(self, line: int) -> list[Statement]:
+        if line < 1 or line > len(self.lines):
+            return []
+        func = self.function_by_line(line)
+        if func is not None:
+            # If the line is in a function, get the statement from the function
+            return func.statements_by_line(line)
+        else:
+            # If the line is not in a function, get the statement from the file
+            root_node = self.project.parser.parse(self.text)
+            for node in root_node.named_children:
+                if line < node.start_point[0] + 1 or line > node.end_point[0] + 1:
+                    continue
+                if node.text is None:
+                    continue
+                return [Statement(node, self)]
+        return []
 
 
 class CFile(File):

@@ -31,6 +31,13 @@ class C(Language):
     query_call = "(call_expression)@name"
     query_struct = "(struct_specifier)@name"
     query_include = "(preproc_include)@name"
+    query_global_statement = (
+        "(declaration)@name"
+        "(struct_specifier)@name"
+        "(union_specifier)@name"
+        "(type_definition)@name"
+        "(preproc_def)@name"
+    )
 
     block_statements = [
         "if_statement",
@@ -74,7 +81,12 @@ class C(Language):
         "return_statement",
     ]
 
-    loop_statements = ["for_statement", "while_statement", "do_statement", "for_range_loop"]
+    loop_statements = [
+        "for_statement",
+        "while_statement",
+        "do_statement",
+        "for_range_loop",
+    ]
 
     def language(self):
         return C

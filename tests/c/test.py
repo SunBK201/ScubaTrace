@@ -3,16 +3,7 @@ import sys
 sys.path.append("../../")
 
 import scubatrace
-from scubatrace.parser import cpp_parser
 from scubatrace.statement import CBlockStatement, CSimpleStatement
-
-
-def main():
-    a_proj = scubatrace.CProject("../tests/c")
-    test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[0]
-    with open("ast.dot", "w") as f:
-        cpp_parser.parser.parse(bytes(func_main.text, "utf-8"))
 
 
 def testImports():
@@ -216,6 +207,16 @@ def test_is_taint_from_entry():
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     print(func_main.statements[5].is_taint_from_entry)
+
+
+def test_file_statements_by_line():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=False)
+    test_c = a_proj.files["test.c"]
+    line = 3
+    statements = test_c.statements_by_line(line)
+    for stat in statements:
+        print(f"Line {line}: {stat.text} (File: {test_c.relpath})")
+
 
 if __name__ == "__main__":
     test_statements_by_line()
