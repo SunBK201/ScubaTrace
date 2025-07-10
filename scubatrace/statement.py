@@ -48,6 +48,22 @@ class Statement:
     def variables(self) -> list[Identifier]: ...
 
     @property
+    def right_values(self) -> list[Identifier]:
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        return [id for id in variables if id.is_right_value]
+
+    @property
+    def left_values(self) -> list[Identifier]:
+        if isinstance(self, BlockStatement):
+            variables = self.block_variables
+        else:
+            variables = self.variables
+        return [id for id in variables if id.is_left_value]
+
+    @property
     @abstractmethod
     def is_jump_statement(self) -> bool: ...
 

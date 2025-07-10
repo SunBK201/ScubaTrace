@@ -202,11 +202,24 @@ def test_statement_references():
         for statement in statements:
             print(f"  Referenced at: {statement.text} (Line {statement.start_line})")
 
+
 def test_is_taint_from_entry():
     a_proj = scubatrace.CPPProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     print(func_main.statements[5].is_taint_from_entry)
+
+
+def test_identifiers_is_taint_from_entry():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    func_main = test_c.functions[1]
+    for stat in func_main.statements:
+        print(f"Statement: {stat.text}")
+        for variables in stat.variables:
+            print(
+                f"  Identifier: {variables.text}, is_taint_from_entry: {variables.is_taint_from_entry}"
+            )
 
 
 def test_file_statements_by_line():
@@ -218,5 +231,31 @@ def test_file_statements_by_line():
         print(f"Line {line}: {stat.text} (File: {test_c.relpath})")
 
 
+def test_identifiers_references():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    line = 8
+    refs = test_c.statements_by_line(line)[0].identifiers[0].references
+    for ref in refs:
+        print(
+            f"Reference: {ref.text} (Line {ref.start_line}, Column {ref.start_column})"
+        )
+        stat = test_c.statements_by_line(ref.start_line)[0]
+        print(f"  In statement: {stat.text} (File: {test_c.relpath})")
+
+
+def test_identifiers_definitions():
+    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = a_proj.files["test.c"]
+    line = 26
+    defs = test_c.statements_by_line(line)[0].identifiers[0].definitions
+    for defi in defs:
+        print(
+            f"Definition: {defi.text} (Line {defi.start_line}, Column {defi.start_column})"
+        )
+        stat = test_c.statements_by_line(defi.start_line)[0]
+        print(f"  In statement: {stat.text} (File: {test_c.relpath})")
+
+
 if __name__ == "__main__":
-    test_statements_by_line()
+    test_identifiers_is_taint_from_entry()

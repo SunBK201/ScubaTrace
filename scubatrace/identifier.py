@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
@@ -87,15 +88,88 @@ class Identifier:
 
     @property
     def references(self) -> list[Identifier]:
-        func = self.function
-        assert func is not None
-        identifiers = []
-        for identifier in func.identifiers:
-            if identifier == self:
+        refs = []
+        lsp = self.file.project.lsp
+        ref_locs = lsp.request_references(
+            self.file.relpath, self.start_line - 1, self.start_column - 1
+        )
+        def_locs = lsp.request_definition(
+            self.file.relpath, self.start_line - 1, self.start_column - 1
+        )
+        ref_locs.extend(def_locs)  # add definition locations to references
+        for loc in ref_locs:
+            ref_path = loc["relativePath"]
+            if ref_path is None:
                 continue
-            if identifier.text == self.text:
-                identifiers.append(identifier)
-        return identifiers
+            if ref_path not in self.file.project.files:
+                continue
+            ref_file = self.file.project.files[ref_path]
+            ref_line_start_line = loc["range"]["start"]["line"] + 1
+            ref_line_start_column = loc["range"]["start"]["character"] + 1
+            ref_file.statements_by_line(ref_line_start_line)
+            ref_stats = ref_file.statements_by_line(ref_line_start_line)
+            for ref_stat in ref_stats:
+                for identifier in ref_stat.identifiers:
+                    if (
+                        identifier.start_line == ref_line_start_line
+                        and identifier.start_column == ref_line_start_column
+                    ):
+                        refs.append(identifier)
+        return sorted(refs, key=lambda x: (x.start_line, x.start_column))
+
+    @property
+    def definitions(self) -> list[Identifier]:
+        defs = []
+        lsp = self.file.project.lsp
+        def_locs = lsp.request_definition(
+            self.file.relpath, self.start_line - 1, self.start_column - 1
+        )
+        for loc in def_locs:
+            def_path = loc["relativePath"]
+            if def_path is None:
+                continue
+            if def_path not in self.file.project.files:
+                continue
+            def_file = self.file.project.files[def_path]
+            def_line_start_line = loc["range"]["start"]["line"] + 1
+            def_line_start_column = loc["range"]["start"]["character"] + 1
+            def_file.statements_by_line(def_line_start_line)
+            def_stats = def_file.statements_by_line(def_line_start_line)
+            for def_stat in def_stats:
+                for identifier in def_stat.identifiers:
+                    if (
+                        identifier.start_line == def_line_start_line
+                        and identifier.start_column == def_line_start_column
+                    ):
+                        defs.append(identifier)
+        return sorted(defs, key=lambda x: (x.start_line, x.start_column))
+
+    @cached_property
+    def is_taint_from_entry(self) -> bool:
+        if self.is_left_value:
+            for right_value in self.statement.right_values:
+                if right_value.is_taint_from_entry:
+                    return True
+            return False
+        refs = self.references
+        backword_refs: list[Identifier] = []
+        for ref in refs:
+            if ref.start_line < self.start_line:
+                backword_refs.append(ref)
+        if len(backword_refs) == 0:
+            return False
+        for ref in backword_refs:
+            if (
+                "Function" in ref.statement.__class__.__name__
+                or "Method" in ref.statement.__class__.__name__
+            ):
+                return True
+            if not ref.is_left_value:
+                continue
+            for right_value in ref.statement.right_values:
+                if right_value.is_taint_from_entry:
+                    return True
+        return False
 
     @property
     @abstractmethod
