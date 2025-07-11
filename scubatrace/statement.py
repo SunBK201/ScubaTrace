@@ -40,12 +40,27 @@ class Statement:
         return hash(self.signature)
 
     @cached_property
-    @abstractmethod
-    def identifiers(self) -> list[Identifier]: ...
+    def identifiers(self) -> list[Identifier]:
+        parser = self.file.project.parser
+        language = self.file.project.language
+        nodes = parser.query_all(self.node, language.query_identifier)
+        identifiers = [
+            Identifier(node, self) for node in nodes if node.text is not None
+        ]
+        return list(identifiers)
 
     @cached_property
-    @abstractmethod
-    def variables(self) -> list[Identifier]: ...
+    def variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
 
     @property
     def right_values(self) -> list[Identifier]:

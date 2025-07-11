@@ -247,15 +247,21 @@ def test_identifiers_references():
 def test_identifiers_definitions():
     a_proj = scubatrace.CPPProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
-    line = 26
-    defs = test_c.statements_by_line(line)[0].identifiers[0].definitions
-    for defi in defs:
-        print(
-            f"Definition: {defi.text} (Line {defi.start_line}, Column {defi.start_column})"
-        )
-        stat = test_c.statements_by_line(defi.start_line)[0]
-        print(f"  In statement: {stat.text} (File: {test_c.relpath})")
+    line = 29
+    stats = test_c.statements_by_line(line)
+    for stat in stats:
+        print(f"Statement: {stat.text} (Line {line})")
+        for identifier in stat.identifiers:
+            print(f"  Identifier: {identifier.text}")
+            defs = identifier.definitions
+            if defs:
+                for def_stat in defs:
+                    print(
+                        f"    Defined at: {def_stat.text} (Line {def_stat.start_line})"
+                    )
+            else:
+                print("    No definitions found.")
 
 
 if __name__ == "__main__":
-    test_identifiers_is_taint_from_entry()
+    test_identifiers_definitions()

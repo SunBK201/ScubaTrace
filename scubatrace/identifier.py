@@ -106,7 +106,6 @@ class Identifier:
             ref_file = self.file.project.files[ref_path]
             ref_line_start_line = loc["range"]["start"]["line"] + 1
             ref_line_start_column = loc["range"]["start"]["character"] + 1
-            ref_file.statements_by_line(ref_line_start_line)
             ref_stats = ref_file.statements_by_line(ref_line_start_line)
             for ref_stat in ref_stats:
                 for identifier in ref_stat.identifiers:
@@ -133,15 +132,14 @@ class Identifier:
             def_file = self.file.project.files[def_path]
             def_line_start_line = loc["range"]["start"]["line"] + 1
             def_line_start_column = loc["range"]["start"]["character"] + 1
-            def_file.statements_by_line(def_line_start_line)
             def_stats = def_file.statements_by_line(def_line_start_line)
             for def_stat in def_stats:
-                for identifier in def_stat.identifiers:
+                for variable in def_stat.variables:
                     if (
-                        identifier.start_line == def_line_start_line
-                        and identifier.start_column == def_line_start_column
+                        variable.start_line == def_line_start_line
+                        and variable.start_column == def_line_start_column
                     ):
-                        defs.append(identifier)
+                        defs.append(variable)
         return sorted(defs, key=lambda x: (x.start_line, x.start_column))
 
     @cached_property
@@ -172,39 +170,12 @@ class Identifier:
         return False
 
     @property
-    @abstractmethod
-    def is_left_value(self) -> bool: ...
-
-    @property
-    @abstractmethod
-    def is_right_value(self) -> bool: ...
-
-
-class CIdentifier(Identifier):
-    @property
     def is_left_value(self) -> bool:
+        parser = self.file.project.parser
+        language = self.file.project.language
         stat = self.statement
-        query = f"""
-            (assignment_expression
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (init_declarator
-                declarator: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (parameter_declaration
-                declarator: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (parameter_declaration
-                declarator: (pointer_declarator
-                    (identifier)@id
-                )
-                (#eq? @left "{self.text}")
-            )
-        """
-        nodes = cpp_parser.query_all(stat.node, query)
+        query = language.query_left_value(self.text)
+        nodes = parser.query_all(stat.node, query)
         for node in nodes:
             if node.start_point == self.node.start_point:
                 return True
@@ -215,86 +186,13 @@ class CIdentifier(Identifier):
         return not self.is_left_value
 
 
-class JavaIdentifier(Identifier):
-    @property
-    def is_left_value(self) -> bool:
-        stat = self.statement
-        query = f"""
-            (assignment_expression
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (local_variable_declaration
-                declarator: (variable_declarator)@left
-                (#eq? @left "{self.text}")
-            )
-            (local_variable_declaration
-                declarator: (variable_declarator
-                    name: (identifier)@left
-                )
-                (#eq? @left "{self.text}")
-            )
-        """
-        nodes = java_parser.query_all(stat.node, query)
-        for node in nodes:
-            if node.start_point == self.node.start_point:
-                return True
-        return False
-
-    @property
-    def is_right_value(self) -> bool:
-        return not self.is_left_value
+class CIdentifier(Identifier): ...
 
 
-class PythonIdentifier(Identifier):
-    @property
-    def is_left_value(self) -> bool:
-        stat = self.statement
-        query = f"""
-            (assignment
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (for_statement
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (augmented_assignment
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-        """
-        nodes = python_parser.query_all(stat.node, query)
-        for node in nodes:
-            if node.start_point == self.node.start_point:
-                return True
-        return False
-
-    @property
-    def is_right_value(self) -> bool:
-        return not self.is_left_value
+class JavaIdentifier(Identifier): ...
 
 
-class JavaScriptIdentifier(Identifier):
-    @property
-    def is_left_value(self) -> bool:
-        stat = self.statement
-        query = f"""
-            (assignment_expression
-                left: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-            (variable_declarator
-                name: (identifier)@left
-                (#eq? @left "{self.text}")
-            )
-        """
-        nodes = javascript_parser.query_all(stat.node, query)
-        for node in nodes:
-            if node.start_point == self.node.start_point:
-                return True
-        return False
+class PythonIdentifier(Identifier): ...
 
-    @property
-    def is_right_value(self) -> bool:
-        return not self.is_left_value
+
+class JavaScriptIdentifier(Identifier): ...

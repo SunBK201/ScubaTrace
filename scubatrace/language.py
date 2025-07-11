@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import tree_sitter_c as tsc
 import tree_sitter_cpp as tscpp
 import tree_sitter_java as tsjava
@@ -12,6 +14,15 @@ class Language:
     extensions: list[str]
 
     query_error = "(ERROR)@error"
+
+    query_function = "(function_definition)@name"
+    query_identifier = "(identifier)@name"
+    query_return = "(return_statement)@name"
+    query_call = "(call_expression)@name"
+
+    @staticmethod
+    @abstractmethod
+    def query_left_value(text) -> str: ...
 
     # C = scubalspy_config.Language.CPP
     # CPP = scubalspy_config.Language.CPP
@@ -88,8 +99,28 @@ class C(Language):
         "for_range_loop",
     ]
 
-    def language(self):
-        return C
+    @staticmethod
+    def query_left_value(text):
+        return f"""
+            (assignment_expression
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (init_declarator
+                declarator: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (parameter_declaration
+                declarator: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (parameter_declaration
+                declarator: (pointer_declarator
+                    (identifier)@id
+                )
+                (#eq? @left "{text}")
+            )
+        """
 
 
 class CPP(C):
@@ -144,6 +175,25 @@ class JAVA(Language):
 
     loop_statements = ["for_statement", "while_statement", "do_statement"]
 
+    @staticmethod
+    def query_left_value(text):
+        return f"""
+            (assignment_expression
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (local_variable_declaration
+                declarator: (variable_declarator)@left
+                (#eq? @left "{text}")
+            )
+            (local_variable_declaration
+                declarator: (variable_declarator
+                    name: (identifier)@left
+                )
+                (#eq? @left "{text}")
+            )
+        """
+
 
 class PYTHON(Language):
     extensions = ["py"]
@@ -183,6 +233,23 @@ class PYTHON(Language):
     ]
 
     loop_statements = ["for_statement", "while_statement"]
+
+    @staticmethod
+    def query_left_value(text):
+        return f"""
+            (assignment
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (for_statement
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (augmented_assignment
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+        """
 
 
 class JAVASCRIPT(Language):
@@ -233,6 +300,19 @@ class JAVASCRIPT(Language):
     ]
 
     loop_statements = ["for_statement", "while_statement", "do_statement"]
+
+    @staticmethod
+    def query_left_value(text):
+        return f"""
+            (assignment_expression
+                left: (identifier)@left
+                (#eq? @left "{text}")
+            )
+            (variable_declarator
+                name: (identifier)@left
+                (#eq? @left "{text}")
+            )
+        """
 
 
 class GO(Language):
