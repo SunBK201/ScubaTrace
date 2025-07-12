@@ -1,3 +1,5 @@
+
+import atexit
 import os
 from abc import abstractmethod
 from functools import cached_property
@@ -46,22 +48,32 @@ class Project:
             )
             self.joern.export_with_preprocess()
         if enable_lsp:
-            if language == C or language == CPP:
-                lsp_language = "cpp"
-            elif language == JAVA:
-                lsp_language = "java"
-            elif language == PYTHON:
-                lsp_language = "python"
-            elif language == JAVASCRIPT:
-                lsp_language = "javascript"
-            else:
-                raise ValueError("Unsupported language")
-            self.lsp = SyncLanguageServer.create(
-                ScubalspyConfig.from_dict({"code_language": lsp_language}),
-                ScubalspyLogger(),
-                os.path.abspath(path),
-            )
-            self.lsp.sync_start_server()
+            self.start_lsp()
+
+    def start_lsp(self):
+        if self.language == C or self.language == CPP:
+            lsp_language = "cpp"
+        elif self.language == JAVA:
+            lsp_language = "java"
+        elif self.language == PYTHON:
+            lsp_language = "python"
+        elif self.language == JAVASCRIPT:
+            lsp_language = "javascript"
+        else:
+            raise ValueError("Unsupported language")
+        self.lsp = SyncLanguageServer.create(
+            ScubalspyConfig.from_dict({"code_language": lsp_language}),
+            ScubalspyLogger(),
+            os.path.abspath(self.path),
+        )
+        if self.language == C or self.language == CPP:
+            self.conf_file = os.path.join(self.path, "compile_flags.txt")
+            if not os.path.exists(self.conf_file):
+                with open(self.conf_file, "w") as f:
+                    for sub_dir in self.sub_dirs:
+                        f.write(f"-I{sub_dir}\n")
+                atexit.register(os.remove, self.conf_file)
+        self.lsp.sync_start_server()
 
     def close(self):
         if self.joern is not None:
@@ -69,6 +81,17 @@ class Project:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+
+    @property
+    def sub_dirs(self) -> list[str]:
+        """
+        Returns a list of subdirectories in the project path.
+        """
+        sub_dirs = []
+        for root, dirs, _ in os.walk(self.path):
+            for dir in dirs:
+                sub_dirs.append(os.path.join(root, dir))
+        return sub_dirs
 
     @property
     @abstractmethod
