@@ -42,6 +42,10 @@ class File:
         self.__lsp_preload = False
 
     @property
+    def language(self) -> type[language.Language]:
+        return self.project.language
+
+    @property
     def abspath(self) -> str:
         """
         Returns the absolute path of the file.

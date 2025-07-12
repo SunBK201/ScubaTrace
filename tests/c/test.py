@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 
 import scubatrace
-from scubatrace.statement import CBlockStatement, CSimpleStatement
+from scubatrace.statement import BlockStatement, CBlockStatement, CSimpleStatement
 
 
 def testImports():
@@ -263,5 +263,17 @@ def test_identifiers_definitions():
                 print("    No definitions found.")
 
 
+def test_statement_identifiers():
+    project = scubatrace.CPPProject(".", enable_lsp=True)
+    test_c = project.files["test.c"]
+    func_main = test_c.functions[1]
+    for stat in func_main.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        for identifier in stat.identifiers:
+            print(
+                f"  Identifier: {identifier.text} (Signature: {identifier.signature})"
+            )
+
+
 if __name__ == "__main__":
-    test_identifiers_definitions()
+    test_statement_identifiers()

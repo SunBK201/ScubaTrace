@@ -7,15 +7,7 @@ from typing import TYPE_CHECKING, Callable, Generator
 
 from tree_sitter import Node
 
-from . import language
-from .identifier import (
-    CIdentifier,
-    Identifier,
-    JavaIdentifier,
-    JavaScriptIdentifier,
-    PythonIdentifier,
-)
-from .parser import cpp_parser, java_parser, javascript_parser, python_parser
+from .identifier import Identifier
 
 if TYPE_CHECKING:
     from .file import File
@@ -39,14 +31,24 @@ class Statement:
     def __hash__(self):
         return hash(self.signature)
 
+    @property
+    def language(self):
+        return self.file.language
+
     @cached_property
     def identifiers(self) -> list[Identifier]:
         parser = self.file.project.parser
-        language = self.file.project.language
+        language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
-        identifiers = [
-            Identifier(node, self) for node in nodes if node.text is not None
-        ]
+        identifiers = set(
+            [Identifier(node, self) for node in nodes if node.text is not None]
+        )
+        if isinstance(self, BlockStatement):
+            identifiers_in_children = set()
+            for stat in self.statements:
+                identifiers_in_children.update(stat.identifiers)
+            identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
+            identifiers |= identifiers_in_children
         return list(identifiers)
 
     @cached_property
@@ -57,6 +59,12 @@ class Statement:
             if node.parent is not None and node.parent.type in [
                 "call_expression",
                 "function_declarator",
+                "method_invocation",
+                "method_declaration",
+                "call",
+                "function_definition",
+                "call_expression",
+                "function_declaration",
             ]:
                 continue
             variables.append(identifier)
@@ -440,6 +448,11 @@ class SimpleStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
+    @property
+    def is_jump_statement(self) -> bool:
+        language = self.language
+        return self.node.type in language.jump_statements
+
 
 class BlockStatement(Statement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
@@ -470,12 +483,36 @@ class BlockStatement(Statement):
     def statements(self) -> list[Statement]: ...
 
     @cached_property
-    @abstractmethod
-    def block_identifiers(self) -> list[Identifier]: ...
+    def block_identifiers(self) -> list[Identifier]:
+        parser = self.file.project.parser
+        language = self.language
+        nodes = parser.query_all(self.node, language.query_identifier)
+        identifiers = set(
+            Identifier(node, self) for node in nodes if node.text is not None
+        )
+        identifiers_in_children = set()
+        for stat in self.statements:
+            identifiers_in_children.update(stat.identifiers)
+        return list(identifiers - identifiers_in_children)
 
     @cached_property
-    @abstractmethod
-    def block_variables(self) -> list[Identifier]: ...
+    def block_variables(self) -> list[Identifier]:
+        variables = []
+        for identifier in self.block_identifiers:
+            node = identifier.node
+            if node.parent is not None and node.parent.type in [
+                "call_expression",
+                "function_declarator",
+                "method_invocation",
+                "method_declaration",
+                "call",
+                "function_definition",
+                "call_expression",
+                "function_declaration",
+            ]:
+                continue
+            variables.append(identifier)
+        return variables
 
     def statements_by_line(self, line: int) -> list[Statement]:
         targets = []
@@ -499,119 +536,45 @@ class BlockStatement(Statement):
         else:
             return [s for s in self.statements if s.node.type == type]
 
-
-class CSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
     @property
     def is_jump_statement(self) -> bool:
-        return self.node.type in language.C.jump_statements
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
-        identifiers = [
-            CIdentifier(node, self) for node in nodes if node.text is not None
-        ]
-        return list(identifiers)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declarator",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-
-class CBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
-        identifiers = set(
-            [CIdentifier(node, self) for node in nodes if node.text is not None]
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
-        identifiers |= identifiers_in_children
-        return list(identifiers)
-
-    @cached_property
-    def block_identifiers(self) -> list[Identifier]:
-        nodes = cpp_parser.query_all(self.node, language.C.query_identifier)
-        identifiers = set(
-            CIdentifier(node, self) for node in nodes if node.text is not None
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        return list(identifiers - identifiers_in_children)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declarator",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @cached_property
-    def block_variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.block_identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declarator",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @staticmethod
-    def is_block_statement(node: Node) -> bool:
-        return node.type in language.C.block_statements
-
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool:
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.C.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.C.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.C.simple_statements
-
-    @property
-    def is_jump_statement(self) -> bool:
-        if self.node.type in language.C.loop_statements:
+        language = self.language
+        if self.node.type in language.loop_statements:
             return False
         for child in self.statements:
             if child.is_jump_statement:
                 return True
         return False
+
+    def is_block_statement(self, node: Node) -> bool:
+        language = self.language
+        return node.type in language.block_statements
+
+    def is_simple_statement(self, node: Node) -> bool:
+        language = self.language
+        if node.parent is None:
+            return False
+        else:
+            if node.parent.type in language.simple_statements:
+                return False
+            elif (
+                node.parent.type in language.control_statements
+                and node.parent.child_by_field_name("body") != node
+                and node.parent.child_by_field_name("consequence") != node
+            ):
+                return False
+            else:
+                return node.type in language.simple_statements
+
+
+class CSimpleStatement(SimpleStatement):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
+        super().__init__(node, parent)
+
+
+class CBlockStatement(BlockStatement):
+    def __init__(self, node: Node, parent: BlockStatement | Function | File):
+        super().__init__(node, parent)
 
     def _statements_builder(
         self,
@@ -716,114 +679,10 @@ class JavaSimpleStatement(SimpleStatement):
     def __init__(self, node: Node, parent: BlockStatement | Method):
         super().__init__(node, parent)
 
-    @property
-    def is_jump_statement(self) -> bool:
-        return self.node.type in language.JAVA.jump_statements
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
-        identifiers = [
-            JavaIdentifier(node, self) for node in nodes if node.text is not None
-        ]
-        return list(identifiers)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "method_invocation",
-                "method_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
 
 class JavaBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Method):
         super().__init__(node, parent)
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
-        identifiers = set(
-            [JavaIdentifier(node, self) for node in nodes if node.text is not None]
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
-        identifiers |= identifiers_in_children
-        return list(identifiers)
-
-    @cached_property
-    def block_identifiers(self) -> list[Identifier]:
-        nodes = java_parser.query_all(self.node, language.JAVA.query_identifier)
-        identifiers = set(
-            JavaIdentifier(node, self) for node in nodes if node.text is not None
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        return list(identifiers - identifiers_in_children)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "method_invocation",
-                "method_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @cached_property
-    def block_variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.block_identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "method_invocation",
-                "method_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @staticmethod
-    def is_block_statement(node: Node) -> bool:
-        return node.type in language.JAVA.block_statements
-
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool:
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.JAVA.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.JAVA.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.JAVA.simple_statements
-
-    @property
-    def is_jump_statement(self) -> bool:
-        if self.node.type in language.JAVA.loop_statements:
-            return False
-        for child in self.statements:
-            if child.is_jump_statement:
-                return True
-        return False
 
     def _statements_builder(
         self,
@@ -917,110 +776,10 @@ class PythonSimpleStatement(SimpleStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = python_parser.query_all(self.node, language.PYTHON.query_identifier)
-        identifiers = [
-            PythonIdentifier(node, self) for node in nodes if node.text is not None
-        ]
-        return list(identifiers)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call",
-                "function_definition",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
 
 class PythonBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = python_parser.query_all(self.node, language.PYTHON.query_identifier)
-        identifiers = set(
-            [PythonIdentifier(node, self) for node in nodes if node.text is not None]
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
-        identifiers |= identifiers_in_children
-        return list(identifiers)
-
-    @cached_property
-    def block_identifiers(self) -> list[Identifier]:
-        nodes = python_parser.query_all(self.node, language.PYTHON.query_identifier)
-        identifiers = set(
-            PythonIdentifier(node, self) for node in nodes if node.text is not None
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        return list(identifiers - identifiers_in_children)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call",
-                "function_definition",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @cached_property
-    def block_variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.block_identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call",
-                "function_definition",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @staticmethod
-    def is_block_statement(node: Node) -> bool:
-        return node.type in language.PYTHON.block_statements
-
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool:
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.PYTHON.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.PYTHON.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.PYTHON.simple_statements
-
-    @property
-    def is_jump_statement(self) -> bool:
-        if self.node.type in language.PYTHON.loop_statements:
-            return False
-        for child in self.statements:
-            if child.is_jump_statement:
-                return True
-        return False
 
     def _statements_builder(
         self,
@@ -1088,120 +847,10 @@ class JavaScriptSimpleStatement(SimpleStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
 
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = javascript_parser.query_all(
-            self.node, language.JAVASCRIPT.query_identifier
-        )
-        identifiers = [
-            JavaScriptIdentifier(node, self) for node in nodes if node.text is not None
-        ]
-        return list(identifiers)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
 
 class JavaScriptBlockStatement(BlockStatement):
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         super().__init__(node, parent)
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        nodes = javascript_parser.query_all(
-            self.node, language.JAVASCRIPT.query_identifier
-        )
-        identifiers = set(
-            [
-                JavaScriptIdentifier(node, self)
-                for node in nodes
-                if node.text is not None
-            ]
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
-        identifiers |= identifiers_in_children
-        return list(identifiers)
-
-    @cached_property
-    def block_identifiers(self) -> list[Identifier]:
-        nodes = javascript_parser.query_all(
-            self.node, language.JAVASCRIPT.query_identifier
-        )
-        identifiers = set(
-            JavaScriptIdentifier(node, self) for node in nodes if node.text is not None
-        )
-        identifiers_in_children = set()
-        for stat in self.statements:
-            identifiers_in_children.update(stat.identifiers)
-        return list(identifiers - identifiers_in_children)
-
-    @cached_property
-    def variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @cached_property
-    def block_variables(self) -> list[Identifier]:
-        variables = []
-        for identifier in self.block_identifiers:
-            node = identifier.node
-            if node.parent is not None and node.parent.type in [
-                "call_expression",
-                "function_declaration",
-            ]:
-                continue
-            variables.append(identifier)
-        return variables
-
-    @staticmethod
-    def is_block_statement(node: Node) -> bool:
-        return node.type in language.JAVASCRIPT.block_statements
-
-    @staticmethod
-    def is_simple_statement(node: Node) -> bool:
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.JAVASCRIPT.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.JAVASCRIPT.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.JAVASCRIPT.simple_statements
-
-    @property
-    def is_jump_statement(self) -> bool:
-        if self.node.type in language.JAVASCRIPT.loop_statements:
-            return False
-        for child in self.statements:
-            if child.is_jump_statement:
-                return True
-        return False
 
     def _statements_builder(
         self,

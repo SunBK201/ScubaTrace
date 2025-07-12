@@ -7,7 +7,6 @@ from .function import CPPFunction, Function, JavaScriptFunction, PythonFunction
 from .statement import (
     BlockStatement,
     JavaBlockStatement,
-    PythonBlockStatement,
     SimpleStatement,
     Statement,
 )

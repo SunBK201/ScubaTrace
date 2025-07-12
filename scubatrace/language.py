@@ -20,6 +20,12 @@ class Language:
     query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
 
+    jump_statements: list[str] = []
+    loop_statements: list[str] = []
+    block_statements: list[str] = []
+    simple_statements: list[str] = []
+    control_statements: list[str] = []
+
     @staticmethod
     @abstractmethod
     def query_left_value(text) -> str: ...

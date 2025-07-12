@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
-
-from .parser import cpp_parser, java_parser, javascript_parser, python_parser
 
 if TYPE_CHECKING:
     from .file import File
@@ -184,15 +181,3 @@ class Identifier:
     @property
     def is_right_value(self) -> bool:
         return not self.is_left_value
-
-
-class CIdentifier(Identifier): ...
-
-
-class JavaIdentifier(Identifier): ...
-
-
-class PythonIdentifier(Identifier): ...
-
-
-class JavaScriptIdentifier(Identifier): ...
