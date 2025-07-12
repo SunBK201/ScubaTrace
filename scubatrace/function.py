@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,6 @@ from tree_sitter import Node
 
 from . import language
 from .call import Call
-from .parser import cpp_parser
 from .statement import (
     BlockStatement,
     CBlockStatement,
@@ -37,8 +37,8 @@ class Function(BlockStatement):
         self.joern_id = joern_id
         self._is_build_cfg = False
 
-        self.callers: list[Call] = []
-        self.callees: list[Call] = []
+        self.callers_joern: list[Call] = []
+        self.callees_joern: list[Call] = []
 
     def __str__(self) -> str:
         return self.signature
@@ -118,6 +118,10 @@ class Function(BlockStatement):
     @abstractmethod
     def parameter_lines(self) -> list[int]: ...
 
+    @cached_property
+    @abstractmethod
+    def name_node(self) -> Node: ...
+
     @property
     @abstractmethod
     def name(self) -> str: ...
@@ -127,32 +131,73 @@ class Function(BlockStatement):
     def accessible_functions(self) -> list[Function]: ...
 
     @cached_property
+    def calls(self) -> list[Statement]:
+        parser = self.file.project.parser
+        call_nodes = parser.query_all(self.node, self.language.query_call)
+        calls = []
+        for call_node in call_nodes:
+            call_node_line = call_node.start_point[0] + 1
+            calls.extend(self.statements_by_line(call_node_line))
+        return calls
+
+    @cached_property
+    def callees(self) -> dict[Function, list[Statement]]:
+        lsp = self.lsp
+        callees = defaultdict(set[Statement])
+        for call_stat in self.calls:
+            for identifier in call_stat.identifiers:
+                call_hierarchys = lsp.request_prepare_call_hierarchy(
+                    self.file.relpath,
+                    identifier.node.start_point[0],
+                    identifier.node.start_point[1],
+                )
+                if len(call_hierarchys) == 0:
+                    continue
+                callee_def = lsp.request_definition(
+                    call_stat.file.relpath,
+                    identifier.node.start_point[0],
+                    identifier.node.start_point[1],
+                )
+                if len(callee_def) == 0:
+                    continue
+                callee_def = callee_def[0]
+                callee_file = self.file.project.files[
+                    callee_def["uri"].replace("file://", "")
+                ]
+                callee_line = callee_def["range"]["start"]["line"] + 1
+                callee_func = callee_file.function_by_line(callee_line)
+                if callee_func is None:
+                    continue
+                callees[callee_func].add(identifier.statement)
+        callees = {k: list(v) for k, v in callees.items()}
+        return callees
+
+    @cached_property
     @abstractmethod
-    def calls(self) -> list[Statement]: ...
-
-    # @cached_property
-    # @abstractmethod
-    # def callees(self) -> dict[Function, list[Statement]]:
-    #     lsp = self.file.project.lsp
-    #     lsp.request_document_symbols(self.file.relpath)  # preload symbols
-    #     caller = lsp.request_prepare_call_hierarchy(
-    #         self.file.relpath,
-    #         self.start_line - 1,
-    #         self.start_column - 1,
-    #     )
-    #     if len(caller) == 0:
-    #         return {}
-    #     caller = caller[0]
-    #     calls = lsp.request_outgoing_calls(caller)
-    #     for call in calls:
-    #         to = call["to"]
-    #         fromRanges = call["fromRanges"]
-    #         uri = to["uri"]
-    #         callee_line = to["range"]["start"]["line"]
-
-    # @cached_property
-    # @abstractmethod
-    # def callers(self) -> dict[Function, list[Statement]]: ...
+    def callers(self) -> dict[Function, list[Statement]]:
+        lsp = self.lsp
+        call_hierarchy = lsp.request_prepare_call_hierarchy(
+            self.file.relpath,
+            self.name_node.start_point[0],
+            self.name_node.start_point[1],
+        )
+        if len(call_hierarchy) == 0:
+            return {}
+        call_hierarchy = call_hierarchy[0]
+        calls = lsp.request_incoming_calls(call_hierarchy)
+        callers = defaultdict(list[Statement])
+        for call in calls:
+            from_ = call["from_"]
+            fromRanges = call["fromRanges"]
+            caller_file = self.file.project.files[from_["uri"].replace("file://", "")]
+            for fromRange in fromRanges:
+                callsite_line = fromRange["start"]["line"] + 1
+                callsite_stats = caller_file.statements_by_line(callsite_line)
+                for stat in callsite_stats:
+                    if self.name in stat.text:
+                        callers[stat.function].append(stat)
+                        break
+        return callers
 
     def __traverse_statements(self):
         stack = []
@@ -354,8 +399,8 @@ class CFunction(Function, CBlockStatement):
     def __init__(self, node: Node, file):
         super().__init__(node, file)
 
-    @property
-    def name(self) -> str:
+    @cached_property
+    def name_node(self) -> Node:
         name_node = self.node.child_by_field_name("declarator")
         while name_node is not None and name_node.type not in {
             "identifier",
@@ -383,6 +428,11 @@ class CFunction(Function, CBlockStatement):
             if name_node == all_temp_name_node:
                 break
         assert name_node is not None
+        return name_node
+
+    @property
+    def name(self) -> str:
+        name_node = self.name_node
         assert name_node.text is not None
         return name_node.text.decode()
 
@@ -531,122 +581,6 @@ class CFunction(Function, CBlockStatement):
         if self.body_node is None:
             return []
         return list(self._statements_builder(self.body_node, self))
-
-    @cached_property
-    def calls(self):  # -> list[Statement]:
-        nodes = cpp_parser.query_all(self.node, language.C.query_call)
-        calls: dict[Node, str] = {
-            node: node.text.decode() for node in nodes if node.text is not None
-        }
-        stmts = []
-        call_funcs: dict[Node, str] = {}
-        for call_node in calls:
-            func = call_node.child_by_field_name("function")
-            assert func is not None
-            for child in func.children:
-                if child.type == "identifier" and child.text is not None:
-                    call_funcs[call_node] = child.text.decode()
-                    break
-
-        for call in call_funcs.copy():
-            accessible = False
-            for func in self.accessible_functions:
-                if func == call_funcs[call]:
-                    accessible = True
-                    break
-            if not accessible:
-                call_funcs.pop(call)
-
-        for node in call_funcs:
-            for stmt in self.statements:
-                if (
-                    stmt.node.start_point[0] == node.start_point[0]
-                    and stmt.node.text == node.text
-                ):
-                    stmts.append(stmt)
-                    break
-
-        return stmts
-
-    # @cached_property
-    # def callers(self):  # -> dict[Function, list[Statement]]
-    #     callers = {}
-    #     for file in self.file.project.files:
-    #         for func in self.file.project.files[file].functions:
-    #             if self in func.callees:
-    #                 for stmt in func.callees[self]:
-    #                     try:
-    #                         callers[func].append(stmt)
-    #                     except Exception:
-    #                         callers[func] = [stmt]
-    #     return callers
-
-    # @cached_property
-    # def callees(self):  # -> dict[Function, list[Statement]]
-    #     def get_callee_stmt(statements, callee):
-    #         for stmt in statements:
-    #             if isinstance(stmt, SimpleStatement):
-    #                 if stmt.node.start_point[0] == callee.start_point[0]:
-    #                     stmt_calls = c_parser.query_all(
-    #                         stmt.node, language.C.query_call
-    #                     )
-    #                     for stmt_call in stmt_calls:
-    #                         if stmt_call.text == callee.text:
-    #                             return stmt
-    #             elif isinstance(stmt, BlockStatement):
-    #                 if (
-    #                     stmt.node.start_point[0] <= callee.start_point[0]
-    #                     and stmt.node.end_point[0] >= callee.end_point[0]
-    #                 ):
-    #                     if stmt.node.start_point[0] == callee.start_point[0]:
-    #                         stmt_calls = c_parser.query_all(
-    #                             stmt.node, language.C.query_call
-    #                         )
-    #                         for stmt_call in stmt_calls:
-    #                             if stmt_call.text == callee.text:
-    #                                 return stmt
-    #                     else:
-    #                         return get_callee_stmt(stmt.statements, callee)
-    #         return None
-    #
-    #     callees = {}
-    #     nodes = c_parser.query_all(self.node, language.C.query_call)
-    #     calls: dict[Node, str] = {
-    #         node: node.text.decode() for node in nodes if node.text is not None
-    #     }
-    #     call_funcs: dict[Node, str] = {}
-    #     for call_node in calls:
-    #         func = call_node.child_by_field_name("function")
-    #         assert func is not None
-    #         if func.type == "identifier" and func.text is not None:
-    #             call_funcs[call_node] = func.text.decode()
-    #         else:
-    #             for child in func.children:
-    #                 if child.type == "identifier" and child.text is not None:
-    #                     call_funcs[call_node] = child.text.decode()
-    #                     break
-    #     call_funcs_Func = {}
-    #     for call in call_funcs.copy():
-    #         accessible = False
-    #         for func in self.accessible_functions:
-    #             if func.name == call_funcs[call]:
-    #                 accessible = True
-    #                 call_funcs_Func[call_funcs[call]] = func
-    #                 break
-    #         if not accessible:
-    #             call_funcs.pop(call)
-    #
-    #     for node in call_funcs:
-    #         stmts = []
-    #         callee_stmt = get_callee_stmt(self.statements, node)
-    #         if callee_stmt is not None:
-    #             stmts.append(callee_stmt)
-    #         try:
-    #             callees[call_funcs_Func[call_funcs[node]]].extend(stmts)
-    #         except Exception:
-    #             callees[call_funcs_Func[call_funcs[node]]] = stmts
-    #
-    #     return callees
 
     @cached_property
     def accessible_functions(self) -> list[Function]:

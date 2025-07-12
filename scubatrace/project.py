@@ -1,4 +1,3 @@
-
 import atexit
 import os
 from abc import abstractmethod
@@ -166,7 +165,7 @@ class Project:
                 continue
             if src_func == dst_func:
                 continue
-            src_func.callees.append(
+            src_func.callees_joern.append(
                 Call(
                     src_func,
                     dst_func,
@@ -174,7 +173,7 @@ class Project:
                     int(data["COLUMN_NUMBER"]),
                 )
             )
-            dst_func.callers.append(
+            dst_func.callers_joern.append(
                 Call(
                     src_func,
                     dst_func,
@@ -219,6 +218,7 @@ class CProject(Project):
                     key = file_path.replace(self.path + "/", "")
                     if self.language == language.C:
                         file_lists[key] = CFile(file_path, self)
+                        file_lists[os.path.abspath(file_path)] = file_lists[key]
         return file_lists
 
 
@@ -240,6 +240,7 @@ class CPPProject(Project):
                     key = file_path.replace(self.path + "/", "")
                     if self.language == language.CPP:
                         file_lists[key] = CPPFile(file_path, self)
+                        file_lists[os.path.abspath(file_path)] = file_lists[key]
         return file_lists
 
 
