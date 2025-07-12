@@ -6,6 +6,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 import chardet
+from scubalspy import SyncLanguageServer
 from tree_sitter import Node
 
 from . import language
@@ -140,11 +141,14 @@ class File:
     @abstractmethod
     def variables(self) -> list[Identifier]: ...
 
-    def lsp_preload(self):
-        if self.project.lsp is None or self.__lsp_preload:
-            return
+    @property
+    def lsp(self) -> SyncLanguageServer:
+        lsp = self.project.lsp
+        if self.__lsp_preload:
+            return lsp
         self.project.lsp.request_document_symbols(self.relpath)
         self.__lsp_preload = True
+        return lsp
 
     def function_by_line(self, line: int) -> Function | None:
         for func in self.functions:

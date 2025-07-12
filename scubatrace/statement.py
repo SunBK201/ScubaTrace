@@ -35,6 +35,10 @@ class Statement:
     def language(self):
         return self.file.language
 
+    @property
+    def lsp(self):
+        return self.file.lsp
+
     @cached_property
     def identifiers(self) -> list[Identifier]:
         parser = self.file.project.parser
@@ -297,14 +301,12 @@ class Statement:
             variables = self.block_variables
         else:
             variables = self.variables
-        lsp = self.file.project.lsp
-        self.file.lsp_preload()
         for var in variables:
             ref_stats: set[Statement] = set()
-            ref_locs = lsp.request_references(
+            ref_locs = self.lsp.request_references(
                 self.file.relpath, var.start_line - 1, var.start_column - 1
             )
-            def_locs = lsp.request_definition(
+            def_locs = self.lsp.request_definition(
                 self.file.relpath, var.start_line - 1, var.start_column - 1
             )
             ref_locs.extend(def_locs)  # add definition locations to references
@@ -327,11 +329,9 @@ class Statement:
             variables = self.block_variables
         else:
             variables = self.variables
-        lsp = self.file.project.lsp
-        self.file.lsp_preload()
         for var in variables:
             def_stats: set[Statement] = set()
-            def_locs = lsp.request_definition(
+            def_locs = self.lsp.request_definition(
                 self.file.relpath, var.start_line - 1, var.start_column - 1
             )
             for loc in def_locs:

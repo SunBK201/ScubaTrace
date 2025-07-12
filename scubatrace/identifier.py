@@ -25,6 +25,10 @@ class Identifier:
         return hash(self.signature)
 
     @property
+    def lsp(self):
+        return self.statement.lsp
+
+    @property
     def signature(self) -> str:
         return (
             self.file.signature
@@ -86,11 +90,10 @@ class Identifier:
     @property
     def references(self) -> list[Identifier]:
         refs = []
-        lsp = self.file.project.lsp
-        ref_locs = lsp.request_references(
+        ref_locs = self.lsp.request_references(
             self.file.relpath, self.start_line - 1, self.start_column - 1
         )
-        def_locs = lsp.request_definition(
+        def_locs = self.lsp.request_definition(
             self.file.relpath, self.start_line - 1, self.start_column - 1
         )
         ref_locs.extend(def_locs)  # add definition locations to references
@@ -116,8 +119,7 @@ class Identifier:
     @property
     def definitions(self) -> list[Identifier]:
         defs = []
-        lsp = self.file.project.lsp
-        def_locs = lsp.request_definition(
+        def_locs = self.lsp.request_definition(
             self.file.relpath, self.start_line - 1, self.start_column - 1
         )
         for loc in def_locs:
