@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 
 import scubatrace
-from scubatrace.statement import BlockStatement, CBlockStatement, CSimpleStatement
+from scubatrace.statement import BlockStatement, SimpleStatement
 
 
 def testImports():
@@ -35,9 +35,9 @@ def testIsSimpleStatement():
                 temp_stmts = []
                 i += 1
                 for stmt in stmts:
-                    if isinstance(stmt, CSimpleStatement):
+                    if isinstance(stmt, SimpleStatement):
                         print(f"{i} layer simple statments: {stmt.text}")
-                    elif isinstance(stmt, CBlockStatement):
+                    elif isinstance(stmt, BlockStatement):
                         temp_stmts.extend(stmt.statements)
                         print(f"{i} layer block statements: {stmt.text}")
 
@@ -66,11 +66,40 @@ def testPreControlDep():
     print(func_main.statements[3].pre_control_dependents[0].text)
 
 
-def testCallees():
-    a_proj = scubatrace.CProject("../tests")
+def testCalls():
+    a_proj = scubatrace.CPPProject(".")
     test_c = a_proj.files["test.c"]
-    for func_main in test_c.functions:
-        print(func_main.name, func_main.callees, func_main.callers)
+    func_main = test_c.functions[1]
+    calls = func_main.calls
+    for call in calls:
+        print(f"Call: {call.text} (Line {call.start_line})")
+        print(f"  Function: {call.function}")
+        print(f"  File: {call.file.relpath}")
+        print(f"  Start Line: {call.start_line}, End Line: {call.end_line}")
+
+
+def testCallees():
+    a_proj = scubatrace.CPPProject(".")
+    test_c = a_proj.files["test.c"]
+    for func in test_c.functions:
+        print(f"Function: {func.name}")
+        callees = func.callees
+        for callee_func, statements in callees.items():
+            print(f"  Callee: {callee_func.name}, Signature: {callee_func.signature}")
+            for stat in statements:
+                print(f"    Statement: {stat.text} (Line {stat.start_line})")
+
+
+def testCallers():
+    a_proj = scubatrace.CPPProject(".")
+    test_c = a_proj.files["test.c"]
+    for func in test_c.functions:
+        print(f"Function: {func.name}")
+        callers = func.callers
+        for caller_func, statements in callers.items():
+            print(f"  Caller: {caller_func.name}, Signature: {caller_func.signature}")
+            for stat in statements:
+                print(f"    Statement: {stat.text} (Line {stat.start_line})")
 
 
 def testIdentifiers():
@@ -276,4 +305,4 @@ def test_statement_identifiers():
 
 
 if __name__ == "__main__":
-    test_statement_identifiers()
+    testCallees()

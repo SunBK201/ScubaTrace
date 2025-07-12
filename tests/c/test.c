@@ -1,6 +1,7 @@
+#include <test.h>
 int add(int a, int b)
 {
-    return a + b;
+    return a + sub(a, b);
 }
 
 int main(int argc, char** argv)
@@ -9,7 +10,7 @@ int main(int argc, char** argv)
     int b = 2;
     int count = 10;
     int c = count + argc;
-    while (a < 10) {
+    while (a < 10 && add(c, c)) {
         a += 1;
         if (b > 5) {
             a -= 1;
@@ -22,6 +23,7 @@ int main(int argc, char** argv)
         a -= 1;
         count -= c;
         count += a;
+        b = sub(a, c);
     }
     count -= c;
     int i = 1;
@@ -31,4 +33,9 @@ int main(int argc, char** argv)
         break;
     }
     return 0;
+}
+
+int mul(int a, int b)
+{
+    return a * add(a, b);
 }
