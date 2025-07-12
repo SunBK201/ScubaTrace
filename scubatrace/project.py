@@ -24,7 +24,7 @@ class Project:
         self,
         path: str,
         language: type[language.Language],
-        enable_lsp: bool = False,
+        enable_lsp: bool = True,
         enable_joern: bool = False,
     ):
         self.path = path
@@ -179,7 +179,7 @@ class Project:
 
 
 class CProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = False):
+    def __init__(self, path: str, enable_lsp: bool = True):
         super().__init__(path, language.C, enable_lsp=enable_lsp)
 
     @property
@@ -200,7 +200,7 @@ class CProject(Project):
 
 
 class CPPProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = False):
+    def __init__(self, path: str, enable_lsp: bool = True):
         super().__init__(path, language.CPP, enable_lsp)
 
     @property
@@ -221,7 +221,7 @@ class CPPProject(Project):
 
 
 class JavaProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = False):
+    def __init__(self, path: str, enable_lsp: bool = True):
         super().__init__(path, language.JAVA, enable_lsp)
 
     @property
@@ -246,7 +246,7 @@ class JavaProject(Project):
 
 
 class PythonProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = False):
+    def __init__(self, path: str, enable_lsp: bool = True):
         super().__init__(path, language.PYTHON, enable_lsp)
 
     @property
@@ -267,7 +267,7 @@ class PythonProject(Project):
 
 
 class JavaScriptProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = False):
+    def __init__(self, path: str, enable_lsp: bool = True):
         super().__init__(path, language.JAVASCRIPT, enable_lsp)
 
     @property
