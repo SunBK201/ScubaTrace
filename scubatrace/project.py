@@ -10,7 +10,7 @@ from scubalspy.scubalspy_logger import ScubalspyLogger
 
 from . import joern, language
 from .call import Call
-from .file import CFile, CPPFile, File, JavaFile, JavaScriptFile, PythonFile
+from .file import CPPFile, File, JavaFile, JavaScriptFile, PythonFile
 from .function import Function
 from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
 from .parser import Parser, cpp_parser, java_parser, javascript_parser, python_parser
@@ -110,6 +110,25 @@ class Project:
                              of the corresponding file class (CFile, CPPFile, JavaFile).
         """
         ...
+
+    @cached_property
+    def files_abspath(self) -> dict[str, File]:
+        """
+        Returns a dictionary of files in the project with absolute paths as keys.
+        This is useful for accessing files without worrying about relative paths.
+        """
+        return {os.path.abspath(k): v for k, v in self.files.items()}
+
+    @cached_property
+    def files_uri(self) -> dict[str, File]:
+        """
+        Returns a dictionary of files in the project with 'file://' URIs as keys.
+        This is useful for accessing files in a URI format.
+        """
+        return {
+            "file://" + os.path.abspath(k).replace("\\", "/"): v
+            for k, v in self.files.items()
+        }
 
     @cached_property
     def functions(self) -> list[Function]:
@@ -216,32 +235,14 @@ class CProject(Project):
                 if file.split(".")[-1] in self.language.extensions:
                     file_path = os.path.join(root, file)
                     key = file_path.replace(self.path + "/", "")
-                    if self.language == language.C:
-                        file_lists[key] = CFile(file_path, self)
-                        file_lists[os.path.abspath(file_path)] = file_lists[key]
-        return file_lists
-
-
-class CPPProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.CPP, enable_lsp)
-
-    @property
-    def parser(self) -> Parser:
-        return cpp_parser
-
-    @cached_property
-    def files(self) -> dict[str, File]:
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.CPP:
+                    if self.language == language.C or self.language == language.CPP:
                         file_lists[key] = CPPFile(file_path, self)
-                        file_lists[os.path.abspath(file_path)] = file_lists[key]
         return file_lists
+
+
+class CPPProject(CProject):
+    def __init__(self, path: str, enable_lsp: bool = True):
+        super().__init__(path, enable_lsp)
 
 
 class JavaProject(Project):

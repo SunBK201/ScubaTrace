@@ -161,9 +161,7 @@ class Function(BlockStatement):
                 if len(callee_def) == 0:
                     continue
                 callee_def = callee_def[0]
-                callee_file = self.file.project.files[
-                    callee_def["uri"].replace("file://", "")
-                ]
+                callee_file = self.file.project.files_uri[callee_def["uri"]]
                 callee_line = callee_def["range"]["start"]["line"] + 1
                 callee_func = callee_file.function_by_line(callee_line)
                 if callee_func is None:
@@ -189,7 +187,7 @@ class Function(BlockStatement):
         for call in calls:
             from_ = call["from_"]
             fromRanges = call["fromRanges"]
-            caller_file = self.file.project.files[from_["uri"].replace("file://", "")]
+            caller_file = self.file.project.files_uri[from_["uri"]]
             for fromRange in fromRanges:
                 callsite_line = fromRange["start"]["line"] + 1
                 callsite_stats = caller_file.statements_by_line(callsite_line)

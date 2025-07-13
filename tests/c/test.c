@@ -1,4 +1,4 @@
-#include <test.h>
+#include <include/sub.h>
 int add(int a, int b)
 {
     return a + sub(a, b);
@@ -37,5 +37,6 @@ int main(int argc, char** argv)
 
 int mul(int a, int b)
 {
+    a = MAX(a, 1);
     return a * add(a, b);
 }

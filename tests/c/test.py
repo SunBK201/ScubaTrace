@@ -3,14 +3,8 @@ import sys
 sys.path.append("../../")
 
 import scubatrace
+from scubatrace.file import CFile
 from scubatrace.statement import BlockStatement, SimpleStatement
-
-
-def testImports():
-    a_proj = scubatrace.CProject("../tests")
-    for file_path in a_proj.files:
-        print(file_path)
-        print(a_proj.files[file_path].imports)
 
 
 def testAccessiableFunc():
@@ -64,6 +58,27 @@ def testPreControlDep():
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     print(func_main.statements[3].pre_control_dependents[0].text)
+
+
+def testImports():
+    a_proj = scubatrace.CPPProject(".")
+    test_c = a_proj.files["test.c"]
+    imports = test_c.imports
+    for import_file in imports:
+        print(f"Import: {import_file.relpath}")
+
+
+def testSourceHeader():
+    a_proj = scubatrace.CPPProject(".")
+    for file_path in a_proj.files:
+        file = a_proj.files[file_path]
+        if not isinstance(file, CFile):
+            continue
+        source_header = file.source_header
+        if source_header:
+            print(f"Source header for {file.relpath}: {source_header.relpath}")
+        else:
+            print(f"No source header found for {file.relpath}")
 
 
 def testCalls():
@@ -305,4 +320,4 @@ def test_statement_identifiers():
 
 
 if __name__ == "__main__":
-    testCallees()
+    testCalls()

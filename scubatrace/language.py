@@ -20,11 +20,11 @@ class Language:
     query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
 
-    jump_statements: list[str] = []
-    loop_statements: list[str] = []
-    block_statements: list[str] = []
-    simple_statements: list[str] = []
-    control_statements: list[str] = []
+    jump_statements: list[str]
+    loop_statements: list[str]
+    block_statements: list[str]
+    simple_statements: list[str]
+    control_statements: list[str]
 
     @staticmethod
     @abstractmethod
@@ -39,7 +39,7 @@ class Language:
 
 
 class C(Language):
-    extensions = ["c", "h", "cc"]
+    extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp"]
     tslanguage = TSLanguage(tsc.language())
 
     query_function = "(function_definition)@name"
