@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath('../'))
 project = "ScubaTrace"
 copyright = "2024, SunBK201"
 author = "SunBK201"
-release = "0.9.0"
+release = "0.9.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
