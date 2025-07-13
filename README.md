@@ -67,20 +67,9 @@ func_in_tenth_line = file.function_by_line(10)
 ### Call Relationships
 
 ```py
-callers = func.callers
-callfrom, callto, callsite_line, callsite_column = (
-    callers[0].src,
-    callers[0].dst,
-    callers[0].line,
-    callers[0].column,
-)
-callees = func.callees
-callfrom, callto, callsite_line, callsite_column = (
-    callees[0].src,
-    callees[0].dst,
-    callees[0].line,
-    callees[0].column,
-)
+def callers(self) -> dict[Function, list[Statement]]: ...
+def callees(self) -> dict[Function, list[Statement]]: ...
+def calls(self) -> list[Statement]: ...
 ```
 
 ### Function Control Flow Graph
