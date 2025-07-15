@@ -161,6 +161,8 @@ class Function(BlockStatement):
                 if len(callee_def) == 0:
                     continue
                 callee_def = callee_def[0]
+                if callee_def["uri"] not in self.file.project.files_uri:
+                    continue
                 callee_file = self.file.project.files_uri[callee_def["uri"]]
                 callee_line = callee_def["range"]["start"]["line"] + 1
                 callee_func = callee_file.function_by_line(callee_line)

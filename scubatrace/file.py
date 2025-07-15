@@ -246,6 +246,8 @@ class CFile(File):
                 continue
             include = include[0]
             include_abspath = include["absolutePath"]
+            if include_abspath not in self.project.files_abspath:
+                continue
             import_files.append(self.project.files_abspath[include_abspath])
         return import_files
 
