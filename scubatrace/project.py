@@ -75,7 +75,7 @@ class Project:
         self.lsp.sync_start_server()
 
     def close(self):
-        if self.joern is not None:
+        if "joern" in self.__dict__:
             self.joern.close()
 
     def __exit__(self, exc_type, exc_value, traceback):

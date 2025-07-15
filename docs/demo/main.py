@@ -5,7 +5,7 @@ import scubatrace
 
 codebase_path = "path/to/your/codebase"
 proj = scubatrace.CProject(codebase_path)
-proj.callgraph
+proj.callgraph_joern
 proj.export_callgraph("callgraph.dot")
 proj.search_function("file/path/to/your/file.c", start_line=0)
 
