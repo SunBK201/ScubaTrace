@@ -117,7 +117,7 @@ class Project:
         Returns a dictionary of files in the project with absolute paths as keys.
         This is useful for accessing files without worrying about relative paths.
         """
-        return {os.path.abspath(k): v for k, v in self.files.items()}
+        return {v.abspath: v for v in self.files.values()}
 
     @cached_property
     def files_uri(self) -> dict[str, File]:
@@ -126,8 +126,8 @@ class Project:
         This is useful for accessing files in a URI format.
         """
         return {
-            "file://" + os.path.abspath(k).replace("\\", "/"): v
-            for k, v in self.files.items()
+            "file://" + v.abspath: v
+            for v in self.files.values()
         }
 
     @cached_property
