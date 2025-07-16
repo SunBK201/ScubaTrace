@@ -629,11 +629,6 @@ class CFunction(Function, CBlockStatement):
         return funcs
 
 
-class CPPFunction(Function, CBlockStatement):
-    def __init__(self, node, file):
-        super().__init__(node, file)
-
-
 class PythonFunction(Function, PythonBlockStatement):
     def __init__(self, node, file):
         super().__init__(node, file)

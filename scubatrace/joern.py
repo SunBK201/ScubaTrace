@@ -14,8 +14,7 @@ from pygraphviz import AGraph
 
 class Language(Enum):
     JAVA = "javasrc"
-    C = "newc"
-    CPP = "newcpp"
+    C = "newcpp"
     PYTHON = "python"
     JAVASCRIPT = "javascript"
 
@@ -70,11 +69,7 @@ class Joern:
                 subprocess.run(["rm", "-rf", cpg_dir])
 
         if self.language is not None:
-            lang = (
-                Language.C.value
-                if self.language == Language.CPP
-                else self.language.value
-            )
+            lang = self.language.value
             subprocess.run(
                 ["joern-parse", "--language", lang, os.path.abspath(self.code_path)],
                 cwd=self.cache_path,

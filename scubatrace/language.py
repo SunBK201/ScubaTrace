@@ -1,6 +1,5 @@
 from abc import abstractmethod
 
-import tree_sitter_c as tsc
 import tree_sitter_cpp as tscpp
 import tree_sitter_java as tsjava
 import tree_sitter_javascript as tsjavascript
@@ -30,8 +29,7 @@ class Language:
     @abstractmethod
     def query_left_value(text) -> str: ...
 
-    # C = scubalspy_config.Language.CPP
-    # CPP = scubalspy_config.Language.CPP
+    # C = scubalspy_config.Language.C
     # JAVA = scubalspy_config.Language.JAVA
     # PYTHON = scubalspy_config.Language.PYTHON
     # JAVASCRIPT = scubalspy_config.Language.JAVASCRIPT
@@ -40,13 +38,16 @@ class Language:
 
 class C(Language):
     extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp"]
-    tslanguage = TSLanguage(tsc.language())
+    tslanguage = TSLanguage(tscpp.language())
 
     query_function = "(function_definition)@name"
     query_identifier = "(identifier)@name"
     query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
     query_struct = "(struct_specifier)@name"
+    query_class = "(class_specifier)@name"
+    query_method = "(function_definition)@name"
+    query_field = "(field_declaration)@name"
     query_include = "(preproc_include)@name"
     query_global_statement = (
         "(declaration)@name"
@@ -127,14 +128,6 @@ class C(Language):
                 (#eq? @left "{text}")
             )
         """
-
-
-class CPP(C):
-    extensions = C.extensions + ["cpp", "hpp", "cxx"]
-    tslanguage = TSLanguage(tscpp.language())
-    query_class = "(class_specifier)@name"
-    query_method = "(function_definition)@name"
-    query_field = "(field_declaration)@name"
 
 
 class JAVA(Language):

@@ -12,7 +12,6 @@ from .identifier import Identifier
 if TYPE_CHECKING:
     from .file import File
     from .function import Function
-    from .method import Method
 
 
 class Statement:
@@ -676,18 +675,18 @@ class CBlockStatement(BlockStatement):
 
 
 class JavaSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Method):
+    def __init__(self, node: Node, parent: BlockStatement | Function):
         super().__init__(node, parent)
 
 
 class JavaBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Method):
+    def __init__(self, node: Node, parent: BlockStatement | Function):
         super().__init__(node, parent)
 
     def _statements_builder(
         self,
         node: Node,
-        parent: BlockStatement | Method,
+        parent: BlockStatement | Function,
     ) -> Generator[Statement, None, None]:
         cursor = node.walk()
         if cursor.node is not None:
@@ -784,7 +783,7 @@ class PythonBlockStatement(BlockStatement):
     def _statements_builder(
         self,
         node: Node,
-        parent: BlockStatement | Method,
+        parent: BlockStatement | Function,
     ) -> Generator[Statement, None, None]:
         cursor = node.walk()
         if cursor.node is not None:

@@ -2,6 +2,8 @@ import sys
 
 sys.path.append("../../")
 
+import time
+
 import scubatrace
 from scubatrace.file import CFile
 from scubatrace.statement import BlockStatement, SimpleStatement
@@ -61,7 +63,7 @@ def testPreControlDep():
 
 
 def testImports():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["test.c"]
     imports = test_c.imports
     for import_file in imports:
@@ -69,7 +71,7 @@ def testImports():
 
 
 def testSourceHeader():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     for file_path in a_proj.files:
         file = a_proj.files[file_path]
         if not isinstance(file, CFile):
@@ -82,7 +84,7 @@ def testSourceHeader():
 
 
 def testCalls():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     calls = func_main.calls
@@ -94,7 +96,7 @@ def testCalls():
 
 
 def testCallees():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["test.c"]
     for func in test_c.functions:
         print(f"Function: {func.name}")
@@ -106,7 +108,7 @@ def testCallees():
 
 
 def testCallers():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["test.c"]
     for func in test_c.functions:
         print(f"Function: {func.name}")
@@ -139,7 +141,7 @@ def testReferences():
 
 
 def testPreDataDependency():
-    a_proj = scubatrace.CPPProject("../cpp")
+    a_proj = scubatrace.CProject("../cpp")
     test_c = a_proj.files["other.c"]
     func_main = test_c.functions[0]
     stat = func_main.statements[0]
@@ -188,7 +190,7 @@ def test_slice_by_statements():
 
 
 def test_slice_by_lines():
-    a_proj = scubatrace.CPPProject(".")
+    a_proj = scubatrace.CProject(".")
     test_c = a_proj.files["engine.cpp"]
     func_main = test_c.function_by_line(181)
     assert func_main is not None, "Function not found at line 181"
@@ -206,9 +208,11 @@ def test_slice_by_lines():
 
 
 def test_cg():
-    a_proj = scubatrace.CProject(".")
+    start_time = time.time()
+    a_proj = scubatrace.CProject("/Users/sunbk201/Downloads/marco_expanded_repo")
     a_proj.export_callgraph(".")
-    a_proj.close()
+    end_time = time.time()
+    print(f"Time: {end_time - start_time:.2f} s")
 
 
 def test_statements_by_line():
@@ -226,7 +230,7 @@ def test_statements_by_line():
 
 
 def test_statement_definitions():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     defs = func_main.statements[5].definitions
@@ -237,7 +241,7 @@ def test_statement_definitions():
 
 
 def test_statement_references():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     refs = func_main.statements[5].references
@@ -248,14 +252,14 @@ def test_statement_references():
 
 
 def test_is_taint_from_entry():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     print(func_main.statements[5].is_taint_from_entry)
 
 
 def test_identifiers_is_taint_from_entry():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     func_main = test_c.functions[1]
     for stat in func_main.statements:
@@ -267,7 +271,7 @@ def test_identifiers_is_taint_from_entry():
 
 
 def test_file_statements_by_line():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=False)
+    a_proj = scubatrace.CProject(".", enable_lsp=False)
     test_c = a_proj.files["test.c"]
     line = 3
     statements = test_c.statements_by_line(line)
@@ -276,7 +280,7 @@ def test_file_statements_by_line():
 
 
 def test_identifiers_references():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     line = 8
     refs = test_c.statements_by_line(line)[0].identifiers[0].references
@@ -289,7 +293,7 @@ def test_identifiers_references():
 
 
 def test_identifiers_definitions():
-    a_proj = scubatrace.CPPProject(".", enable_lsp=True)
+    a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
     line = 29
     stats = test_c.statements_by_line(line)
@@ -308,7 +312,7 @@ def test_identifiers_definitions():
 
 
 def test_statement_identifiers():
-    project = scubatrace.CPPProject(".", enable_lsp=True)
+    project = scubatrace.CProject(".", enable_lsp=True)
     test_c = project.files["test.c"]
     func_main = test_c.functions[1]
     for stat in func_main.statements:

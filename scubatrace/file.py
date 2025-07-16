@@ -10,12 +10,11 @@ from scubalspy import SyncLanguageServer
 from tree_sitter import Node
 
 from . import language
-from .clazz import Class, CPPClass, JavaClass, JavaScriptClass, PythonClass
+from .clazz import Class
 from .function import CFunction, Function, JavaScriptFunction, PythonFunction
 from .identifier import Identifier
-from .parser import cpp_parser, java_parser, javascript_parser, python_parser
+from .parser import c_parser, java_parser, javascript_parser, python_parser
 from .statement import Statement
-from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
     from .project import Project
@@ -57,8 +56,8 @@ class File:
             File: An instance of the appropriate file type.
         """
         match project.language:
-            case language.C | language.CPP:
-                return CPPFile(path, project)
+            case language.C:
+                return CFile(path, project)
             case language.JAVA:
                 return JavaFile(path, project)
             case language.PYTHON:
@@ -179,10 +178,6 @@ class File:
 
     @cached_property
     @abstractmethod
-    def structs(self) -> list[Struct]: ...
-
-    @cached_property
-    @abstractmethod
     def statements(self) -> list[Statement]: ...
 
     @cached_property
@@ -215,7 +210,7 @@ class File:
         for import_file in self.imports:
             lsp.open_file(import_file.relpath).__enter__()
             # preload corresponding source file if the file is C/C++
-            if self.language == language.CPP or self.language == language.C:
+            if self.language == language.C:
                 heuristic_name_list = [
                     import_file.name.replace(".h", ".cpp"),
                     import_file.name.replace(".h", ".c"),
@@ -266,11 +261,11 @@ class CFile(File):
 
     @cached_property
     def node(self) -> Node:
-        return cpp_parser.parse(self.text)
+        return c_parser.parse(self.text)
 
     @cached_property
     def imports(self) -> list[File]:
-        include_node = cpp_parser.query_all(self.text, language.C.query_include)
+        include_node = c_parser.query_all(self.text, language.C.query_include)
         import_files = []
         for node in include_node:
             include_path_node = node.child_by_field_name("path")
@@ -302,13 +297,8 @@ class CFile(File):
 
     @cached_property
     def functions(self) -> list[Function]:
-        func_node = cpp_parser.query_all(self.text, language.CPP.query_function)
+        func_node = c_parser.query_all(self.text, language.C.query_function)
         return [CFunction(node, file=self) for node in func_node]
-
-    @cached_property
-    def structs(self) -> list[Struct]:
-        struct_node = cpp_parser.query_all(self.text, language.CPP.query_struct)
-        return [CStruct(node) for node in struct_node]
 
     @cached_property
     def statements(self) -> list[Statement]:
@@ -323,16 +313,6 @@ class CFile(File):
         for stmt in self.statements:
             identifiers.extend(stmt.identifiers)
         return identifiers
-
-
-class CPPFile(CFile):
-    def __init__(self, path: str, project: Project):
-        super().__init__(path, project)
-
-    @cached_property
-    def classes(self) -> list[Class]:
-        class_node = cpp_parser.query_all(self.text, language.CPP.query_class)
-        return [CPPClass(node, file=self) for node in class_node]
 
 
 class JavaFile(File):
@@ -361,11 +341,6 @@ class JavaFile(File):
             imports.append(scoped_identifier)
         return imports
 
-    @cached_property
-    def classes(self) -> list[Class]:
-        class_node = java_parser.query_all(self.text, language.JAVA.query_class)
-        return [JavaClass(node, file=self) for node in class_node]
-
 
 class PythonFile(File):
     def __init__(self, path: str, project: Project):
@@ -379,11 +354,6 @@ class PythonFile(File):
     def functions(self) -> list[Function]:
         func_node = python_parser.query_all(self.text, language.PYTHON.query_function)
         return [PythonFunction(node, file=self) for node in func_node]
-
-    @cached_property
-    def classes(self) -> list[Class]:
-        class_node = python_parser.query_all(self.text, language.PYTHON.query_class)
-        return [PythonClass(node, file=self) for node in class_node]
 
 
 class JavaScriptFile(File):
@@ -400,10 +370,3 @@ class JavaScriptFile(File):
             self.text, language.JAVASCRIPT.query_function
         )
         return [JavaScriptFunction(node, file=self) for node in func_node]
-
-    @cached_property
-    def classes(self) -> list[Class]:
-        class_node = javascript_parser.query_all(
-            self.text, language.JAVASCRIPT.query_class
-        )
-        return [JavaScriptClass(node, file=self) for node in class_node]

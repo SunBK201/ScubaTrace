@@ -11,10 +11,10 @@ from scubalspy.scubalspy_logger import ScubalspyLogger
 
 from . import joern, language
 from .call import Call
-from .file import CPPFile, File, JavaFile, JavaScriptFile, PythonFile
+from .file import CFile, File, JavaFile, JavaScriptFile, PythonFile
 from .function import Function, FunctionDeclaration
-from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
-from .parser import Parser, cpp_parser, java_parser, javascript_parser, python_parser
+from .language import JAVA, JAVASCRIPT, PYTHON, C
+from .parser import Parser, c_parser, java_parser, javascript_parser, python_parser
 
 
 class Project:
@@ -32,7 +32,7 @@ class Project:
         self.path = path
         self.language = language
         if enable_joern:
-            if language == C or language == CPP:
+            if language == C:
                 joern_language = joern.Language.C
             elif language == JAVA:
                 joern_language = joern.Language.JAVA
@@ -51,7 +51,7 @@ class Project:
             self.start_lsp()
 
     def start_lsp(self):
-        if self.language == C or self.language == CPP:
+        if self.language == C:
             lsp_language = "cpp"
         elif self.language == JAVA:
             lsp_language = "java"
@@ -66,7 +66,7 @@ class Project:
             ScubalspyLogger(),
             os.path.abspath(self.path),
         )
-        if self.language == C or self.language == CPP:
+        if self.language == C:
             self.conf_file = os.path.join(self.path, "compile_flags.txt")
             if not os.path.exists(self.conf_file):
                 with open(self.conf_file, "w") as f:
@@ -102,26 +102,10 @@ class Project:
     def parser(self) -> Parser: ...
 
     @cached_property
-    def files(self) -> dict[str, File]:
-        """
-        Retrieves a dictionary of files in the project directory that match the specified language extensions.
-
-        This method walks through the directory tree starting from the project's path and collects files
-        that have extensions matching the language's extensions. It then creates instances of the appropriate
-        file class (CFile, CPPFile, JavaFile) based on the language and stores them in a dictionary.
-
-        Returns:
-            dict[str, File]: A dictionary where the keys are relative file paths and the values are instances
-                             of the corresponding file class (CFile, CPPFile, JavaFile).
-        """
-        ...
+    def files(self) -> dict[str, File]: ...
 
     @cached_property
     def files_abspath(self) -> dict[str, File]:
-        """
-        Returns a dictionary of files in the project with absolute paths as keys.
-        This is useful for accessing files without worrying about relative paths.
-        """
         return {v.abspath: v for v in self.files.values()}
 
     @cached_property
@@ -279,7 +263,7 @@ class CProject(Project):
 
     @property
     def parser(self) -> Parser:
-        return cpp_parser
+        return c_parser
 
     @cached_property
     def files(self) -> dict[str, File]:
@@ -289,8 +273,8 @@ class CProject(Project):
                 if file.split(".")[-1] in self.language.extensions:
                     file_path = os.path.join(root, file)
                     key = file_path.replace(self.path + "/", "")
-                    if self.language == language.C or self.language == language.CPP:
-                        file_lists[key] = CPPFile(file_path, self)
+                    if self.language == language.C:
+                        file_lists[key] = CFile(file_path, self)
         return file_lists
 
     @cached_property
@@ -299,11 +283,6 @@ class CProject(Project):
             if func.name == "main":
                 return func
         return None
-
-
-class CPPProject(CProject):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, enable_lsp)
 
 
 class JavaProject(Project):
