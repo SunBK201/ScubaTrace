@@ -44,6 +44,30 @@ class File:
         self.project = project
         self.__lsp_preload = False
 
+    @staticmethod
+    def File(path: str, project: Project) -> File:
+        """
+        Factory method to create a File instance based on the file type.
+
+        Args:
+            path (str): The file path.
+            project (Project): The project associated with this instance.
+
+        Returns:
+            File: An instance of the appropriate file type.
+        """
+        match project.language:
+            case language.C | language.CPP:
+                return CPPFile(path, project)
+            case language.JAVA:
+                return JavaFile(path, project)
+            case language.PYTHON:
+                return PythonFile(path, project)
+            case language.JAVASCRIPT:
+                return JavaScriptFile(path, project)
+            case _:
+                return File(path, project)
+
     @property
     def language(self) -> type[language.Language]:
         return self.project.language
