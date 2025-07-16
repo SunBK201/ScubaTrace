@@ -6,10 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "scubatrace"
 version = "0.9.2"
 dependencies = [
-    "tree_sitter==0.23.2",
-    "tree_sitter_c==0.23.1",
-    "tree_sitter_cpp==0.23.1",
-    "tree_sitter_java==0.23.2",
+    "tree_sitter==0.24.0",
+    "tree_sitter_cpp==0.23.4",
+    "tree_sitter_java==0.23.5",
     "tree_sitter_python==0.23.6",
     "tree_sitter_javascript==0.23.1",
     "networkx>=3.3",
