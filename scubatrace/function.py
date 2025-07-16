@@ -130,6 +130,10 @@ class Function(BlockStatement):
     @abstractmethod
     def accessible_functions(self) -> list[Function]: ...
 
+    @property
+    def is_external(self) -> bool:
+        return self.file.is_external
+
     @cached_property
     def calls(self) -> list[Statement]:
         parser = self.file.project.parser
@@ -141,7 +145,7 @@ class Function(BlockStatement):
         return calls
 
     @cached_property
-    def callees(self) -> dict[Function, list[Statement]]:
+    def callees(self) -> dict[Function | FunctionDeclaration, list[Statement]]:
         lsp = self.lsp
         callees = defaultdict(set[Statement])
         for call_stat in self.calls:
@@ -161,13 +165,24 @@ class Function(BlockStatement):
                 if len(callee_def) == 0:
                     continue
                 callee_def = callee_def[0]
+                # external file
                 if callee_def["uri"] not in self.file.project.files_uri:
-                    continue
+                    if len(callee_def["uri"]) == 0:
+                        continue
+                    from .file import File
+
+                    self.file.project.files_uri[callee_def["uri"]] = File.File(
+                        callee_def["uri"],
+                        self.file.project,
+                    )
                 callee_file = self.file.project.files_uri[callee_def["uri"]]
                 callee_line = callee_def["range"]["start"]["line"] + 1
                 callee_func = callee_file.function_by_line(callee_line)
                 if callee_func is None:
-                    continue
+                    declar = callee_file.lines[callee_line - 1]
+                    callee_func = FunctionDeclaration(
+                        identifier.text, declar, callee_file
+                    )
                 callees[callee_func].add(identifier.statement)
         callees = {k: list(v) for k, v in callees.items()}
         return callees
@@ -393,6 +408,27 @@ class Function(BlockStatement):
 
         nx.nx_pydot.write_dot(graph, path)
         return graph
+
+
+class FunctionDeclaration:
+    def __init__(self, name: str, text: str, file: File):
+        self.name = name
+        self.text = text
+        self.file = file
+
+    def __hash__(self):
+        return hash(self.signature)
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def signature(self) -> str:
+        return self.name + self.text + self.file.abspath
+
+    @property
+    def dot_text(self) -> str:
+        return self.name
 
 
 class CFunction(Function, CBlockStatement):

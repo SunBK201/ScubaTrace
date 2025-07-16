@@ -1,6 +1,7 @@
 import atexit
 import os
 from abc import abstractmethod
+from collections import deque
 from functools import cached_property
 
 import networkx as nx
@@ -11,7 +12,7 @@ from scubalspy.scubalspy_logger import ScubalspyLogger
 from . import joern, language
 from .call import Call
 from .file import CPPFile, File, JavaFile, JavaScriptFile, PythonFile
-from .function import Function
+from .function import Function, FunctionDeclaration
 from .language import CPP, JAVA, JAVASCRIPT, PYTHON, C
 from .parser import Parser, cpp_parser, java_parser, javascript_parser, python_parser
 
@@ -148,7 +149,59 @@ class Project:
         return functions
 
     @cached_property
+    @abstractmethod
+    def entry_point(self) -> Function | None: ...
+
+    def __build_callgraph(self, entry: Function) -> nx.MultiDiGraph:
+        """
+        Build a call graph starting from the given entry function.
+
+        Args:
+            entry (Function | None): The entry point function to start building the call graph.
+
+        Returns:
+            nx.MultiDiGraph: A directed graph representing the call relationships between functions.
+        """
+        cg = nx.MultiDiGraph()
+        dq: deque[Function | FunctionDeclaration] = deque([entry])
+        visited: set[Function | FunctionDeclaration] = set([entry])
+        while len(dq) > 0:
+            caller = dq.popleft()
+            if isinstance(caller, FunctionDeclaration):
+                continue
+            if caller.file.is_external:
+                continue
+            for callee, callsites in caller.callees.items():
+                if callee in visited:
+                    continue
+                visited.add(callee)
+                cg.add_node(
+                    callee,
+                    label=callee.dot_text,
+                )
+                for callsite in callsites:
+                    cg.add_edge(
+                        caller,
+                        callee,
+                        line=callsite.start_line,
+                        column=callsite.start_column,
+                    )
+                dq.append(callee)
+            caller.calls
+        return cg
+
+    @property
     def callgraph(self) -> nx.MultiDiGraph:
+        entry = self.entry_point
+        if entry is None:
+            return nx.MultiDiGraph()
+        cg = self.__build_callgraph(entry)
+        return cg
+
+    @cached_property
+    def callgraph_joern(self) -> nx.MultiDiGraph:
+        if self.joern is None:
+            raise ValueError("Joern is not enabled for this project.")
         joern_cg = self.joern.callgraph
         cg = nx.MultiDiGraph()
         for node in joern_cg.nodes:
@@ -239,6 +292,13 @@ class CProject(Project):
                     if self.language == language.C or self.language == language.CPP:
                         file_lists[key] = CPPFile(file_path, self)
         return file_lists
+
+    @cached_property
+    def entry_point(self) -> Function | None:
+        for func in self.functions:
+            if func.name == "main":
+                return func
+        return None
 
 
 class CPPProject(CProject):
