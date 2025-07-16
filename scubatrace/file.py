@@ -38,6 +38,8 @@ class File:
             path (str): The file path.
             project (Project): The project associated with this instance.
         """
+        if path.startswith("file://"):
+            path = path[7:]
         self._path = path
         self.project = project
         self.__lsp_preload = False
@@ -128,6 +130,9 @@ class File:
     def __str__(self) -> str:
         return self.signature
 
+    def __hash__(self) -> int:
+        return hash(self.signature)
+
     @property
     def signature(self) -> str:
         return self.relpath
@@ -163,6 +168,16 @@ class File:
     @cached_property
     @abstractmethod
     def variables(self) -> list[Identifier]: ...
+
+    @property
+    def is_external(self) -> bool:
+        """
+        Checks if the file is external (not part of the project).
+
+        Returns:
+            bool: True if the file is external, False otherwise.
+        """
+        return not self.abspath.startswith(self.project.abspath)
 
     @property
     def lsp(self) -> SyncLanguageServer:
