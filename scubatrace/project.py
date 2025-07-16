@@ -82,6 +82,10 @@ class Project:
         self.close()
 
     @property
+    def abspath(self) -> str:
+        return os.path.abspath(self.path)
+
+    @property
     def sub_dirs(self) -> list[str]:
         """
         Returns a list of subdirectories in the project path.
@@ -125,10 +129,7 @@ class Project:
         Returns a dictionary of files in the project with 'file://' URIs as keys.
         This is useful for accessing files in a URI format.
         """
-        return {
-            "file://" + v.abspath: v
-            for v in self.files.values()
-        }
+        return {"file://" + v.abspath: v for v in self.files.values()}
 
     @cached_property
     def functions(self) -> list[Function]:
