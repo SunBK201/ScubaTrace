@@ -18,7 +18,7 @@ from .statement import Statement
 from .structure import CStruct, Struct
 
 if TYPE_CHECKING:
-    from .project import JavaProject, JavaScriptProject, Project, PythonProject
+    from .project import Project
 
 
 class File:
@@ -297,7 +297,7 @@ class CPPFile(CFile):
 
 
 class JavaFile(File):
-    def __init__(self, path: str, project: JavaProject):
+    def __init__(self, path: str, project: Project):
         super().__init__(path, project)
 
     @cached_property
@@ -329,7 +329,7 @@ class JavaFile(File):
 
 
 class PythonFile(File):
-    def __init__(self, path: str, project: PythonProject):
+    def __init__(self, path: str, project: Project):
         super().__init__(path, project)
 
     @cached_property
@@ -348,7 +348,7 @@ class PythonFile(File):
 
 
 class JavaScriptFile(File):
-    def __init__(self, path: str, project: JavaScriptProject):
+    def __init__(self, path: str, project: Project):
         super().__init__(path, project)
 
     @cached_property
