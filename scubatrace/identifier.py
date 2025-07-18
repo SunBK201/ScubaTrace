@@ -183,3 +183,89 @@ class Identifier:
     @property
     def is_right_value(self) -> bool:
         return not self.is_left_value
+
+    @property
+    def pre_data_dependents(self) -> list[Identifier]:
+        if self.is_left_value:
+            return []
+
+        from .statement import BlockStatement
+
+        def is_data_dependents(stat: Statement) -> bool:
+            if stat.signature == self.statement.signature:
+                return False
+            if isinstance(stat, BlockStatement):
+                stat_vars = stat.block_variables
+            else:
+                stat_vars = stat.variables
+            for stat_var in stat_vars:
+                if stat_var.text != self.text:
+                    continue
+                if stat_var.is_left_value:
+                    return True
+            return False
+
+        dependents = []
+        for pre in self.statement.walk_backward(
+            filter=is_data_dependents, stop_by=is_data_dependents
+        ):
+            if pre.signature == self.signature:
+                continue
+            if isinstance(pre, BlockStatement):
+                pre_vars = pre.block_variables
+            else:
+                pre_vars = pre.variables
+            for pre_var in pre_vars:
+                if pre_var.text == self.text and pre_var.is_left_value:
+                    dependents.append(pre_var)
+        return sorted(dependents, key=lambda x: (x.start_line, x.start_column))
+
+    @property
+    def post_data_dependents(self) -> list[Identifier]:
+        if self.is_right_value:
+            return []
+
+        from .statement import BlockStatement
+
+        def is_data_dependents(stat: Statement) -> bool:
+            if stat.signature == self.statement.signature:
+                return False
+            if isinstance(stat, BlockStatement):
+                stat_vars = stat.block_variables
+            else:
+                stat_vars = stat.variables
+            for stat_var in stat_vars:
+                if stat_var.text != self.text:
+                    continue
+                if not stat_var.is_left_value:
+                    return True
+            return False
+
+        def is_stop(stat: Statement) -> bool:
+            if stat.signature == self.statement.signature:
+                return False
+            if isinstance(stat, BlockStatement):
+                stat_vars = stat.block_variables
+            else:
+                stat_vars = stat.variables
+            for stat_var in stat_vars:
+                if stat_var.text != self.text:
+                    continue
+                if stat_var.is_left_value:
+                    return True
+            return False
+
+        dependents = []
+        for post in self.statement.walk_forward(
+            filter=is_data_dependents, stop_by=is_stop
+        ):
+            if post.signature == self.signature:
+                continue
+            if isinstance(post, BlockStatement):
+                post_vars = post.block_variables
+            else:
+                post_vars = post.variables
+            for post_var in post_vars:
+                if post_var.text == self.text and not post_var.is_left_value:
+                    dependents.append(post_var)
+        return sorted(dependents, key=lambda x: (x.start_line, x.start_column))

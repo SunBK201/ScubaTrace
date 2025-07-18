@@ -323,5 +323,45 @@ def test_statement_identifiers():
             )
 
 
+def test_identifier_pre_data_dependents():
+    project = scubatrace.CProject(".", enable_lsp=True)
+    test_c = project.files["test.c"]
+    func_main = test_c.functions[2]
+    for stat in func_main.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        for identifier in stat.identifiers:
+            print(
+                f"  Identifier: {identifier.text} (Signature: {identifier.signature})"
+            )
+            pre_data_dependents = identifier.pre_data_dependents
+            if pre_data_dependents:
+                for dep in pre_data_dependents:
+                    print(
+                        f"    Pre Data Dependent: {dep.text}, (Line {dep.start_line})"
+                    )
+            else:
+                print("    No pre data dependent found.")
+
+
+def test_identifier_post_data_dependents():
+    project = scubatrace.CProject(".", enable_lsp=True)
+    test_c = project.files["test.c"]
+    func_main = test_c.functions[1]
+    for stat in func_main.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        for identifier in stat.identifiers:
+            print(
+                f"  Identifier: {identifier.text} (Signature: {identifier.signature})"
+            )
+            post_data_dependents = identifier.post_data_dependents
+            if post_data_dependents:
+                for dep in post_data_dependents:
+                    print(
+                        f"    Post Data Dependent: {dep.text}, (Line {dep.start_line})"
+                    )
+            else:
+                print("    No post data dependent found.")
+
+
 if __name__ == "__main__":
     testCalls()
