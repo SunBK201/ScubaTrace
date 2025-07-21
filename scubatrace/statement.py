@@ -227,28 +227,10 @@ class Statement:
         else:
             variables = self.variables
         for var in variables:
-            if var.is_left_value:
-                continue
-
-            def is_data_dependents(stat: Statement) -> bool:
-                if stat.signature == self.signature:
-                    return False
-                if isinstance(stat, BlockStatement):
-                    stat_vars = stat.block_variables
-                else:
-                    stat_vars = stat.variables
-                for stat_var in stat_vars:
-                    if stat_var.text != var.text:
-                        continue
-                    if stat_var.is_left_value:
-                        return True
-                return False
-
-            for pre in self.walk_backward(
-                filter=is_data_dependents, stop_by=is_data_dependents
-            ):
-                dependents[var].append(pre)
-
+            var_deps_stats = set(
+                var_dep.statement for var_dep in var.pre_data_dependents
+            )
+            dependents[var] = sorted(var_deps_stats, key=lambda x: x.start_line)
         return dependents
 
     @property
@@ -259,39 +241,10 @@ class Statement:
         else:
             variables = self.variables
         for var in variables:
-            if var.is_right_value:
-                continue
-
-            def is_data_dependents(stat: Statement) -> bool:
-                if stat.signature == self.signature:
-                    return False
-                if isinstance(stat, BlockStatement):
-                    stat_vars = stat.block_variables
-                else:
-                    stat_vars = stat.variables
-                for stat_var in stat_vars:
-                    if stat_var.text != var.text:
-                        continue
-                    return stat_var.is_right_value
-                return False
-
-            def is_right_value(stat: Statement) -> bool:
-                if stat.signature == self.signature:
-                    return False
-                if isinstance(stat, BlockStatement):
-                    stat_vars = stat.block_variables
-                else:
-                    stat_vars = stat.variables
-                for stat_var in stat_vars:
-                    if stat_var.text != var.text:
-                        continue
-                    return stat_var.is_left_value
-                return False
-
-            for post in self.walk_forward(
-                filter=is_data_dependents, stop_by=is_right_value
-            ):
-                dependents[var].append(post)
+            var_deps_stats = set(
+                var_dep.statement for var_dep in var.post_data_dependents
+            )
+            dependents[var] = sorted(var_deps_stats, key=lambda x: x.start_line)
         return dependents
 
     @property

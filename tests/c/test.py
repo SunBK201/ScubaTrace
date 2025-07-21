@@ -141,15 +141,19 @@ def testReferences():
 
 
 def testPreDataDependency():
-    a_proj = scubatrace.CProject("../cpp")
-    test_c = a_proj.files["other.c"]
-    func_main = test_c.functions[0]
-    stat = func_main.statements[0]
-    print(f"statement: {stat.text}")
-    for var, stat in stat.pre_data_dependents.items():
-        print(f"variable: {var}")
-        for s in stat:
-            print(f"statement: {s.text}")
+    a_proj = scubatrace.CProject(".")
+    test_c = a_proj.files["test.c"]
+    line = 29
+    func = test_c.function_by_line(line)
+    assert func is not None, f"Function not found at line {line}"
+    for stat in func.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        for var, stats in stat.pre_data_dependents.items():
+            print(f"  Variable: {var.text}")
+            for s in stats:
+                print(
+                    f"    Pre Data Dependent Statement: {s.text} (Line {s.start_line})"
+                )
 
 
 def testPostDataDependency():
