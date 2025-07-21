@@ -247,12 +247,23 @@ def test_statement_definitions():
 def test_statement_references():
     a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[1]
-    refs = func_main.statements[5].references
-    for var, statements in refs.items():
-        print(f"Variable: {var.text}")
-        for statement in statements:
-            print(f"  Referenced at: {statement.text} (Line {statement.start_line})")
+    line = 562
+    func_main = test_c.function_by_line(line)
+    assert func_main is not None, f"Function not found at line {line}"
+    for stat in func_main.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        statement_refs = stat.references
+        if statement_refs:
+            for identifier, refs in statement_refs.items():
+                print(
+                    f"  Identifier: {identifier.text} (Signature: {identifier.signature})"
+                )
+                for ref in refs:
+                    print(
+                        f"    Reference: {ref.text} (Line {ref.start_line}, File: {ref.file.relpath})"
+                    )
+        else:
+            print("  No references found.")
 
 
 def test_is_taint_from_entry():

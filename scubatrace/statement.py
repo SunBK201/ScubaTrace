@@ -256,7 +256,8 @@ class Statement:
             variables = self.variables
         for var in variables:
             ref_vars = var.references
-            refs[var] = [ref_var.statement for ref_var in ref_vars]
+            ref_vars_stats = set(ref_var.statement for ref_var in ref_vars)
+            refs[var] = sorted(ref_vars_stats, key=lambda x: x.start_line)
         return refs
 
     @property
@@ -268,7 +269,8 @@ class Statement:
             variables = self.variables
         for var in variables:
             def_vars = var.definitions
-            defs[var] = [def_var.statement for def_var in def_vars]
+            def_vars_stats = set(def_var.statement for def_var in def_vars)
+            defs[var] = sorted(def_vars_stats, key=lambda x: x.start_line)
         return defs
 
     @cached_property
