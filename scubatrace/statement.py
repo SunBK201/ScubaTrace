@@ -142,9 +142,11 @@ class Statement:
 
     @property
     def file(self) -> File:
-        if "File" in self.parent.__class__.__name__:
-            return self.parent  # type: ignore
-        return self.parent.file  # type: ignore
+        from .file import File
+
+        if isinstance(self.parent, File):
+            return self.parent
+        return self.parent.file
 
     @property
     def function(self) -> Function | None:
@@ -164,11 +166,8 @@ class Statement:
         func = self.function
         if func is None:
             return []
-        assert (
-            "Function" in func.__class__.__name__ or "Method" in func.__class__.__name__
-        )
-        if not func._is_build_cfg:  # type: ignore
-            func.build_cfg()  # type: ignore
+        if not func._is_build_cfg:
+            func.build_cfg()
         return self._post_control_statements
 
     @post_controls.setter
@@ -180,11 +179,8 @@ class Statement:
         func = self.function
         if func is None:
             return []
-        assert (
-            "Function" in func.__class__.__name__ or "Method" in func.__class__.__name__
-        )
-        if not func._is_build_cfg:  # type: ignore
-            func.build_cfg()  # type: ignore
+        if not func._is_build_cfg:
+            func.build_cfg()
         return self._pre_control_statements
 
     @pre_controls.setter
@@ -207,10 +203,9 @@ class Statement:
     @property
     def pre_control_dependents(self) -> list[Statement]:
         parent = self.parent
-        if (
-            "Function" in parent.__class__.__name__
-            or "Method" in parent.__class__.__name__
-        ):
+        from .function import Function
+
+        if isinstance(parent, Function):
             return []
         if not isinstance(parent, Statement):
             return []
@@ -284,12 +279,11 @@ class Statement:
         if len(backword_refs) == 0:
             return False
 
+        from .function import Function
+
         for var, statements in backword_refs.items():
             for stat in statements:
-                if (
-                    "Function" in stat.__class__.__name__
-                    or "Method" in stat.__class__.__name__
-                ):
+                if isinstance(stat, Function):
                     return True
                 for stat_var in stat.variables:
                     if stat_var.text != var.text:
