@@ -52,7 +52,7 @@ class Parser:
         results = []
         for nodes in captures.values():
             results.extend(nodes)
-        return results
+        return sorted(results, key=lambda node: node.start_point)
 
     def query_by_capture_name(
         self, target: str | Node, query_str: str, capture_name: str
