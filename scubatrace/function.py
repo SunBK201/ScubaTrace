@@ -114,6 +114,10 @@ class Function(BlockStatement):
         else:
             return self.body_node.end_point[0] + 1
 
+    @property
+    def dot_text(self) -> str:
+        return f"{self.name}#{self.file.name}#{self.start_line}"
+
     @cached_property
     @abstractmethod
     def parameter_lines(self) -> list[int]: ...
