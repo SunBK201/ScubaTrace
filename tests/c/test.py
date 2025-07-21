@@ -282,14 +282,25 @@ def test_file_statements_by_line():
 def test_identifiers_references():
     a_proj = scubatrace.CProject(".", enable_lsp=True)
     test_c = a_proj.files["test.c"]
-    line = 8
-    refs = test_c.statements_by_line(line)[0].identifiers[0].references
-    for ref in refs:
-        print(
-            f"Reference: {ref.text} (Line {ref.start_line}, Column {ref.start_column})"
-        )
-        stat = test_c.statements_by_line(ref.start_line)[0]
-        print(f"  In statement: {stat.text} (File: {test_c.relpath})")
+    func_line = 562
+    func = test_c.function_by_line(func_line)
+    if func is None:
+        print(f"No function found at line {func_line}")
+        return
+    for stat in func.statements:
+        print(f"Statement: {stat.text} (Line {stat.start_line})")
+        for identifier in stat.variables:
+            print(
+                f"  Identifier: {identifier.text} (Signature: {identifier.signature})"
+            )
+            references = identifier.references
+            if references:
+                for ref in references:
+                    print(
+                        f"    Reference: {ref.text} (Line {ref.start_line}, File: {ref.file.relpath})"
+                    )
+            else:
+                print("    No references found.")
 
 
 def test_identifiers_definitions():

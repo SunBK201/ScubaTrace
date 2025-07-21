@@ -147,14 +147,15 @@ class Statement:
         return self.parent.file  # type: ignore
 
     @property
-    def function(self):
+    def function(self) -> Function | None:
+        from .file import File
+        from .function import Function
+
         cur = self
-        while (
-            "Function" not in cur.__class__.__name__
-            and "Method" not in cur.__class__.__name__
-        ):
-            cur = cur.parent  # type: ignore
-            if "File" in cur.__class__.__name__:
+
+        while not isinstance(cur, Function):
+            cur = cur.parent
+            if isinstance(cur, File):
                 return None
         return cur
 

@@ -81,15 +81,11 @@ class Identifier:
 
     @property
     def function(self):
-        if self.statement.function is None:
-            return None
-        if "Function" not in self.statement.function.__class__.__name__:
-            return None
         return self.statement.function
 
     @property
     def references(self) -> list[Identifier]:
-        refs = []
+        refs = set()
         ref_locs = self.lsp.request_references(
             self.file.relpath, self.start_line - 1, self.start_column - 1
         )
@@ -113,7 +109,13 @@ class Identifier:
                         identifier.start_line == ref_line_start_line
                         and identifier.start_column == ref_line_start_column
                     ):
-                        refs.append(identifier)
+                        refs.add(identifier)
+
+        # also add identifiers from the current function
+        if self.function is not None:
+            for identifier in self.function.identifiers:
+                if identifier.text == self.text and identifier != self:
+                    refs.add(identifier)
         return sorted(refs, key=lambda x: (x.start_line, x.start_column))
 
     @property
