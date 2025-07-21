@@ -302,24 +302,8 @@ class Statement:
         else:
             variables = self.variables
         for var in variables:
-            ref_stats: set[Statement] = set()
-            ref_locs = self.lsp.request_references(
-                self.file.relpath, var.start_line - 1, var.start_column - 1
-            )
-            def_locs = self.lsp.request_definition(
-                self.file.relpath, var.start_line - 1, var.start_column - 1
-            )
-            ref_locs.extend(def_locs)  # add definition locations to references
-            for loc in ref_locs:
-                ref_path = loc["relativePath"]
-                if ref_path is None:
-                    continue
-                if ref_path not in self.file.project.files:
-                    continue
-                ref_file = self.file.project.files[ref_path]
-                ref_line = loc["range"]["start"]["line"] + 1
-                ref_stats.update(ref_file.statements_by_line(ref_line))
-            refs[var] = sorted(ref_stats, key=lambda s: (s.start_line, s.start_column))
+            ref_vars = var.references
+            refs[var] = [ref_var.statement for ref_var in ref_vars]
         return refs
 
     @property
@@ -330,20 +314,8 @@ class Statement:
         else:
             variables = self.variables
         for var in variables:
-            def_stats: set[Statement] = set()
-            def_locs = self.lsp.request_definition(
-                self.file.relpath, var.start_line - 1, var.start_column - 1
-            )
-            for loc in def_locs:
-                def_path = loc["relativePath"]
-                if def_path is None:
-                    continue
-                if def_path not in self.file.project.files:
-                    continue
-                def_file = self.file.project.files[def_path]
-                def_line = loc["range"]["start"]["line"] + 1
-                def_stats.update(def_file.statements_by_line(def_line))
-            defs[var] = sorted(def_stats, key=lambda s: (s.start_line, s.start_column))
+            def_vars = var.definitions
+            defs[var] = [def_var.statement for def_var in def_vars]
         return defs
 
     @cached_property
