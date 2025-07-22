@@ -123,7 +123,7 @@ class C(Language):
             )
             (parameter_declaration
                 declarator: (pointer_declarator
-                    (identifier)@id
+                    (identifier)@left
                 )
                 (#eq? @left "{text}")
             )
