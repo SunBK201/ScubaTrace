@@ -60,28 +60,17 @@ class CFunction(Function, CBlockStatement):
             return []
         return list(self._build_statements(self.body_node, self))
 
-    def __find_next_nearest_stat(
-        self, stat: Statement, jump: int = 0
-    ) -> Statement | None:
+    def __find_next_nearest_stat(self, stat: Statement) -> Statement | None:
         stat_type = stat.node.type
         if stat_type == "return_statement":
             return None
 
-        if jump == -1:
-            jump = 0x3F3F3F
-        while (
-            jump > 0
-            and stat.parent is not None
-            and isinstance(stat.parent, BlockStatement)
-        ):
-            stat = stat.parent
-            jump -= 1
-
         parent_statements = stat.parent.statements
         index = parent_statements.index(stat)
         if (
-            index < len(parent_statements) - 1
-            and parent_statements[index + 1].node.type != "else_clause"
+            index < len(parent_statements) - 1  # last statement in block
+            and parent_statements[index + 1].node.type
+            != "else_clause"  # if () { stat; } else { ... }
         ):
             return parent_statements[index + 1]
         else:

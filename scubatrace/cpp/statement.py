@@ -43,23 +43,24 @@ class CBlockStatement(BlockStatement):
         match type:
             case "if_statement":
                 consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in [
-                    "compound_statement"
-                ]:
+                if (
+                    consequence_node is not None
+                    and consequence_node.type == "compound_statement"
+                ):  # if () { ... }
                     stats.extend(list(self._build_statements(consequence_node, self)))
-                elif consequence_node is not None:
+                elif consequence_node is not None:  # if () ...;
                     stats.extend([CSimpleStatement(consequence_node, self)])
                 else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
+                if else_clause_node is not None:  # else { ... }
                     stats.extend([CBlockStatement(else_clause_node, self)])
             case "else_clause":
                 compound_node = None
                 for child in self.node.children:
                     if child.type == "compound_statement":
                         compound_node = child
-                if compound_node is not None:
+                if compound_node is not None:  # else { ... }
                     stats.extend(list(self._build_statements(compound_node, self)))
-                else:
+                else:  # else ...;
                     stats.extend(list(self._build_statements(self.node, self)))
             case "for_range_loop":
                 body_node = self.node.child_by_field_name("body")
