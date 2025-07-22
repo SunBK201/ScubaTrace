@@ -458,6 +458,15 @@ class BlockStatement(Statement):
         else:
             return [s for s in self.statements if s.node.type == type]
 
+    def statement_by_field_name(self, field_name: str) -> Statement | None:
+        field_node = self.node.child_by_field_name(field_name)
+        if field_node is None:
+            return None
+        for stat in self.statements:
+            if stat.node.start_byte == field_node.start_byte:
+                return stat
+        return None
+
     def is_block_statement(self, node: Node) -> bool:
         language = self.language
         return node.type in language.block_statements
