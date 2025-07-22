@@ -27,6 +27,9 @@ class JAVA(Language):
         "do_statement",
         "switch_expression",
         "switch_block_statement_group",
+        "try_statement",
+        "try_with_resources_statement",
+        "catch_clause",
     ]
 
     simple_statements = [
@@ -35,6 +38,7 @@ class JAVA(Language):
         "local_variable_declaration",
         "break_statement",
         "continue_statement",
+        "yield_statement",
     ]
 
     control_statements = [
@@ -46,7 +50,7 @@ class JAVA(Language):
         "switch_expression",
     ]
 
-    loop_statements = ["for_statement", "while_statement", "do_statement"]
+    loop_statements = ["for_statement", "while_statement", "do_statement", "enhanced_for_statement"]
 
     query_import_name = """
         (import_declaration

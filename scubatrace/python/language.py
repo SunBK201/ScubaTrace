@@ -20,18 +20,35 @@ class PYTHON(Language):
     ]
 
     block_statements = [
-        "if_statement",
+        "class_definition",
+        "decorated_definition",
         "for_statement",
-        "while_statement",
+        "function_definition",
+        "if_statement",
         "match_statement",
+        "try_statement",
+        "while_statement",
+        "with_statement",
         "case_clause",
     ]
 
     simple_statements = [
-        "expression_statement",
-        "return_statement",
+        "assert_statement",
         "break_statement",
         "continue_statement",
+        "delete_statement",
+        "exec_statement",
+        "expression_statement",
+        "future_import_statement",
+        "global_statement",
+        "import_from_statement",
+        "import_statement",
+        "nonlocal_statement",
+        "pass_statement",
+        "print_statement",
+        "raise_statement",
+        "return_statement",
+        "type_alias_statement",
     ]
 
     control_statements = [
