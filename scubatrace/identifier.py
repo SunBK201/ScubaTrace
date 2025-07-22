@@ -157,11 +157,10 @@ class Identifier:
                 backword_refs.append(ref)
         if len(backword_refs) == 0:
             return False
+        from .function import Function
+
         for ref in backword_refs:
-            if (
-                "Function" in ref.statement.__class__.__name__
-                or "Method" in ref.statement.__class__.__name__
-            ):
+            if isinstance(ref.statement, Function):
                 return True
             if not ref.is_left_value:
                 continue
