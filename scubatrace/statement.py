@@ -52,7 +52,7 @@ class Statement:
                 identifiers_in_children.update(stat.identifiers)
             identifiers -= identifiers_in_children  # remove identifiers in children base the hash of Identifier
             identifiers |= identifiers_in_children
-        return list(identifiers)
+        return sorted(identifiers, key=lambda x: (x.start_line, x.start_column))
 
     @cached_property
     def variables(self) -> list[Identifier]:
