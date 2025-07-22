@@ -113,9 +113,27 @@ class C(Language):
                 left: (identifier)@left
                 (#eq? @left "{text}")
             )
+            (assignment_expression
+                left: (field_expression
+                	argument: (identifier)@left
+                )
+                (#eq? @left "{text}")
+            )
             (init_declarator
                 declarator: (identifier)@left
                 (#eq? @left "{text}")
+            )
+            (init_declarator
+                (pointer_declarator
+                    declarator: (identifier)@left
+                    (#eq? @left "{text}")
+                )
+            )
+            (init_declarator
+                (reference_declarator
+                    (identifier)@left
+                    (#eq? @left "{text}")
+                )
             )
             (parameter_declaration
                 declarator: (identifier)@left
