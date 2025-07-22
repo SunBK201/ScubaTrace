@@ -370,7 +370,7 @@ def test_identifier_pre_data_dependents():
 
 
 def test_identifier_post_data_dependents():
-    project = scubatrace.CProject(".", enable_lsp=True)
+    project = scubatrace.Project.Project(".", language.C)
     test_c = project.files["test.c"]
     func_main = test_c.functions[1]
     for stat in func_main.statements:

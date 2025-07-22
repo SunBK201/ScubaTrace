@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import os
 from abc import abstractmethod
@@ -21,6 +23,55 @@ class Project:
     """
     Represents a programming project with a specified path and language.
     """
+
+    @staticmethod
+    def Project(
+        path: str,
+        language: type[lang.Language],
+        enable_lsp: bool = True,
+    ) -> Project:
+        if language == lang.C:
+            from .cpp.project import CProject
+
+            return CProject(path, enable_lsp)
+        elif language == lang.JAVA:
+            from .java.project import JavaProject
+
+            return JavaProject(path, enable_lsp)
+        elif language == lang.PYTHON:
+            from .python.project import PythonProject
+
+            return PythonProject(path, enable_lsp)
+        elif language == lang.JAVASCRIPT:
+            from .javascript.project import JavaScriptProject
+
+            return JavaScriptProject(path, enable_lsp)
+        elif language == lang.GO:
+            from .go.project import GoProject
+
+            return GoProject(path, enable_lsp)
+        elif language == lang.RUST:
+            from .rust.project import RustProject
+
+            return RustProject(path, enable_lsp)
+        elif language == lang.CSHARP:
+            from .csharp.project import CSharpProject
+
+            return CSharpProject(path, enable_lsp)
+        elif language == lang.RUBY:
+            from .ruby.project import RubyProject
+
+            return RubyProject(path, enable_lsp)
+        elif language == lang.PHP:
+            from .php.project import PHPProject
+
+            return PHPProject(path, enable_lsp=False)
+        elif language == lang.SWIFT:
+            from .swift.project import SwiftProject
+
+            return SwiftProject(path, enable_lsp=False)
+        else:
+            raise ValueError("Unsupported language for project creation")
 
     def __init__(
         self,
