@@ -14,6 +14,27 @@ class JavaFile(File):
         return package
 
     @cached_property
+    def imports(self) -> list[File]:
+        import_name_node = self.parser.query_all(
+            self.text, language.JAVA.query_import_name
+        )
+        import_files = []
+        for node in import_name_node:
+            include = self.lsp.request_definition(
+                self.relpath,
+                node.start_point[0],
+                node.start_point[1],
+            )
+            if len(include) == 0:
+                continue
+            include = include[0]
+            include_abspath = include["absolutePath"]
+            if include_abspath not in self.project.files_abspath:
+                continue
+            import_files.append(self.project.files_abspath[include_abspath])
+        return import_files
+
+    @cached_property
     def import_class(self) -> list[str]:
         import_node = self.parser.query_all(self.text, language.JAVA.query_import)
         imports = []

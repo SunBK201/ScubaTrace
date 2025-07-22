@@ -10,7 +10,7 @@ class JAVA(Language):
     query_import = "(import_declaration(scoped_identifier)@name)"
     query_package = "(package_declaration)@name"
     query_class = "(class_declaration)@name"
-    query_method = "(method_declaration)@name"
+    query_function = query_method = "(method_declaration)@name"
     query_identifier = "(identifier)@name"
 
     jump_statements = [
@@ -43,10 +43,21 @@ class JAVA(Language):
         "enhanced_for_statement",
         "while_statement",
         "do_statement",
-        "switch_statement",
+        "switch_expression",
     ]
 
     loop_statements = ["for_statement", "while_statement", "do_statement"]
+
+    query_import_name = """
+        (import_declaration
+            (scoped_identifier
+                name: (identifier)@name
+            )
+        )
+        (import_declaration
+            (identifier)@name
+        )
+    """
 
     @staticmethod
     def query_left_value(text):

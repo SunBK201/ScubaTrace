@@ -42,12 +42,12 @@ class JavaBlockStatement(BlockStatement):
         match type:
             case "if_statement":
                 consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in ["block"]:
+                if consequence_node is not None and consequence_node.type == "block":
                     stats.extend(list(self._build_statements(consequence_node, self)))
-                elif consequence_node is not None:
+                elif consequence_node is not None:  # if () ...;
                     stats.extend([JavaSimpleStatement(consequence_node, self)])
                 else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
+                if else_clause_node is not None:  # if () { ... } else if () { ... }
                     stats.extend([JavaBlockStatement(else_clause_node, self)])
             case "for_statement":
                 body_node = self.node.child_by_field_name("body")
