@@ -7,10 +7,10 @@ from tree_sitter import Node
 from ..function import Function
 from ..statement import BlockStatement, Statement
 from . import language
-from .statement import JavaBlockStatement, SimpleStatement
+from .statement import RustBlockStatement, SimpleStatement
 
 
-class JavaFunction(Function, JavaBlockStatement):
+class RustFunction(Function, RustBlockStatement):
     @cached_property
     def name_node(self) -> Node: ...
 

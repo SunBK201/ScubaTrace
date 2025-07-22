@@ -59,6 +59,20 @@ class Project:
             lsp_language = "python"
         elif self.language == lang.JAVASCRIPT:
             lsp_language = "javascript"
+        elif self.language == lang.GO:
+            lsp_language = "go"
+        elif self.language == lang.RUST:
+            lsp_language = "rust"
+        elif self.language == lang.CSHARP:
+            lsp_language = "csharp"
+        elif self.language == lang.RUBY:
+            lsp_language = "ruby"
+        elif self.language == lang.PHP:
+            lsp_language = "php"
+            return
+        elif self.language == lang.SWIFT:
+            lsp_language = "swift"
+            return
         else:
             raise ValueError("Unsupported language")
         self.lsp = SyncLanguageServer.create(

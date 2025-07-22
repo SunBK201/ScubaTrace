@@ -35,19 +35,46 @@ class Function(BlockStatement):
 
     @staticmethod
     def Function(node: Node, file: File):
-        from .cpp.function import CFunction
-        from .java.function import JavaFunction
-        from .javascript.function import JavaScriptFunction
-        from .python.function import PythonFunction
-
         if file.project.language == lang.C:
+            from .cpp.function import CFunction
+
             return CFunction(node, file)
         elif file.project.language == lang.JAVA:
+            from .java.function import JavaFunction
+
             return JavaFunction(node, file)
         elif file.project.language == lang.JAVASCRIPT:
+            from .javascript.function import JavaScriptFunction
+
             return JavaScriptFunction(node, file)
         elif file.project.language == lang.PYTHON:
+            from .python.function import PythonFunction
+
             return PythonFunction(node, file)
+        elif file.project.language == lang.GO:
+            from .go.function import GoFunction
+
+            return GoFunction(node, file)
+        elif file.project.language == lang.PHP:
+            from .php.function import PHPFunction
+
+            return PHPFunction(node, file)
+        elif file.project.language == lang.RUBY:
+            from .ruby.function import RubyFunction
+
+            return RubyFunction(node, file)
+        elif file.project.language == lang.RUST:
+            from .rust.function import RustFunction
+
+            return RustFunction(node, file)
+        elif file.project.language == lang.SWIFT:
+            from .swift.function import SwiftFunction
+
+            return SwiftFunction(node, file)
+        elif file.project.language == lang.CSHARP:
+            from .csharp.function import CSharpFunction
+
+            return CSharpFunction(node, file)
         else:
             return Function(node, file)
 

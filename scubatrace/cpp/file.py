@@ -5,9 +5,6 @@ from . import language
 
 
 class CFile(File):
-    def __init__(self, path: str, project):
-        super().__init__(path, project)
-
     @cached_property
     def imports(self) -> list[File]:
         include_node = self.parser.query_all(

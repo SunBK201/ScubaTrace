@@ -30,7 +30,13 @@ class Language:
     # GO = scubalspy_config.Language.GO
 
 
-from .cpp.language import C
-from .java.language import JAVA
-from .javascript.language import JAVASCRIPT
-from .python.language import PYTHON
+from .cpp.language import C  # noqa: F401 E402
+from .csharp.language import CSHARP  # noqa: F401 E402
+from .go.language import GO  # noqa: F401 E402
+from .java.language import JAVA  # noqa: F401 E402
+from .javascript.language import JAVASCRIPT  # noqa: F401 E402
+from .php.language import PHP  # noqa: F401 E402
+from .python.language import PYTHON  # noqa: F401 E402
+from .ruby.language import RUBY  # noqa: F401 E402
+from .rust.language import RUST  # noqa: F401 E402
+from .swift.language import SWIFT  # noqa: F401 E402

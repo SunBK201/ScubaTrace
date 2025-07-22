@@ -44,19 +44,46 @@ class File:
 
     @staticmethod
     def File(path: str, project: Project) -> File:
-        from .cpp.file import CFile
-        from .java.file import JavaFile
-        from .javascript.file import JavaScriptFile
-        from .python.file import PythonFile
-
         if project.language == lang.C:
+            from .cpp.file import CFile
+
             return CFile(path, project)
         elif project.language == lang.JAVA:
+            from .java.file import JavaFile
+
             return JavaFile(path, project)
         elif project.language == lang.JAVASCRIPT:
+            from .javascript.file import JavaScriptFile
+
             return JavaScriptFile(path, project)
         elif project.language == lang.PYTHON:
+            from .python.file import PythonFile
+
             return PythonFile(path, project)
+        elif project.language == lang.GO:
+            from .go.file import GoFile
+
+            return GoFile(path, project)
+        elif project.language == lang.PHP:
+            from .php.file import PHPFile
+
+            return PHPFile(path, project)
+        elif project.language == lang.RUBY:
+            from .ruby.file import RubyFile
+
+            return RubyFile(path, project)
+        elif project.language == lang.RUST:
+            from .rust.file import RustFile
+
+            return RustFile(path, project)
+        elif project.language == lang.SWIFT:
+            from .swift.file import SwiftFile
+
+            return SwiftFile(path, project)
+        elif project.language == lang.CSHARP:
+            from .csharp.file import CSharpFile
+
+            return CSharpFile(path, project)
         else:
             return File(path, project)
 

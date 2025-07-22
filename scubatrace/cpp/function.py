@@ -11,9 +11,6 @@ from .statement import CBlockStatement, SimpleStatement
 
 
 class CFunction(Function, CBlockStatement):
-    def __init__(self, node: Node, file):
-        super().__init__(node, file)
-
     @cached_property
     def name_node(self) -> Node:
         name_node = self.node.child_by_field_name("declarator")
@@ -56,6 +53,12 @@ class CFunction(Function, CBlockStatement):
         param_node_start_line = param_node.start_point[0] + 1
         param_node_end_line = param_node.end_point[0] + 1
         return list(range(param_node_start_line, param_node_end_line + 1))
+
+    @cached_property
+    def statements(self) -> list[Statement]:
+        if self.body_node is None:
+            return []
+        return list(self._build_statements(self.body_node, self))
 
     def __find_next_nearest_stat(
         self, stat: Statement, jump: int = 0
@@ -184,9 +187,3 @@ class CFunction(Function, CBlockStatement):
                             cur_stat._post_control_statements = next_stat
                     case _:
                         cur_stat._post_control_statements = next_stat
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        if self.body_node is None:
-            return []
-        return list(self._build_statements(self.body_node, self))
