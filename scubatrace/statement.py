@@ -466,23 +466,3 @@ class BlockStatement(Statement):
             if stat.node.start_byte == field_node.start_byte:
                 return stat
         return None
-
-    def is_block_statement(self, node: Node) -> bool:
-        language = self.language
-        return node.type in language.block_statements
-
-    def is_simple_statement(self, node: Node) -> bool:
-        language = self.language
-        if node.parent is None:
-            return False
-        else:
-            if node.parent.type in language.simple_statements:
-                return False
-            elif (
-                node.parent.type in language.control_statements
-                and node.parent.child_by_field_name("body") != node
-                and node.parent.child_by_field_name("consequence") != node
-            ):
-                return False
-            else:
-                return node.type in language.simple_statements

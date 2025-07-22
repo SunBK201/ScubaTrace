@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+from tree_sitter import Node
+
 # from scubalspy import scubalspy_config
 
 
@@ -22,6 +24,16 @@ class Language:
     @staticmethod
     @abstractmethod
     def query_left_value(text) -> str: ...
+
+    @classmethod
+    def is_block_node(cls, node: Node) -> bool:
+        return node.type in cls.block_statements
+
+    @classmethod
+    def is_simple_node(cls, node: Node) -> bool:
+        if node.parent is not None and node.parent.type in cls.simple_statements:
+            return False
+        return node.type in cls.simple_statements
 
     # C = scubalspy_config.Language.C
     # JAVA = scubalspy_config.Language.JAVA

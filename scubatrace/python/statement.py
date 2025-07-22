@@ -27,9 +27,9 @@ class PythonBlockStatement(BlockStatement):
                 yield from ()
         while True:
             assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
+            if self.language.is_simple_node(cursor.node):
                 yield PythonSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
+            elif self.language.is_block_node(cursor.node):
                 yield PythonBlockStatement(cursor.node, parent)
 
             if not cursor.goto_next_sibling():
@@ -54,18 +54,18 @@ class PythonBlockStatement(BlockStatement):
                 if body_node is not None and body_node.type in ["block"]:
                     stats.extend(list(self._build_statements(body_node, self)))
                 elif body_node is not None:
-                    if self.is_simple_statement(body_node):
+                    if self.language.is_simple_node(body_node):
                         stats.extend([PythonSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
+                    elif self.language.is_block_node(body_node):
                         stats.extend([PythonBlockStatement(body_node, self)])
             case "while_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["block"]:
                     stats.extend(list(self._build_statements(body_node, self)))
                 elif body_node is not None:
-                    if self.is_simple_statement(body_node):
+                    if self.language.is_simple_node(body_node):
                         stats.extend([PythonSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
+                    elif self.language.is_block_node(body_node):
                         stats.extend([PythonBlockStatement(body_node, self)])
             case "match_statement":
                 body_node = self.node.child_by_field_name("body")

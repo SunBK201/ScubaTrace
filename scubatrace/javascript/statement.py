@@ -28,9 +28,9 @@ class JavaScriptBlockStatement(BlockStatement):
                 yield from ()
         while True:
             assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
+            if self.language.is_simple_node(cursor.node):
                 yield JavaScriptSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
+            elif self.language.is_block_node(cursor.node):
                 yield JavaScriptBlockStatement(cursor.node, parent)
 
             if not cursor.goto_next_sibling():
@@ -57,27 +57,27 @@ class JavaScriptBlockStatement(BlockStatement):
                 if body_node is not None and body_node.type in ["statement_block"]:
                     stats.extend(list(self._build_statements(body_node, self)))
                 elif body_node is not None:
-                    if self.is_simple_statement(body_node):
+                    if self.language.is_simple_node(body_node):
                         stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
+                    elif self.language.is_block_node(body_node):
                         stats.extend([JavaScriptBlockStatement(body_node, self)])
             case "while_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["statement_block"]:
                     stats.extend(list(self._build_statements(body_node, self)))
                 elif body_node is not None:
-                    if self.is_simple_statement(body_node):
+                    if self.language.is_simple_node(body_node):
                         stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
+                    elif self.language.is_block_node(body_node):
                         stats.extend([JavaScriptBlockStatement(body_node, self)])
             case "do_statement":
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["statement_block"]:
                     stats.extend(list(self._build_statements(body_node, self)))
                 elif body_node is not None:
-                    if self.is_simple_statement(body_node):
+                    if self.language.is_simple_node(body_node):
                         stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
+                    elif self.language.is_block_node(body_node):
                         stats.extend([JavaScriptBlockStatement(body_node, self)])
             case "switch_statement":
                 body_node = self.node.child_by_field_name("body")
