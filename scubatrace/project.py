@@ -179,6 +179,11 @@ class Project:
         entry = self.entry_point
         if entry is None:
             return nx.MultiDiGraph()
+        for file in self.files.values():
+            try:
+                self.lsp.open_file(file.relpath).__enter__()
+            except Exception as e:
+                print(f"Error preloading file {file.relpath}: {e}")
         cg = self.__build_callgraph(entry)
         return cg
 
