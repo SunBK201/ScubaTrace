@@ -5,8 +5,8 @@ sys.path.append("../../")
 import time
 
 import scubatrace
+from scubatrace import BlockStatement, SimpleStatement, language
 from scubatrace.cpp.file import CFile
-from scubatrace.statement import BlockStatement, SimpleStatement
 
 
 def testAccessiableFunc():

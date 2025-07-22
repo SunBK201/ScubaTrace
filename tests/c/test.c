@@ -40,3 +40,9 @@ int mul(int a, int b)
     a = MAX(a, 1);
     return a * add(a, b);
 }
+
+int cp(int *x, int *y)
+{
+    *x = *y;
+    return 0;
+}
