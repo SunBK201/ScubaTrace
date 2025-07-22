@@ -31,6 +31,10 @@ class Statement:
         return hash(self.signature)
 
     @property
+    @abstractmethod
+    def is_jump_statement(self) -> bool: ...
+
+    @property
     def language(self):
         return self.file.language
 
@@ -40,7 +44,7 @@ class Statement:
 
     @cached_property
     def identifiers(self) -> list[Identifier]:
-        parser = self.file.project.parser
+        parser = self.file.parser
         language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
         identifiers = set(
@@ -88,10 +92,6 @@ class Statement:
         else:
             variables = self.variables
         return [id for id in variables if id.is_left_value]
-
-    @property
-    @abstractmethod
-    def is_jump_statement(self) -> bool: ...
 
     @property
     def signature(self) -> str:
@@ -366,9 +366,6 @@ class Statement:
 
 
 class SimpleStatement(Statement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
     @property
     def is_jump_statement(self) -> bool:
         language = self.language
@@ -376,27 +373,11 @@ class SimpleStatement(Statement):
 
 
 class BlockStatement(Statement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
     def __getitem__(self, index: int) -> Statement:
         return self.statements[index]
 
-    def __traverse_statements(self):
-        stack = []
-        for stat in self.statements:
-            stack.append(stat)
-            while stack:
-                cur_stat = stack.pop()
-                yield cur_stat
-                if isinstance(cur_stat, BlockStatement):
-                    stack.extend(reversed(cur_stat.statements))
-
     @property
     def dot_text(self) -> str:
-        """
-        return only the first line of the text
-        """
         return '"' + self.text.split("\n")[0].replace('"', '\\"') + '..."'
 
     @cached_property
@@ -405,7 +386,7 @@ class BlockStatement(Statement):
 
     @cached_property
     def block_identifiers(self) -> list[Identifier]:
-        parser = self.file.project.parser
+        parser = self.file.parser
         language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
         identifiers = set(
@@ -435,6 +416,26 @@ class BlockStatement(Statement):
             variables.append(identifier)
         return variables
 
+    @property
+    def is_jump_statement(self) -> bool:
+        language = self.language
+        if self.node.type in language.loop_statements:
+            return False
+        for child in self.statements:
+            if child.is_jump_statement:
+                return True
+        return False
+
+    def __traverse_statements(self):
+        stack = []
+        for stat in self.statements:
+            stack.append(stat)
+            while stack:
+                cur_stat = stack.pop()
+                yield cur_stat
+                if isinstance(cur_stat, BlockStatement):
+                    stack.extend(reversed(cur_stat.statements))
+
     def statements_by_line(self, line: int) -> list[Statement]:
         targets = []
         for stat in self.statements:
@@ -457,16 +458,6 @@ class BlockStatement(Statement):
         else:
             return [s for s in self.statements if s.node.type == type]
 
-    @property
-    def is_jump_statement(self) -> bool:
-        language = self.language
-        if self.node.type in language.loop_statements:
-            return False
-        for child in self.statements:
-            if child.is_jump_statement:
-                return True
-        return False
-
     def is_block_statement(self, node: Node) -> bool:
         language = self.language
         return node.type in language.block_statements
@@ -486,364 +477,3 @@ class BlockStatement(Statement):
                 return False
             else:
                 return node.type in language.simple_statements
-
-
-class CSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-
-class CBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-    def _statements_builder(
-        self,
-        node: Node,
-        parent: BlockStatement | Function | File,
-    ) -> Generator[Statement, None, None]:
-        cursor = node.walk()
-        if cursor.node is not None:
-            if not cursor.goto_first_child():
-                yield from ()
-        while True:
-            assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
-                yield CSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
-                yield CBlockStatement(cursor.node, parent)
-
-            if not cursor.goto_next_sibling():
-                break
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        stats = []
-        type = self.node.type
-        match type:
-            case "if_statement":
-                consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in [
-                    "compound_statement"
-                ]:
-                    stats.extend(list(self._statements_builder(consequence_node, self)))
-                elif consequence_node is not None:
-                    stats.extend([CSimpleStatement(consequence_node, self)])
-                else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
-                    stats.extend([CBlockStatement(else_clause_node, self)])
-            case "else_clause":
-                compound_node = None
-                for child in self.node.children:
-                    if child.type == "compound_statement":
-                        compound_node = child
-                if compound_node is not None:
-                    stats.extend(list(self._statements_builder(compound_node, self)))
-                else:
-                    stats.extend(list(self._statements_builder(self.node, self)))
-            case "for_range_loop":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "while_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "do_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "switch_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    stats.extend([CSimpleStatement(body_node, self)])
-            case "case_statement":
-                get_compound = False
-                for child in self.node.children:
-                    if child.type in ["compound_statement"]:
-                        stats.extend(list(self._statements_builder(child, self)))
-                        get_compound = True
-                if not get_compound:
-                    stats.extend(list(self._statements_builder(self.node, self)))
-            case _:
-                stats.extend(list(self._statements_builder(self.node, self)))
-        return stats
-
-
-class JavaSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function):
-        super().__init__(node, parent)
-
-
-class JavaBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function):
-        super().__init__(node, parent)
-
-    def _statements_builder(
-        self,
-        node: Node,
-        parent: BlockStatement | Function,
-    ) -> Generator[Statement, None, None]:
-        cursor = node.walk()
-        if cursor.node is not None:
-            if not cursor.goto_first_child():
-                yield from ()
-        while True:
-            assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
-                yield JavaSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
-                yield JavaBlockStatement(cursor.node, parent)
-
-            if not cursor.goto_next_sibling():
-                break
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        stats = []
-        type = self.node.type
-        match type:
-            case "if_statement":
-                consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(consequence_node, self)))
-                elif consequence_node is not None:
-                    stats.extend([JavaSimpleStatement(consequence_node, self)])
-                else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
-                    stats.extend([JavaBlockStatement(else_clause_node, self)])
-            case "for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaBlockStatement(body_node, self)])
-            case "enhanced_for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaBlockStatement(body_node, self)])
-            case "while_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaBlockStatement(body_node, self)])
-            case "do_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaBlockStatement(body_node, self)])
-            case "switch_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["switch_block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    stats.extend([JavaSimpleStatement(body_node, self)])
-            case "switch_block_statement_group":
-                get_compound = False
-                for child in self.node.children:
-                    if child.type in ["block"]:
-                        stats.extend(list(self._statements_builder(child, self)))
-                        get_compound = True
-                if not get_compound:
-                    stats.extend(list(self._statements_builder(self.node, self)))
-            case _:
-                stats.extend(list(self._statements_builder(self.node, self)))
-        return stats
-
-
-class PythonSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-
-class PythonBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-    def _statements_builder(
-        self,
-        node: Node,
-        parent: BlockStatement | Function,
-    ) -> Generator[Statement, None, None]:
-        cursor = node.walk()
-        if cursor.node is not None:
-            if not cursor.goto_first_child():
-                yield from ()
-        while True:
-            assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
-                yield PythonSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
-                yield PythonBlockStatement(cursor.node, parent)
-
-            if not cursor.goto_next_sibling():
-                break
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        stats = []
-        type = self.node.type
-        match type:
-            case "if_statement":
-                consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(consequence_node, self)))
-                elif consequence_node is not None:
-                    stats.extend([PythonSimpleStatement(consequence_node, self)])
-                else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
-                    stats.extend([PythonBlockStatement(else_clause_node, self)])
-            case "for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([PythonSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([PythonBlockStatement(body_node, self)])
-            case "while_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([PythonSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([PythonBlockStatement(body_node, self)])
-            case "match_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    stats.extend([PythonSimpleStatement(body_node, self)])
-            case _:
-                stats.extend(list(self._statements_builder(self.node, self)))
-        return stats
-
-
-class JavaScriptSimpleStatement(SimpleStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-
-class JavaScriptBlockStatement(BlockStatement):
-    def __init__(self, node: Node, parent: BlockStatement | Function | File):
-        super().__init__(node, parent)
-
-    def _statements_builder(
-        self,
-        node: Node,
-        parent: BlockStatement | Function | File,
-    ) -> Generator[Statement, None, None]:
-        cursor = node.walk()
-        if cursor.node is not None:
-            if not cursor.goto_first_child():
-                yield from ()
-        while True:
-            assert cursor.node is not None
-            if self.is_simple_statement(cursor.node):
-                yield JavaScriptSimpleStatement(cursor.node, parent)
-            elif self.is_block_statement(cursor.node):
-                yield JavaScriptBlockStatement(cursor.node, parent)
-
-            if not cursor.goto_next_sibling():
-                break
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        stats = []
-        type = self.node.type
-        match type:
-            case "if_statement":
-                consequence_node = self.node.child_by_field_name("consequence")
-                if consequence_node is not None and consequence_node.type in [
-                    "statement_block"
-                ]:
-                    stats.extend(list(self._statements_builder(consequence_node, self)))
-                elif consequence_node is not None:
-                    stats.extend([JavaScriptSimpleStatement(consequence_node, self)])
-                else_clause_node = self.node.child_by_field_name("alternative")
-                if else_clause_node is not None:
-                    stats.extend([JavaScriptBlockStatement(else_clause_node, self)])
-            case "for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["statement_block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaScriptBlockStatement(body_node, self)])
-            case "while_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["statement_block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaScriptBlockStatement(body_node, self)])
-            case "do_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["statement_block"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    if self.is_simple_statement(body_node):
-                        stats.extend([JavaScriptSimpleStatement(body_node, self)])
-                    elif self.is_block_statement(body_node):
-                        stats.extend([JavaScriptBlockStatement(body_node, self)])
-            case "switch_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["switch_body"]:
-                    stats.extend(list(self._statements_builder(body_node, self)))
-                elif body_node is not None:
-                    stats.extend([JavaScriptSimpleStatement(body_node, self)])
-            case "switch_case":
-                for child in self.node.children:
-                    stats.extend(list(self._statements_builder(child, self)))
-            case _:
-                stats.extend(list(self._statements_builder(self.node, self)))
-        return stats

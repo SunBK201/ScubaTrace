@@ -1,5 +1,9 @@
+from .cpp.project import CProject
 from .file import File
 from .function import Function
 from .identifier import Identifier
-from .parser import c_parser, java_parser, javascript_parser, python_parser
-from .project import CProject, JavaProject, JavaScriptProject, Project, PythonProject
+from .java.project import JavaProject
+from .javascript.project import JavaScriptProject
+from .parser import Parser
+from .project import Project
+from .python.project import PythonProject

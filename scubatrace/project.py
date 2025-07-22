@@ -9,12 +9,12 @@ from scubalspy import SyncLanguageServer
 from scubalspy.scubalspy_config import ScubalspyConfig
 from scubalspy.scubalspy_logger import ScubalspyLogger
 
-from . import joern, language
+from . import joern
+from . import language as lang
 from .call import Call
-from .file import CFile, File, JavaFile, JavaScriptFile, PythonFile
+from .file import File
 from .function import Function, FunctionDeclaration
-from .language import JAVA, JAVASCRIPT, PYTHON, C
-from .parser import Parser, c_parser, java_parser, javascript_parser, python_parser
+from .parser import Parser
 
 
 class Project:
@@ -25,20 +25,20 @@ class Project:
     def __init__(
         self,
         path: str,
-        language: type[language.Language],
+        language: type[lang.Language],
         enable_lsp: bool = True,
         enable_joern: bool = False,
     ):
         self.path = path
         self.language = language
         if enable_joern:
-            if language == C:
+            if language == lang.C:
                 joern_language = joern.Language.C
-            elif language == JAVA:
+            elif language == lang.JAVA:
                 joern_language = joern.Language.JAVA
-            elif language == PYTHON:
+            elif language == lang.PYTHON:
                 joern_language = joern.Language.PYTHON
-            elif language == JAVASCRIPT:
+            elif language == lang.JAVASCRIPT:
                 joern_language = joern.Language.JAVASCRIPT
             else:
                 raise ValueError("Joern unsupported language")
@@ -51,13 +51,13 @@ class Project:
             self.start_lsp()
 
     def start_lsp(self):
-        if self.language == C:
+        if self.language == lang.C:
             lsp_language = "cpp"
-        elif self.language == JAVA:
+        elif self.language == lang.JAVA:
             lsp_language = "java"
-        elif self.language == PYTHON:
+        elif self.language == lang.PYTHON:
             lsp_language = "python"
-        elif self.language == JAVASCRIPT:
+        elif self.language == lang.JAVASCRIPT:
             lsp_language = "javascript"
         else:
             raise ValueError("Unsupported language")
@@ -66,7 +66,7 @@ class Project:
             ScubalspyLogger(),
             os.path.abspath(self.path),
         )
-        if self.language == C:
+        if self.language == lang.C:
             self.conf_file = os.path.join(self.path, "compile_flags.txt")
             if not os.path.exists(self.conf_file):
                 with open(self.conf_file, "w") as f:
@@ -102,7 +102,15 @@ class Project:
     def parser(self) -> Parser: ...
 
     @cached_property
-    def files(self) -> dict[str, File]: ...
+    def files(self) -> dict[str, File]:
+        file_lists = {}
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                if file.split(".")[-1] in self.language.extensions:
+                    file_path = os.path.join(root, file)
+                    key = file_path.replace(self.path + "/", "")
+                    file_lists[key] = File.File(file_path, self)
+        return file_lists
 
     @cached_property
     def files_abspath(self) -> dict[str, File]:
@@ -260,98 +268,3 @@ class Project:
             if func.start_line <= start_line <= func.end_line:
                 return func
         return None
-
-
-class CProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.C, enable_lsp=enable_lsp)
-
-    @property
-    def parser(self) -> Parser:
-        return c_parser
-
-    @cached_property
-    def files(self) -> dict[str, File]:
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.C:
-                        file_lists[key] = CFile(file_path, self)
-        return file_lists
-
-    @cached_property
-    def entry_point(self) -> Function | None:
-        for func in self.functions:
-            if func.name == "main":
-                return func
-        return None
-
-
-class JavaProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.JAVA, enable_lsp)
-
-    @property
-    def parser(self) -> Parser:
-        return java_parser
-
-    @cached_property
-    def files(self) -> dict[str, File]:
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.JAVA:
-                        file_lists[key] = JavaFile(file_path, self)
-        return file_lists
-
-    @property
-    def class_path(self) -> str:
-        return self.path
-
-
-class PythonProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.PYTHON, enable_lsp)
-
-    @property
-    def parser(self) -> Parser:
-        return python_parser
-
-    @cached_property
-    def files(self) -> dict[str, File]:
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.PYTHON:
-                        file_lists[key] = PythonFile(file_path, self)
-        return file_lists
-
-
-class JavaScriptProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.JAVASCRIPT, enable_lsp)
-
-    @property
-    def parser(self) -> Parser:
-        return javascript_parser
-
-    @cached_property
-    def files(self) -> dict[str, File]:
-        file_lists = {}
-        for root, _, files in os.walk(self.path):
-            for file in files:
-                if file.split(".")[-1] in self.language.extensions:
-                    file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    if self.language == language.JAVASCRIPT:
-                        file_lists[key] = JavaScriptFile(file_path, self)
-        return file_lists

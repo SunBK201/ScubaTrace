@@ -4,8 +4,6 @@ from tree_sitter import Language as TSLanguage
 from tree_sitter import Node, Tree
 from tree_sitter import Parser as TSParser
 
-from . import language
-
 
 class Parser:
     def __init__(self, language: TSLanguage) -> None:
@@ -59,29 +57,3 @@ class Parser:
     ) -> list[Node]:
         captures = self.query(target, query_str)
         return captures.get(capture_name, [])
-
-
-class CParser(Parser):
-    def __init__(self):
-        super().__init__(language.C.tslanguage)
-
-
-class JavaParser(Parser):
-    def __init__(self):
-        super().__init__(language.JAVA.tslanguage)
-
-
-class PythonParser(Parser):
-    def __init__(self):
-        super().__init__(language.PYTHON.tslanguage)
-
-
-class JavaScriptParser(Parser):
-    def __init__(self):
-        super().__init__(language.JAVASCRIPT.tslanguage)
-
-
-c_parser = CParser()
-java_parser = JavaParser()
-python_parser = PythonParser()
-javascript_parser = JavaScriptParser()

@@ -5,7 +5,7 @@ sys.path.append("../../")
 import time
 
 import scubatrace
-from scubatrace.file import CFile
+from scubatrace.cpp.file import CFile
 from scubatrace.statement import BlockStatement, SimpleStatement
 
 

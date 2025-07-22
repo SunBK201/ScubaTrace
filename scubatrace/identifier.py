@@ -172,7 +172,7 @@ class Identifier:
 
     @property
     def is_left_value(self) -> bool:
-        parser = self.file.project.parser
+        parser = self.file.parser
         language = self.file.project.language
         stat = self.statement
         query = language.query_left_value(self.text)

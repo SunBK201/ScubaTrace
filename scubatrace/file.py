@@ -9,11 +9,10 @@ import chardet
 from scubalspy import SyncLanguageServer
 from tree_sitter import Node
 
-from . import language
+from . import language as lang
 from .clazz import Class
-from .function import CFunction, Function, JavaScriptFunction, PythonFunction
+from .function import Function
 from .identifier import Identifier
-from .parser import c_parser, java_parser, javascript_parser, python_parser
 from .statement import Statement
 
 if TYPE_CHECKING:
@@ -45,30 +44,24 @@ class File:
 
     @staticmethod
     def File(path: str, project: Project) -> File:
-        """
-        Factory method to create a File instance based on the file type.
+        from .cpp.file import CFile
+        from .java.file import JavaFile
+        from .javascript.file import JavaScriptFile
+        from .python.file import PythonFile
 
-        Args:
-            path (str): The file path.
-            project (Project): The project associated with this instance.
-
-        Returns:
-            File: An instance of the appropriate file type.
-        """
-        match project.language:
-            case language.C:
-                return CFile(path, project)
-            case language.JAVA:
-                return JavaFile(path, project)
-            case language.PYTHON:
-                return PythonFile(path, project)
-            case language.JAVASCRIPT:
-                return JavaScriptFile(path, project)
-            case _:
-                return File(path, project)
+        if project.language == lang.C:
+            return CFile(path, project)
+        elif project.language == lang.JAVA:
+            return JavaFile(path, project)
+        elif project.language == lang.JAVASCRIPT:
+            return JavaScriptFile(path, project)
+        elif project.language == lang.PYTHON:
+            return PythonFile(path, project)
+        else:
+            return File(path, project)
 
     @property
-    def language(self) -> type[language.Language]:
+    def language(self) -> type[lang.Language]:
         return self.project.language
 
     @property
@@ -160,17 +153,22 @@ class File:
     def signature(self) -> str:
         return self.relpath
 
+    @property
+    def parser(self):
+        return self.project.parser
+
     @cached_property
-    @abstractmethod
-    def node(self) -> Node: ...
+    def node(self) -> Node:
+        return self.parser.parse(self.text)
 
     @cached_property
     @abstractmethod
     def imports(self) -> list[File]: ...
 
     @cached_property
-    @abstractmethod
-    def functions(self) -> list[Function]: ...
+    def functions(self) -> list[Function]:
+        func_node = self.parser.query_all(self.text, self.language.query_function)
+        return [Function.Function(node, file=self) for node in func_node]
 
     @cached_property
     @abstractmethod
@@ -178,11 +176,19 @@ class File:
 
     @cached_property
     @abstractmethod
-    def statements(self) -> list[Statement]: ...
+    def statements(self) -> list[Statement]:
+        stats = []
+        for func in self.functions:
+            stats.extend(func.statements)
+        return stats
 
     @cached_property
     @abstractmethod
-    def identifiers(self) -> list[Identifier]: ...
+    def identifiers(self) -> list[Identifier]:
+        identifiers = []
+        for stmt in self.statements:
+            identifiers.extend(stmt.identifiers)
+        return identifiers
 
     @cached_property
     @abstractmethod
@@ -210,7 +216,7 @@ class File:
         for import_file in self.imports:
             lsp.open_file(import_file.relpath).__enter__()
             # preload corresponding source file if the file is C/C++
-            if self.language == language.C:
+            if self.language == lang.C:
                 heuristic_name_list = [
                     import_file.name.replace(".h", ".cpp"),
                     import_file.name.replace(".h", ".c"),
@@ -245,7 +251,7 @@ class File:
             return func.statements_by_line(line)
         else:
             # If the line is not in a function, get the statement from the file
-            root_node = self.project.parser.parse(self.text)
+            root_node = self.parser.parse(self.text)
             for node in root_node.named_children:
                 if line < node.start_point[0] + 1 or line > node.end_point[0] + 1:
                     continue
@@ -253,120 +259,3 @@ class File:
                     continue
                 return [Statement(node, self)]
         return []
-
-
-class CFile(File):
-    def __init__(self, path: str, project: Project):
-        super().__init__(path, project)
-
-    @cached_property
-    def node(self) -> Node:
-        return c_parser.parse(self.text)
-
-    @cached_property
-    def imports(self) -> list[File]:
-        include_node = c_parser.query_all(self.text, language.C.query_include)
-        import_files = []
-        for node in include_node:
-            include_path_node = node.child_by_field_name("path")
-            if include_path_node is None:
-                continue
-            include = self.lsp.request_definition(
-                self.relpath,
-                include_path_node.start_point[0],
-                include_path_node.start_point[1],
-            )
-            if len(include) == 0:
-                continue
-            include = include[0]
-            include_abspath = include["absolutePath"]
-            if include_abspath not in self.project.files_abspath:
-                continue
-            import_files.append(self.project.files_abspath[include_abspath])
-        return import_files
-
-    @cached_property
-    def source_header(self) -> File | None:
-        """
-        switch between the main source file (*.cpp) and header (*.h)
-        """
-        uri = self.lsp.request_switch_source_header(self.relpath, self.uri)
-        if len(uri) == 0:
-            return None
-        return self.project.files_uri.get(uri, None)
-
-    @cached_property
-    def functions(self) -> list[Function]:
-        func_node = c_parser.query_all(self.text, language.C.query_function)
-        return [CFunction(node, file=self) for node in func_node]
-
-    @cached_property
-    def statements(self) -> list[Statement]:
-        stats = []
-        for func in self.functions:
-            stats.extend(func.statements)
-        return stats
-
-    @cached_property
-    def identifiers(self) -> list[Identifier]:
-        identifiers = []
-        for stmt in self.statements:
-            identifiers.extend(stmt.identifiers)
-        return identifiers
-
-
-class JavaFile(File):
-    def __init__(self, path: str, project: Project):
-        super().__init__(path, project)
-
-    @cached_property
-    def node(self) -> Node:
-        return java_parser.parse(self.text)
-
-    @property
-    def package(self) -> str:
-        package_node = java_parser.query_oneshot(self.text, language.JAVA.query_package)
-        if package_node is None:
-            return ""
-        package = package_node.text.decode()  # type: ignore
-        return package
-
-    @cached_property
-    def import_class(self) -> list[str]:
-        import_node = java_parser.query_all(self.text, language.JAVA.query_import)
-        imports = []
-        for node in import_node:
-            assert node.text is not None
-            scoped_identifier = node.text.decode()
-            imports.append(scoped_identifier)
-        return imports
-
-
-class PythonFile(File):
-    def __init__(self, path: str, project: Project):
-        super().__init__(path, project)
-
-    @cached_property
-    def node(self) -> Node:
-        return python_parser.parse(self.text)
-
-    @cached_property
-    def functions(self) -> list[Function]:
-        func_node = python_parser.query_all(self.text, language.PYTHON.query_function)
-        return [PythonFunction(node, file=self) for node in func_node]
-
-
-class JavaScriptFile(File):
-    def __init__(self, path: str, project: Project):
-        super().__init__(path, project)
-
-    @cached_property
-    def node(self) -> Node:
-        return javascript_parser.parse(self.text)
-
-    @cached_property
-    def functions(self) -> list[Function]:
-        func_node = javascript_parser.query_all(
-            self.text, language.JAVASCRIPT.query_function
-        )
-        return [JavaScriptFunction(node, file=self) for node in func_node]
