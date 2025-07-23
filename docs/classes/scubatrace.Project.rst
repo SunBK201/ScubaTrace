@@ -19,4 +19,3 @@ Project
    -------
    .. automethod:: Project
    .. automethod:: export_callgraph
-   .. automethod:: search_function

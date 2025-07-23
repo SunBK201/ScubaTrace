@@ -21,7 +21,7 @@ from .parser import Parser
 
 class Project:
     """
-    Represents a programming project with a specified path and language.
+    Represents a codebase project with a specified path and language.
     """
 
     @staticmethod
@@ -30,6 +30,18 @@ class Project:
         language: type[lang.Language],
         enable_lsp: bool = True,
     ) -> Project:
+        """
+        Factory function to create a language-specific :class:`Project` instance.
+        Args:
+            path (str): The file system path to the project root.
+            language (type[Language]): The programming language type for the project.
+            enable_lsp (bool, optional): Whether to enable Language Server Protocol (LSP) support. Defaults to True.
+                Note: For PHP and Swift, LSP is always disabled.
+        Returns:
+            Project: An instance of the appropriate language-specific Project subclass.
+        Raises:
+            ValueError: If the provided language is not supported.
+        """
         if language == lang.C:
             from .cpp.project import CProject
 
@@ -149,12 +161,15 @@ class Project:
 
     @property
     def abspath(self) -> str:
+        """
+        The absolute path of the project.
+        """
         return os.path.abspath(self.path)
 
     @property
     def sub_dirs(self) -> list[str]:
         """
-        Returns a list of subdirectories in the project path.
+        A list of subdirectories in the project path.
         """
         sub_dirs = []
         for root, dirs, _ in os.walk(self.path):
@@ -164,10 +179,19 @@ class Project:
 
     @property
     @abstractmethod
-    def parser(self) -> Parser: ...
+    def parser(self) -> Parser:
+        """
+        The :class:`Parser` instance associated with the current object.
+        """
+        ...
 
     @cached_property
     def files(self) -> dict[str, File]:
+        """
+        A dictionary mapping relative file paths to :class:`File` objects for all source files in the project.
+
+        The keys are relative paths from the project root, and the values are :class:`File` representing each source file.
+        """
         file_lists = {}
         for root, _, files in os.walk(self.path):
             for file in files:
@@ -179,26 +203,22 @@ class Project:
 
     @cached_property
     def files_abspath(self) -> dict[str, File]:
+        """
+        A dictionary mapping the absolute file paths to their corresponding :class:`File` objects.
+        """
         return {v.abspath: v for v in self.files.values()}
 
     @cached_property
     def files_uri(self) -> dict[str, File]:
         """
-        Returns a dictionary of files in the project with 'file://' URIs as keys.
-        This is useful for accessing files in a URI format.
+        A dictionary mapping the file URIs to their corresponding :class:`File` objects.
         """
         return {"file://" + v.abspath: v for v in self.files.values()}
 
     @cached_property
     def functions(self) -> list[Function]:
         """
-        Retrieve a list of all functions from the files in the project.
-
-        This method iterates over all files in the project and collects
-        all functions defined in those files.
-
-        Returns:
-            list[Function]: A list of Function objects from all files in the project.
+        All functions in the project.
         """
         functions = []
         for file in self.files.values():
@@ -207,7 +227,14 @@ class Project:
 
     @cached_property
     @abstractmethod
-    def entry_point(self) -> Function | None: ...
+    def entry_point(self) -> Function | None:
+        """
+        The entry point function of the project, if it exists.
+
+        For example, in a C project, this would be the `main` function.
+        If no entry point is defined, returns None.
+        """
+        ...
 
     def __build_callgraph(self, entry: Function) -> nx.MultiDiGraph:
         """
@@ -249,6 +276,9 @@ class Project:
 
     @property
     def callgraph(self) -> nx.MultiDiGraph:
+        """
+        Call graph of the project, starting from the entry point function.
+        """
         entry = self.entry_point
         if entry is None:
             return nx.MultiDiGraph()
@@ -324,6 +354,12 @@ class Project:
         return cg
 
     def export_callgraph(self, output_path: str):
+        """
+        Exports the call graph of the project to a DOT file.
+
+        Args:
+            output_path (str): The directory where the call graph DOT file will be saved.
+        """
         os.makedirs(output_path, exist_ok=True)
         callgraph_path = os.path.join(output_path, "callgraph.dot")
         nx.nx_agraph.write_dot(self.callgraph, callgraph_path)
