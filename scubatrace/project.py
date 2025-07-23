@@ -24,6 +24,11 @@ class Project:
     Represents a codebase project with a specified path and language.
     """
 
+    path: str
+    """The file system path to the project root."""
+    language: type[lang.Language]
+    """The programming language type for the project."""
+
     @staticmethod
     def Project(
         path: str,
@@ -32,13 +37,16 @@ class Project:
     ) -> Project:
         """
         Factory function to create a language-specific :class:`Project` instance.
+
         Args:
             path (str): The file system path to the project root.
             language (type[Language]): The programming language type for the project.
             enable_lsp (bool, optional): Whether to enable Language Server Protocol (LSP) support. Defaults to True.
                 Note: For PHP and Swift, LSP is always disabled.
+
         Returns:
             Project: An instance of the appropriate language-specific Project subclass.
+
         Raises:
             ValueError: If the provided language is not supported.
         """

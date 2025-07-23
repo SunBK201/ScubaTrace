@@ -21,8 +21,11 @@ if TYPE_CHECKING:
 
 class File:
     """
-    Represents a file in a project.
+    Represents a source code file in a project.
     """
+
+    project: Project
+    """ The project this file belongs to."""
 
     def __init__(self, path: str, project: Project):
         """
@@ -40,6 +43,17 @@ class File:
 
     @staticmethod
     def File(path: str, project: Project) -> File:
+        """
+        Factory function to create a :class:`File` instance.
+
+        Args:
+            path (str): The file relative path.
+            project (Project): The project instance.
+
+        Returns:
+            File: An instance of a language-specific File subclass corresponding to the project's language.
+        """
+
         if project.language == lang.C:
             from .cpp.file import CFile
 
@@ -90,10 +104,7 @@ class File:
     @property
     def name(self) -> str:
         """
-        Returns the name of the file without the directory path.
-
-        Returns:
-            str: The name of the file.
+        The name of the file without the directory path.
         """
         return os.path.basename(self._path)
 
