@@ -33,7 +33,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 language = "en"
 
 autoclass_content = "class"
-autodoc_member_order = "alphabetical"
+autodoc_member_order = "groupwise"
 autosummary_generate = False
 
 # -- Options for HTML output -------------------------------------------------
