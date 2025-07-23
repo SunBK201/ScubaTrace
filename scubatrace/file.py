@@ -22,10 +22,6 @@ if TYPE_CHECKING:
 class File:
     """
     Represents a file in a project.
-
-    Attributes:
-        _path (str): The file path.
-        project (Project): The project to which the file belongs.
     """
 
     def __init__(self, path: str, project: Project):

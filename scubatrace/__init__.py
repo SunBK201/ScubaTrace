@@ -12,6 +12,7 @@ from .php.project import PHPProject
 from .swift.project import SwiftProject
 
 from . import language
+from .language import Language
 from .parser import Parser
 
 from .file import File
