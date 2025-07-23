@@ -29,6 +29,13 @@ class Identifier:
         return self.statement.lsp
 
     @property
+    def name(self) -> str:
+        """
+        The name of the identifier.
+        """
+        return self.text.strip()
+
+    @property
     def signature(self) -> str:
         return (
             self.file.signature
