@@ -1,6 +1,6 @@
 # ScubaTrace
 
-Next-Generation Codebase Analysis Toolkit.
+Source Level Code Analysis Toolkit.
 
 <br>
 <img src="https://sunbk201.oss-cn-beijing.aliyuncs.com/img/ScubaTrace.png" width="61.8%">
@@ -15,12 +15,30 @@ Next-Generation Codebase Analysis Toolkit.
 - **Code Data/Control Dependency Graph**
 - **References Inference**
 - **CPG Based Multi-Granularity Slicing**
+- **Built on Tree-sitter and LSP**
 
 # Install
 
 ```bash
 pip install scubatrace
 ```
+
+# Supported Languages
+
+ScubaTrace supports multiple programming languages, including:
+
+| Language   | Maturity |
+| ---------- | -------- |
+| C/C++      | High     |
+| Java       | High     |
+| Python     | High     |
+| JavaScript | High     |
+| Go         | Medium   |
+| Rust       | Medium   |
+| Ruby       | Medium   |
+| Swift      | Medium   |
+| C#         | Medium   |
+| PHP        | Medium   |
 
 # Usage
 
@@ -195,7 +213,3 @@ file_ast = file.node
 func_ast = func.node
 stmt_ast = stat.node
 ```
-
-# ScubaTrace Landscape
-
-![ScubaTrace Landscape](./docs/_static/scubatrace-landscape.png "ScubaTrace Landscape")
