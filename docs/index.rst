@@ -1,10 +1,12 @@
-========================
-ScubaTrace Documentation
-========================
+==========
+ScubaTrace
+==========
 
 Next-generation codebase analysis toolkit.
 
-.. image:: scubatrace.png
+.. image:: _static/ScubaTrace.png
+    :width: 500px
+    :alt: ScubaTrace
 
 .. caution::
 
@@ -25,18 +27,46 @@ Install
 
     import scubatrace
 
-Navigation
-==========
-
 .. toctree::
-   :maxdepth: 2
-   
-   usage
-   relation
-   algorithms
-   sbom
-   misc
-   reference
+    :caption: Usage
+    :hidden:
+
+    usage
+
+Supported Languages
+===================
+
+ScubaTrace supports multiple programming languages, including:
+
+==========   ========
+Language     Maturity
+==========   ========
+C/C++        High
+Java         High
+Python       High
+JavaScript   High
+Go           Medium
+Rust         Medium
+Ruby         Medium
+Swift        Medium
+C#           Medium
+PHP          Medium
+==========   ========
+
+Reference
+==========
+.. autosummary::
+   :toctree: classes
+   :caption: Reference
+   :nosignatures:
+
+   scubatrace.Project
+   scubatrace.File
+   scubatrace.Function
+   scubatrace.Statement
+   scubatrace.Identifier
+   scubatrace.Parser
+   scubatrace.Language
 
 .. toctree::
     :caption: DEVELOPMENT
