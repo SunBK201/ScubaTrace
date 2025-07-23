@@ -26,6 +26,7 @@ dependencies = [
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]
 description = "Next-generation codebase analysis toolkit."
+keywords = ["codebase", "parsing", "ast", "analysis"]
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -38,3 +39,6 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/SunBK201/ScubaTrace"
 Issues = "https://github.com/SunBK201/ScubaTrace/issues"
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx-book-theme", "sphinx_copybutton"]
