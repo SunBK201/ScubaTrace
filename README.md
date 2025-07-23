@@ -7,7 +7,7 @@ Source Level Code Analysis Toolkit.
 
 # Features
 
-- **Multi-Language Support (C, C++, Java, Python, JavaScript, Go)**
+- **Multi-Language Support**
 - **No Need To Compile**
 - **Statement-Based AST Abstraction**
 - **Code Call Graph**
