@@ -2,7 +2,12 @@
 ScubaTrace
 ==========
 
-Next-generation codebase analysis toolkit.
+ScubaTrace is a code analysis toolkit that leverages tree-sitter and LSP (Language Server Protocol) to provide parsing, analysis, and context extraction capabilities for multiple programming languages.
+
+Unlike most traditional static analysis tools that rely on compilation to extract Intermediate Representation (IR) for code analysis, ScubaTrace delivers analysis capabilities even when code repositories are incomplete or unable to compile. This resilience makes it particularly valuable for scenarios where traditional analysis approaches would fail, enabling developers and security researchers to gain insights from code that might otherwise be inaccessible to conventional static analysis methodologies.
+
+ScubaTrace serves as a portable analysis solution for IDE development, AI-powered coding tools, and SAST (Static Application Security Testing) implementations.
+
 
 .. image:: _static/ScubaTrace.png
     :width: 500px
@@ -38,20 +43,20 @@ Supported Languages
 
 ScubaTrace supports multiple programming languages, including:
 
-==========   ========
-Language     Maturity
-==========   ========
-C/C++        High
-Java         High
-Python       High
-JavaScript   High
-Go           Medium
-Rust         Medium
-Ruby         Medium
-Swift        Medium
-C#           Medium
-PHP          Medium
-==========   ========
+===================  ===========================  ========================
+Language             Language Server              Tree-sitter Parser
+===================  ===========================  ========================
+C/C++                clangd                       tree-sitter-cpp
+Java                 Eclipse JDT LS               tree-sitter-java
+Python               jedi-language-server         tree-sitter-python
+JavaScript           typescript-language-server   tree-sitter-javascript
+Go                   gopls                        tree-sitter-go
+Rust                 Rust Analyzer                tree-sitter-rust
+Ruby                 Solargraph                   tree-sitter-ruby
+Swift                SourceKit-LSP                tree-sitter-swift
+C#                   OmniSharp                    tree-sitter-c-sharp
+PHP                  phpactor                     tree-sitter-php
+===================  ===========================  ========================
 
 Reference
 ==========
