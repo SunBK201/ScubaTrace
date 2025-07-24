@@ -40,12 +40,13 @@ def testIsSimpleStatement():
                 stmts = temp_stmts
 
 
-def testPreControl():
-    a_proj = scubatrace.CProject("../c")
-    test_c = a_proj.files["test.c"]
-    func_main = test_c.functions[1]
-    # print(func_main.statements[3].pre_controls[2].text)
-    func_main.export_cfg_dot("test.dot", with_cdg=True, with_ddg=True)
+def testCFG():
+    proj = scubatrace.Project.Project(".", language.C)
+    test_c = proj.files["test.c"]
+    for func in test_c.functions:
+        print(f"Function: {func.name}")
+        func.export_cfg_dot(f"{func.name}_cfg.dot", with_ddg=False, with_cdg=False)
+        print(f"CFG exported for function {func.name} to {func.name}_cfg.dot")
 
 
 def testPostControl():
@@ -370,7 +371,7 @@ def test_identifier_pre_data_dependents():
 
 
 def test_identifier_post_data_dependents():
-    project = scubatrace.Project.Project(".", language.C)
+    project = scubatrace.Project.Project(".", scubatrace.language.C)
     test_c = project.files["test.c"]
     func_main = test_c.functions[1]
     for stat in func_main.statements:
@@ -390,4 +391,4 @@ def test_identifier_post_data_dependents():
 
 
 if __name__ == "__main__":
-    testCalls()
+    test_identifier_post_data_dependents()
