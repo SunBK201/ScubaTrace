@@ -99,6 +99,9 @@ class File:
 
     @property
     def language(self) -> type[lang.Language]:
+        """
+        The language type associated with the current project.
+        """
         return self.project.language
 
     @property
@@ -111,46 +114,28 @@ class File:
     @property
     def abspath(self) -> str:
         """
-        Returns the absolute path of the file.
-
-        Returns:
-            str: The absolute path of the file.
+        The absolute path of the file.
         """
         return os.path.abspath(self._path)
 
     @property
     def relpath(self) -> str:
         """
-        Returns the relative path of the file with respect to the project directory.
-
-        The method removes the project directory path from the file's absolute path,
-        leaving only the relative path.
-
-        Returns:
-            str: The relative path of the file.
+        The relative path of the file with respect to the project directory.
         """
         return self._path.replace(self.project.path + "/", "")
 
     @property
     def uri(self) -> str:
         """
-        Returns the URI of the file.
-
-        The URI is constructed by replacing the project path with "file://" and
-        ensuring it is properly formatted for use in a URI context.
-
-        Returns:
-            str: The URI of the file.
+        The URI of the file.
         """
         return f"file://{self.abspath.replace(os.path.sep, '/')}"
 
     @property
     def text(self) -> str:
         """
-        Reads the content of the file at the given path and returns it as a string.
-
-        Returns:
-            str: The content of the file.
+        The content of the file.
         """
         with open(
             self._path,
@@ -170,10 +155,7 @@ class File:
     @property
     def lines(self) -> list[str]:
         """
-        Reads the content of the file and returns it as a list of lines.
-
-        Returns:
-            list[str]: The content of the file split into lines.
+        A list of the lines in the file.
         """
         return self.text.splitlines()
 
@@ -189,18 +171,34 @@ class File:
 
     @property
     def parser(self):
+        """
+        The parser associated with the current project.
+        """
         return self.project.parser
 
     @cached_property
     def node(self) -> Node:
+        """
+        The tree-sitter root node for the file.
+        """
         return self.parser.parse(self.text)
 
     @cached_property
     @abstractmethod
-    def imports(self) -> list[File]: ...
+    def imports(self) -> list[File]:
+        """
+        A list of :class:`File` that are imported by this file.
+
+        For example, in Python, this would include files imported using the `import` statement.
+        In C/C++, this would include files included using the `#include` directive.
+        """
+        ...
 
     @cached_property
     def functions(self) -> list[Function]:
+        """
+        All functions in the file.
+        """
         func_node = self.parser.query_all(self.text, self.language.query_function)
         return [Function.Function(node, file=self) for node in func_node]
 
@@ -211,30 +209,38 @@ class File:
     @cached_property
     @abstractmethod
     def statements(self) -> list[Statement]:
+        """
+        All statements of functions in the file.
+        """
         stats = []
         for func in self.functions:
             stats.extend(func.statements)
         return stats
 
     @cached_property
-    @abstractmethod
     def identifiers(self) -> list[Identifier]:
+        """
+        All identifiers of functions in the file.
+        """
         identifiers = []
         for stmt in self.statements:
             identifiers.extend(stmt.identifiers)
         return identifiers
 
     @cached_property
-    @abstractmethod
-    def variables(self) -> list[Identifier]: ...
+    def variables(self) -> list[Identifier]:
+        """
+        All variables of functions in the file.
+        """
+        variables = []
+        for stmt in self.statements:
+            variables.extend(stmt.variables)
+        return variables
 
     @property
     def is_external(self) -> bool:
         """
         Checks if the file is external (not part of the project).
-
-        Returns:
-            bool: True if the file is external, False otherwise.
         """
         return not self.abspath.startswith(self.project.abspath)
 
@@ -271,12 +277,30 @@ class File:
         return lsp
 
     def function_by_line(self, line: int) -> Function | None:
+        """
+        Returns the function that contains the specified line number.
+
+        Args:
+            line (int): The line number to check.
+
+        Returns:
+            Function | None: The function that contains the line, or None if not found.
+        """
         for func in self.functions:
             if func.start_line <= line <= func.end_line:
                 return func
         return None
 
     def statements_by_line(self, line: int) -> list[Statement]:
+        """
+        Returns the statements that are located on the specified line number.
+
+        Args:
+            line (int): The line number to check.
+
+        Returns:
+            list[Statement]: A list of statements that are located on the specified line.
+        """
         if line < 1 or line > len(self.lines):
             return []
         func = self.function_by_line(line)

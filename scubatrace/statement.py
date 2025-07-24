@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Callable, Generator
 from tree_sitter import Node
 
 from .identifier import Identifier
+from .language import Language
 
 if TYPE_CHECKING:
     from .file import File
@@ -15,6 +16,16 @@ if TYPE_CHECKING:
 
 
 class Statement:
+    """
+    A statement in the source code.
+    """
+
+    node: Node
+    """ The tree-sitter node representing this statement. """
+
+    parent: BlockStatement | Function | File
+    """ The parent block or function or file this statement belongs to. """
+
     def __init__(self, node: Node, parent: BlockStatement | Function | File):
         self.node = node
         self.parent = parent
@@ -32,10 +43,17 @@ class Statement:
 
     @property
     @abstractmethod
-    def is_jump_statement(self) -> bool: ...
+    def is_jump_statement(self) -> bool:
+        """
+        Checks if the statement is a jump statement (e.g., break, continue, return).
+        """
+        ...
 
     @property
-    def language(self):
+    def language(self) -> type[Language]:
+        """
+        The language of the file this statement belongs to.
+        """
         return self.file.language
 
     @property
@@ -44,6 +62,11 @@ class Statement:
 
     @cached_property
     def identifiers(self) -> list[Identifier]:
+        """
+        Identifiers in the statement.
+
+        This includes variables, function names, and other identifiers.
+        """
         parser = self.file.parser
         language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
@@ -60,6 +83,9 @@ class Statement:
 
     @cached_property
     def variables(self) -> list[Identifier]:
+        """
+        Variables in the statement.
+        """
         variables = []
         for identifier in self.identifiers:
             node = identifier.node
@@ -79,6 +105,11 @@ class Statement:
 
     @property
     def right_values(self) -> list[Identifier]:
+        """
+        Variables that are right values in the statement.
+
+        Right values are variables that are used in the statement but not modified or assigned.
+        """
         if isinstance(self, BlockStatement):
             variables = self.block_variables
         else:
@@ -87,6 +118,11 @@ class Statement:
 
     @property
     def left_values(self) -> list[Identifier]:
+        """
+        Variables that are left values in the statement.
+
+        Left values are variables that are modified or assigned in the statement.
+        """
         if isinstance(self, BlockStatement):
             variables = self.block_variables
         else:
@@ -95,6 +131,9 @@ class Statement:
 
     @property
     def signature(self) -> str:
+        """
+        A unique signature for the statement.
+        """
         return (
             self.parent.signature
             + "line"
@@ -109,39 +148,56 @@ class Statement:
 
     @property
     def text(self) -> str:
+        """
+        The text of the statement.
+        """
         if self.node.text is None:
             raise ValueError("Node text is None")
         return self.node.text.decode()
 
     @property
     def dot_text(self) -> str:
-        """
-        escape the text ':' for dot
-        """
         return '"' + self.text.replace('"', '\\"') + '"'
 
     @property
     def start_line(self) -> int:
+        """
+        The start line of the statement.
+        """
         return self.node.start_point[0] + 1
 
     @property
     def end_line(self) -> int:
+        """
+        The end line of the statement.
+        """
         return self.node.end_point[0] + 1
 
     @property
     def start_column(self) -> int:
+        """
+        The start column of the statement.
+        """
         return self.node.start_point[1] + 1
 
     @property
     def end_column(self) -> int:
+        """
+        The end column of the statement.
+        """
         return self.node.end_point[1] + 1
 
     @property
     def length(self):
+        """
+        The length of the statement in lines."""
         return self.end_line - self.start_line + 1
 
     @property
     def file(self) -> File:
+        """
+        The file this statement belongs to.
+        """
         from .file import File
 
         if isinstance(self.parent, File):
@@ -150,6 +206,11 @@ class Statement:
 
     @property
     def function(self) -> Function | None:
+        """
+        The function this statement belongs to, if any.
+
+        If the statement is not part of a function, returns None.
+        """
         from .file import File
         from .function import Function
 
@@ -163,6 +224,11 @@ class Statement:
 
     @property
     def post_controls(self) -> list[Statement]:
+        """
+        Post-control statements of the statement.
+
+        These are statements that are executed after this statement in the control flow.
+        """
         func = self.function
         if func is None:
             return []
@@ -176,6 +242,11 @@ class Statement:
 
     @property
     def pre_controls(self) -> list[Statement]:
+        """
+        Pre-control statements of the statement.
+
+        These are statements that are executed before this statement in the control flow.
+        """
         func = self.function
         if func is None:
             return []
@@ -189,6 +260,9 @@ class Statement:
 
     @property
     def post_control_dependents(self) -> list[Statement]:
+        """
+        Statements that are dependent on this statement in the control flow.
+        """
         if isinstance(self, SimpleStatement):
             return []
         assert isinstance(self, BlockStatement)
@@ -202,6 +276,9 @@ class Statement:
 
     @property
     def pre_control_dependents(self) -> list[Statement]:
+        """
+        Statements that are dependent on this statement in the control flow before it.
+        """
         parent = self.parent
         from .function import Function
 
@@ -216,6 +293,9 @@ class Statement:
 
     @property
     def pre_data_dependents(self) -> dict[Identifier, list[Statement]]:
+        """
+        Data-dependent statements that are executed before this statement.
+        """
         dependents = defaultdict(list)
         if isinstance(self, BlockStatement):
             variables = self.block_variables
@@ -230,6 +310,9 @@ class Statement:
 
     @property
     def post_data_dependents(self) -> dict[Identifier, list[Statement]]:
+        """
+        Data-dependent statements that are executed after this statement.
+        """
         dependents = defaultdict(list)
         if isinstance(self, BlockStatement):
             variables = self.block_variables
@@ -244,6 +327,11 @@ class Statement:
 
     @property
     def references(self) -> dict[Identifier, list[Statement]]:
+        """
+        References to variables in the statement.
+
+        Includes variables that are in the whole project.
+        """
         refs = defaultdict(list)
         if isinstance(self, BlockStatement):
             variables = self.block_variables
@@ -257,6 +345,11 @@ class Statement:
 
     @property
     def definitions(self) -> dict[Identifier, list[Statement]]:
+        """
+        Definitions of variables in the statement.
+
+        Includes variables that are defined in the whole project.
+        """
         defs = defaultdict(list)
         if isinstance(self, BlockStatement):
             variables = self.block_variables
@@ -270,6 +363,9 @@ class Statement:
 
     @cached_property
     def is_taint_from_entry(self) -> bool:
+        """
+        Checks if the variables of the statement are tainted from the parameters of the function.
+        """
         refs: dict[Identifier, list[Statement]] = self.references
         backword_refs: dict[Identifier, list[Statement]] = defaultdict(list)
         for var, statements in refs.items():
@@ -299,6 +395,20 @@ class Statement:
         depth: int = -1,
         base: str = "control",
     ) -> Generator[Statement, None, None]:
+        """
+        Walks backward through the control flow graph of the statement.
+
+        Args:
+            filter (Callable[[Statement], bool] | None): A filter function to apply to each statement.
+                If the filter returns True, the statement is yielded.
+            stop_by (Callable[[Statement], bool] | None): A function to stop the walking when it returns True.
+            depth (int): The maximum depth to walk backward. Default is -1, which means no limit.
+            base (str): The base type of the walk.
+                Can be "control", "data_dependent", or "control_dependent".
+
+        Yields:
+            Statement: The statements that match the filter or all statements if no filter is provided.
+        """
         depth = 2048 if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
@@ -335,6 +445,20 @@ class Statement:
         depth: int = -1,
         base: str = "control",
     ) -> Generator[Statement, None, None]:
+        """
+        Walks forward through the control flow graph of the statement.
+
+        Args:
+            filter (Callable[[Statement], bool] | None): A filter function to apply to each statement.
+                If the filter returns True, the statement is yielded.
+            stop_by (Callable[[Statement], bool] | None): A function to stop the walking when it returns True.
+            depth (int): The maximum depth to walk forward. Default is -1, which means no limit.
+            base (str): The base type of the walk.
+                Can be "control", "data_dependent", or "control_dependent".
+
+        Yields:
+            Statement: The statements that match the filter or all statements if no filter is provided.
+        """
         depth = 2048 if depth == -1 else depth
         dq: deque[Statement] = deque([self])
         visited: set[Statement] = set([self])
@@ -382,10 +506,19 @@ class BlockStatement(Statement):
 
     @cached_property
     @abstractmethod
-    def statements(self) -> list[Statement]: ...
+    def statements(self) -> list[Statement]:
+        """
+        Sub-statements of the block.
+        """
+        ...
 
     @cached_property
     def block_identifiers(self) -> list[Identifier]:
+        """
+        Identifiers declared directly in the block.
+
+        Only includes identifiers that are declared in this block and excludes those found in sub-statements.
+        """
         parser = self.file.parser
         language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
@@ -399,6 +532,11 @@ class BlockStatement(Statement):
 
     @cached_property
     def block_variables(self) -> list[Identifier]:
+        """
+        Variables declared directly in the block.
+
+        Only includes variables that are declared in this block and excludes those found in sub-statements.
+        """
         variables = []
         for identifier in self.block_identifiers:
             node = identifier.node
@@ -437,6 +575,15 @@ class BlockStatement(Statement):
                     stack.extend(reversed(cur_stat.statements))
 
     def statements_by_line(self, line: int) -> list[Statement]:
+        """
+        Returns the statements that are located on the specified line number.
+
+        Args:
+            line (int): The line number to check.
+
+        Returns:
+            list[Statement]: A list of statements that are located on the specified line.
+        """
         targets = []
         for stat in self.statements:
             if stat.start_line <= line <= stat.end_line:
@@ -453,12 +600,31 @@ class BlockStatement(Statement):
         return targets
 
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
+        """
+        Returns the statements that are of the specified type.
+
+        Args:
+            type (str): The tree-sitter ast type of the statements to return.
+            recursive (bool): If True, recursively search in sub-statements.
+
+        Returns:
+            list[Statement]: A list of statements that match the specified type.
+        """
         if recursive:
             return [s for s in self.__traverse_statements() if s.node.type == type]
         else:
             return [s for s in self.statements if s.node.type == type]
 
     def statement_by_field_name(self, field_name: str) -> Statement | None:
+        """
+        Returns the statement that contains the specified tree-sitter ast field name.
+
+        Args:
+            field_name (str): The tree-sitter ast field name to search for.
+
+        Returns:
+            Optional[Statement]: The statement that contains the specified field name, or None if not found.
+        """
         field_node = self.node.child_by_field_name(field_name)
         if field_node is None:
             return None

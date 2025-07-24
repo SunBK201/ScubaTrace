@@ -12,6 +12,16 @@ if TYPE_CHECKING:
 
 
 class Class:
+    """
+    A class in the source code.
+    """
+
+    node: Node
+    """ The tree-sitter node representing the class. """
+
+    file: File
+    """ The file this class belongs to. """
+
     def __init__(self, node: Node, file: File) -> None:
         self.node = node
         self.file = file
@@ -21,6 +31,9 @@ class Class:
 
     @property
     def signature(self) -> str:
+        """
+        A unique signature for the class.
+        """
         return (
             self.file.signature
             + "#"

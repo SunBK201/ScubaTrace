@@ -18,11 +18,7 @@ if TYPE_CHECKING:
 
 class Function(BlockStatement):
     """
-    Represents a function in the source code with various properties and methods to access its details.
-
-    Attributes:
-        node (Node): The AST node representing the function.
-        file (File): The file in which the function is defined.
+    A function in the source code.
     """
 
     def __init__(self, node: Node, file: File, joern_id: str | None = None):
@@ -35,6 +31,16 @@ class Function(BlockStatement):
 
     @staticmethod
     def Function(node: Node, file: File):
+        """
+        Factory function to create a Function instance based on the language of the file.
+
+        Args:
+            node (Node): The tree-sitter node representing the function.
+            file (File): The file containing the function.
+
+        Returns:
+            Function: An instance of a language-specific Function subclass corresponding to the file's language.
+        """
         if file.project.language == lang.C:
             from .cpp.function import CFunction
 
@@ -86,6 +92,9 @@ class Function(BlockStatement):
 
     @property
     def signature(self) -> str:
+        """
+        A unique signature for the function.
+        """
         return (
             self.file.signature
             + "#"
@@ -99,12 +108,7 @@ class Function(BlockStatement):
     @property
     def lines(self) -> dict[int, str]:
         """
-        Generates a dictionary mapping line numbers to their corresponding lines of text.
-
-
-        Returns:
-            dict[int, str]: A dictionary where the keys are line numbers (starting from `self.start_line`)
-                            and the values are the lines of text from `self.text`.
+        A dictionary mapping line numbers to their corresponding lines of text.
         """
         return {
             i + self.start_line: line for i, line in enumerate(self.text.split("\n"))
@@ -113,23 +117,14 @@ class Function(BlockStatement):
     @property
     def body_node(self) -> Node | None:
         """
-        Retrieves the body node of the current node.
-
-        Returns:
-            Node | None: The body node if it exists, otherwise None.
+        The tree-sitter body node of the function.
         """
         return self.node.child_by_field_name("body")
 
     @property
     def body_start_line(self) -> int:
         """
-        Returns the starting line number of the body of the node.
-
-        If the body node is not defined, it returns the starting line number of the node itself.
-        Otherwise, it returns the starting line number of the body node.
-
-        Returns:
-            int: The starting line number of the body or the node.
+        The starting line number of the body of the function.
         """
         if self.body_node is None:
             return self.start_line
@@ -139,13 +134,7 @@ class Function(BlockStatement):
     @property
     def body_end_line(self) -> int:
         """
-        Returns the ending line number of the body of the node.
-
-        If the body_node attribute is None, it returns the end_line attribute.
-        Otherwise, it returns the line number immediately after the end of the body_node.
-
-        Returns:
-            int: The ending line number of the body.
+        The ending line number of the body of the function.
         """
         if self.body_node is None:
             return self.end_line
@@ -158,15 +147,26 @@ class Function(BlockStatement):
 
     @cached_property
     @abstractmethod
-    def parameter_lines(self) -> list[int]: ...
+    def parameter_lines(self) -> list[int]:
+        """
+        The lines where the parameters of the function are defined.
+        """
+        ...
 
     @cached_property
     @abstractmethod
-    def name_node(self) -> Node: ...
+    def name_node(self) -> Node:
+        """
+        The tree-sitter node representing the name of the function.
+        """
+        ...
 
     @property
     @abstractmethod
     def name(self) -> str:
+        """
+        The name of the function.
+        """
         name_node = self.name_node
         assert name_node.text is not None
         return name_node.text.decode()
@@ -184,10 +184,16 @@ class Function(BlockStatement):
 
     @property
     def is_external(self) -> bool:
+        """
+        Checks if the function is external (not part of the project).
+        """
         return self.file.is_external
 
     @cached_property
     def calls(self) -> list[Statement]:
+        """
+        Call statements within the function.
+        """
         parser = self.file.parser
         call_nodes = parser.query_all(self.node, self.language.query_call)
         calls = []
@@ -198,6 +204,9 @@ class Function(BlockStatement):
 
     @cached_property
     def callees(self) -> dict[Function | FunctionDeclaration, list[Statement]]:
+        """
+        The functions or function declarations that are called by this function and their corresponding call sites.
+        """
         lsp = self.lsp
         callees = defaultdict(set[Statement])
         for call_stat in self.calls:
@@ -242,6 +251,9 @@ class Function(BlockStatement):
     @cached_property
     @abstractmethod
     def callers(self) -> dict[Function, list[Statement]]:
+        """
+        The functions that call this function and their corresponding call sites.
+        """
         lsp = self.lsp
         call_hierarchy = lsp.request_prepare_call_hierarchy(
             self.file.relpath,
@@ -278,14 +290,14 @@ class Function(BlockStatement):
 
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         """
-        Retrieves all statements of a given node type within the function.
+        Retrieves all statements of a given tree-sitter node type within the function.
 
         Args:
-            type (str): The type of statement node to search for.
-            recursive (bool): A flag to indicate whether to search recursively within nested blocks
+            type (str): The tree-sitter node type to filter by.
+            recursive (bool): If True, recursively search through all sub-statements.
 
         Returns:
-            list[Statement]: A list of statements of the given type.
+            list[Statement]: A list of statements that match the specified type.
         """
         if recursive:
             return [
@@ -303,13 +315,16 @@ class Function(BlockStatement):
         control_dependent_depth: int = 1,
     ) -> list[Statement]:
         """
-        Slices the function into statements based on the provided statements.
+        Slices the function to retrieve relevant statements based on the provided statements.
 
         Args:
-            statements (list[Statement]): A list of statements to slice the function by.
+            statements (list[Statement]): Slice criteria statements.
+            control_depth (int): Slice depth for control flow dependencies.
+            data_dependent_depth (int): Slice depth for data dependencies.
+            control_dependent_depth (int): Slice depth for control-dependent statements.
 
         Returns:
-            list[Statement]: A list of statements that fall within the specified statements.
+            list[Statement]: A list of statements that are sliced based on the provided statements.
         """
         res = set()
         for stat in statements:
@@ -343,6 +358,18 @@ class Function(BlockStatement):
         data_dependent_depth: int = 1,
         control_dependent_depth: int = 1,
     ) -> list[Statement]:
+        """
+        Slices the function to retrieve relevant statements based on the specified lines.
+
+        Args:
+            lines (list[int]): Slice criteria lines.
+            control_depth (int): Slice depth for control flow dependencies.
+            data_dependent_depth (int): Slice depth for data dependencies.
+            control_dependent_depth (int): Slice depth for control-dependent statements.
+
+        Returns:
+            list[Statement]: A list of statements that are sliced based on the specified lines.
+        """
         statements = set()
         for line in lines:
             stats: list[Statement] = self.statements_by_line(line)
@@ -463,6 +490,27 @@ class Function(BlockStatement):
 
 
 class FunctionDeclaration:
+    """
+    Represents a function declaration in the code.
+
+    For example, in C/C++, this would be a function prototype without the body.
+    """
+
+    name: str
+    """
+    The name of the function declaration.
+    """
+
+    text: str
+    """
+    The text of the function declaration.
+    """
+
+    file: File
+    """
+    The file where the function declaration is located.
+    """
+
     def __init__(self, name: str, text: str, file: File):
         self.name = name
         self.text = text
@@ -476,6 +524,9 @@ class FunctionDeclaration:
 
     @property
     def signature(self) -> str:
+        """
+        The unique signature of the function declaration.
+        """
         return self.name + self.text + self.file.abspath
 
     @property

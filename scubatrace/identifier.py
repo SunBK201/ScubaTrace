@@ -11,6 +11,15 @@ if TYPE_CHECKING:
 
 
 class Identifier:
+    """
+    An identifier in the source code.
+    """
+
+    node: Node
+    """ The tree-sitter node representing the identifier. """
+    statement: Statement
+    """ The statement that contains this identifier. """
+
     def __init__(self, node: Node, statement: Statement):
         self.node = node
         self.statement = statement
@@ -37,6 +46,9 @@ class Identifier:
 
     @property
     def signature(self) -> str:
+        """
+        A unique signature for the identifier.
+        """
         return (
             self.file.signature
             + "line"
@@ -51,47 +63,64 @@ class Identifier:
 
     @property
     def text(self) -> str:
+        """
+        The text of the identifier.
+        """
         if self.node.text is None:
             raise ValueError("Node text is None")
         return self.node.text.decode()
 
     @property
     def dot_text(self) -> str:
-        """
-        escape the text ':' for dot
-        """
         return '"' + self.text.replace('"', '\\"') + '"'
 
     @property
     def start_line(self) -> int:
+        """
+        The starting line number of the identifier in the file.
+        """
         return self.node.start_point[0] + 1
 
     @property
     def end_line(self) -> int:
+        """
+        The ending line number of the identifier in the file.
+        """
         return self.node.end_point[0] + 1
 
     @property
     def start_column(self) -> int:
+        """
+        The starting column number of the identifier in the file.
+        """
         return self.node.start_point[1] + 1
 
     @property
     def end_column(self) -> int:
+        """
+        The ending column number of the identifier in the file.
+        """
         return self.node.end_point[1] + 1
 
     @property
-    def length(self):
-        return self.end_line - self.start_line + 1
-
-    @property
     def file(self) -> File:
+        """
+        The file that contains this identifier.
+        """
         return self.statement.file
 
     @property
     def function(self):
+        """
+        The function that contains this identifier, if applicable.
+        """
         return self.statement.function
 
     @property
     def references(self) -> list[Identifier]:
+        """
+        Identifiers that reference this identifier.
+        """
         refs = set()
         ref_locs = self.lsp.request_references(
             self.file.relpath, self.start_line - 1, self.start_column - 1
@@ -127,6 +156,9 @@ class Identifier:
 
     @property
     def definitions(self) -> list[Identifier]:
+        """
+        Identifiers that define this identifier.
+        """
         defs = []
         def_locs = self.lsp.request_definition(
             self.file.relpath, self.start_line - 1, self.start_column - 1
@@ -152,6 +184,9 @@ class Identifier:
 
     @cached_property
     def is_taint_from_entry(self) -> bool:
+        """
+        Checks if the variables of the statement are tainted from the parameters of the function.
+        """
         if self.is_left_value:
             for right_value in self.statement.right_values:
                 if right_value.is_taint_from_entry:
@@ -178,6 +213,9 @@ class Identifier:
 
     @property
     def is_left_value(self) -> bool:
+        """
+        Checks if the identifier is a left value (e.g., a variable that can be assigned a value).
+        """
         parser = self.file.parser
         language = self.file.project.language
         stat = self.statement
@@ -190,10 +228,18 @@ class Identifier:
 
     @property
     def is_right_value(self) -> bool:
+        """
+        Checks if the identifier is a right value (e.g., a variable that is used to retrieve a value).
+        """
         return not self.is_left_value
 
     @property
     def pre_data_dependents(self) -> list[Identifier]:
+        """
+        Identifiers that are data dependents of this identifier in the backward direction.
+
+        This means they are modified before this identifier in the code.
+        """
         if self.is_left_value:
             return []
 
@@ -230,6 +276,11 @@ class Identifier:
 
     @property
     def post_data_dependents(self) -> list[Identifier]:
+        """
+        Identifiers that are data dependents of this identifier in the forward direction.
+
+        This means they are used after this identifier in the code.
+        """
         if self.is_right_value:
             return []
 
