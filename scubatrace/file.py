@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 class File:
     """
-    Represents a source code file in a project.
+    A source code file in a project.
     """
 
     project: Project

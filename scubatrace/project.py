@@ -21,7 +21,7 @@ from .parser import Parser
 
 class Project:
     """
-    Represents a codebase project with a specified path and language.
+    A codebase project with a specified path and language.
     """
 
     path: str
