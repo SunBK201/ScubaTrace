@@ -1,7 +1,10 @@
 import "./admin.js";
 import { admin } from "./admin.js";
 var fs = require("fs");
-
+const fs = require("fs");
+const path = require("path");
+const module = await import('./admin.js');
+const { default: defaultExport } = await import('./admin.js');
 admin.name = "Pete";
 
 class Runoob {

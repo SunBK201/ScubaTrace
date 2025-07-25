@@ -24,24 +24,31 @@ class Language:
     This is used to identify syntax errors in the code.
     """
 
-    query_function = "(function_definition)@name"
-    """
-    The tree-sitter query to match function definitions.
-    """
-
     query_identifier = "(identifier)@name"
     """
     The tree-sitter query to match identifiers.
     """
 
-    query_return = "(return_statement)@name"
+    query_function: str
+    """
+    The tree-sitter query to match function definitions.
+    """
+
+    query_return: str
     """
     The tree-sitter query to match return statements.
     """
 
-    query_call = "(call_expression)@name"
+    query_call: str
     """
     The tree-sitter query to match function calls.
+    """
+
+    query_import_identifier: str
+    """
+    The tree-sitter query to match import identifiers.
+
+    For example, in C/C++, this would match the `header.h` in `#include <header.h>`.
     """
 
     jump_statements: list[str]

@@ -192,7 +192,26 @@ class File:
         For example, in Python, this would include files imported using the `import` statement.
         In C/C++, this would include files included using the `#include` directive.
         """
-        ...
+        import_identifier_node = self.parser.query_all(
+            self.text, self.language.query_import_identifier
+        )
+        import_files = []
+        for node in import_identifier_node:
+            include = self.lsp.request_definition(
+                self.relpath,
+                node.start_point[0],
+                node.start_point[1],
+            )
+            if len(include) == 0:
+                continue
+            include = include[0]
+            include_abspath = include["absolutePath"]
+            if include_abspath in self.project.files_abspath:
+                import_files.append(self.project.files_abspath[include_abspath])
+            else:
+                # If the file is not in the project, we still add it to the imports
+                import_files.append(File.File(include_abspath, self.project))
+        return import_files
 
     @cached_property
     def functions(self) -> list[Function]:

@@ -8,12 +8,29 @@ class JAVASCRIPT(Language):
     extensions = ["js"]
     tslanguage = TSLanguage(tsjavascript.language())
 
-    query_function = "(function_declaration)@name"
-    query_method = "(method_definition)@name"
-    query_identifier = "(identifier)@name"
-    query_import = "(import_statement)@name"
-    query_export = "(export_statement)@name"
+    query_function = """
+    (function_declaration)@name
+    (method_definition)@name
+    """
+    query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
+    query_import = "(import_statement)@name"
+    query_import_identifier = """
+    (call_expression
+        function: [
+            (identifier)@require
+            (import)
+        ]
+        arguments: (arguments
+            (string)@name
+        )
+        (#eq? @require "require")
+    )
+    (import_statement
+        source: (string)@name
+    )
+    """
+
     query_class = "(class_declaration)@name"
 
     jump_statements = [

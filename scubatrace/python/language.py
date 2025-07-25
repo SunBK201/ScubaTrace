@@ -9,9 +9,28 @@ class PYTHON(Language):
     tslanguage = TSLanguage(tspython.language())
 
     query_function = "(function_definition)@name"
-    query_identifier = "(identifier)@name"
+    query_return = "(return_statement)@name"
+    query_call = "(call)@name"
+    query_import_identifier = """
+    (import_statement
+        name: [
+            (dotted_name)@name
+            (aliased_import
+                name: (dotted_name)@name
+            )
+        ]
+    )
+    (import_from_statement
+        module_name: [
+            (dotted_name)@name
+            (relative_import
+                (dotted_name)@name
+            )
+        ]
+    )
+    """
+
     query_class = "(class_definition)@name"
-    query_import = "(import_statement)@name"
 
     jump_statements = [
         "break_statement",

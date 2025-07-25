@@ -9,14 +9,22 @@ class C(Language):
     tslanguage = TSLanguage(tscpp.language())
 
     query_function = "(function_definition)@name"
-    query_identifier = "(identifier)@name"
     query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
+    query_import_identifier = """
+        (preproc_include
+            path: [
+                (system_lib_string)@name
+                (string_literal)@name
+            ]
+        )
+    """
+
     query_struct = "(struct_specifier)@name"
     query_class = "(class_specifier)@name"
-    query_method = "(function_definition)@name"
     query_field = "(field_declaration)@name"
     query_include = "(preproc_include)@name"
+
     query_global_statement = (
         "(declaration)@name"
         "(struct_specifier)@name"

@@ -1,4 +1,5 @@
 #include "include/sub.h"
+#include <stdio.h>
 int add(int a, int b)
 {
     return a + sub(a, b);
@@ -32,6 +33,7 @@ int main(int argc, char** argv)
         a += i;
         break;
     }
+    printf("a: %d, b: %d, count: %d\n", a, b, count);
     return 0;
 }
 
