@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from functools import cached_property
 
+from tree_sitter import Node
+
 from ..function import Function
 from ..statement import BlockStatement, SimpleStatement, Statement
 from . import language
@@ -9,13 +11,21 @@ from .statement import JavaScriptBlockStatement
 
 
 class JavaScriptFunction(Function, JavaScriptBlockStatement):
-    @property
-    def name(self) -> str:
-        name_node = self.node.child_by_field_name("name")
-        if name_node is None:
-            return ""
-        assert name_node.text is not None
-        return name_node.text.decode()
+    @cached_property
+    def name_node(self) -> Node:
+        node = self.node.child_by_field_name("name")
+        if node is None:
+            raise ValueError(f"Function name node not found: {self.node}")
+        return node
+
+    @cached_property
+    def parameter_lines(self) -> list[int]:
+        parameters_node = self.node.child_by_field_name("parameters")
+        if parameters_node is None:
+            return [self.start_line]
+        param_start_line = parameters_node.start_point[0] + 1
+        param_end_line = parameters_node.end_point[0] + 1
+        return list(range(param_start_line, param_end_line + 1))
 
     @cached_property
     def statements(self) -> list[Statement]:
@@ -23,22 +33,10 @@ class JavaScriptFunction(Function, JavaScriptBlockStatement):
             return []
         return list(self._build_statements(self.body_node, self))
 
-    def __find_next_nearest_stat(
-        self, stat: Statement, jump: int = 0
-    ) -> Statement | None:
+    def __find_next_nearest_stat(self, stat: Statement) -> Statement | None:
         stat_type = stat.node.type
         if stat_type == "return_statement":
             return None
-
-        if jump == -1:
-            jump = 0x3F3F3F
-        while (
-            jump > 0
-            and stat.parent is not None
-            and isinstance(stat.parent, BlockStatement)
-        ):
-            stat = stat.parent
-            jump -= 1
 
         parent_statements = stat.parent.statements
         index = parent_statements.index(stat)
