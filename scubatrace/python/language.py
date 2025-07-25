@@ -1,4 +1,4 @@
-import tree_sitter_cpp as tspython
+import tree_sitter_python as tspython
 from tree_sitter import Language as TSLanguage
 
 from ..language import Language

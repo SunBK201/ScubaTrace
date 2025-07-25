@@ -1,4 +1,4 @@
-import tree_sitter_cpp as tsjavascript
+import tree_sitter_javascript as tsjavascript
 from tree_sitter import Language as TSLanguage
 
 from ..language import Language
