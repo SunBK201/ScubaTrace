@@ -33,18 +33,20 @@ pip install scubatrace
 
 ScubaTrace supports multiple programming languages, including:
 
-| Language   | Language Server            | Tree-sitter Parser     |
-| ---------- | -------------------------- | ---------------------- |
-| C/C++      | clangd                     | tree-sitter-cpp        |
-| Java       | Eclipse JDT LS             | tree-sitter-java       |
-| Python     | jedi-language-server       | tree-sitter-python     |
-| JavaScript | typescript-language-server | tree-sitter-javascript |
-| Go         | gopls                      | tree-sitter-go         |
-| Rust       | Rust Analyzer              | tree-sitter-rust       |
-| Ruby       | Solargraph                 | tree-sitter-ruby       |
-| Swift      | SourceKit-LSP              | tree-sitter-swift      |
-| C#         | OmniSharp                  | tree-sitter-c-sharp    |
-| PHP        | phpactor                   | tree-sitter-php        |
+| Language   | Language Server            | Tree-sitter Parser     | Maturity |
+| ---------- | -------------------------- | ---------------------- | -------- |
+| C/C++      | clangd                     | tree-sitter-cpp        | High     |
+| Java       | Eclipse JDT LS             | tree-sitter-java       | High     |
+| Python     | pylsp                      | tree-sitter-python     | High     |
+| JavaScript | typescript-language-server | tree-sitter-javascript | High     |
+| Python     | jedi-language-server       | tree-sitter-python     | WIP      |
+| JavaScript | typescript-language-server | tree-sitter-javascript | WIP      |
+| Go         | gopls                      | tree-sitter-go         | WIP      |
+| Rust       | Rust Analyzer              | tree-sitter-rust       | WIP      |
+| Ruby       | Solargraph                 | tree-sitter-ruby       | WIP      |
+| Swift      | SourceKit-LSP              | tree-sitter-swift      | WIP      |
+| C#         | OmniSharp                  | tree-sitter-c-sharp    | WIP      |
+| PHP        | phpactor                   | tree-sitter-php        | WIP      |
 
 # Usage
 
