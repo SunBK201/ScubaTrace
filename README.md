@@ -16,9 +16,9 @@ ScubaTrace serves as a portable analysis solution for IDE development, AI-powere
 - **Multi-Language Support**
 - **No Need To Compile**
 - **Statement-Based AST Abstraction**
-- **Code Call Graph**
-- **Code Control Flow Graph**
-- **Code Data/Control Dependency Graph**
+- **Call Graph**
+- **Control Flow Graph**
+- **Data/Control Dependency Graph**
 - **References Inference**
 - **CPG Based Multi-Granularity Slicing**
 - **Built on Tree-sitter and LSP**
@@ -39,8 +39,6 @@ ScubaTrace supports multiple programming languages, including:
 | Java       | Eclipse JDT LS             | tree-sitter-java       | High     |
 | Python     | pylsp                      | tree-sitter-python     | High     |
 | JavaScript | typescript-language-server | tree-sitter-javascript | High     |
-| Python     | jedi-language-server       | tree-sitter-python     | WIP      |
-| JavaScript | typescript-language-server | tree-sitter-javascript | WIP      |
 | Go         | gopls                      | tree-sitter-go         | WIP      |
 | Rust       | Rust Analyzer              | tree-sitter-rust       | WIP      |
 | Ruby       | Solargraph                 | tree-sitter-ruby       | WIP      |
