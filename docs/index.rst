@@ -26,6 +26,17 @@ Install
 
     pip install scubatrace
 
+.. note::
+
+    If you encounter a ``pygraphviz`` installation failure during ``pip install``, you need to install the Graphviz development package. You can install it using the following command:
+
+    .. code-block:: bash
+
+        # For Debian/Ubuntu
+        apt install libgraphviz-dev
+        # For macOS, Ref: https://pygraphviz.github.io/documentation/stable/install.html#homebrew
+        brew install graphviz
+
 2. Import it to your project:
 
 .. code-block:: python

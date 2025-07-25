@@ -29,6 +29,16 @@ ScubaTrace serves as a portable analysis solution for IDE development, AI-powere
 pip install scubatrace
 ```
 
+> [!NOTE]
+> If you encounter a `pygraphviz` installation failure during `pip install`, you need to install the Graphviz development package. You can install it using the following command:
+>
+> ```bash
+> # For Debian/Ubuntu
+> apt install libgraphviz-dev
+> # For macOS, Ref: https://pygraphviz.github.io/documentation/stable/install.html#homebrew
+> brew install graphviz
+> ```
+
 # Supported Languages
 
 ScubaTrace supports multiple programming languages, including:
