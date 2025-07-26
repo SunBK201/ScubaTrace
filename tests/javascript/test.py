@@ -5,13 +5,12 @@ sys.path.append("../../")
 import scubatrace
 
 
-def main():
-    a_proj = scubatrace.JavaScriptProject("../javascript")
-    test = a_proj.files["test.js"]
-    for method in test.functions:
-        method.export_cfg_dot("test.dot", with_cdg=True, with_ddg=True)
-        print(method.slice_by_statements([method.statements[0]]))
+def test_cfg():
+    project = scubatrace.Project.Project(".", scubatrace.language.JAVASCRIPT)
+    for file in project.files.values():
+        for function in file.functions:
+            function.export_cfg_dot("test.dot", with_cdg=True, with_ddg=True)
 
 
 if __name__ == "__main__":
-    main()
+    test_cfg()
