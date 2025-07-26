@@ -43,6 +43,7 @@ class GO(Language):
     simple_statements = [
         "var_declaration",
         "const_declaration",
+        "expression_statement",
         "assignment_statement",
         "short_var_declaration",
         "return_statement",
