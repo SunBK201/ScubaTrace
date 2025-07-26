@@ -274,20 +274,24 @@ class File:
         # preload all imports for the file
         for import_file in self.imports:
             lsp.open_file(import_file.relpath).__enter__()
-            # preload corresponding source file if the file is C/C++
+            # preload corresponding source/header file if the file is C/C++
             if self.language == lang.C:
-                heuristic_name_list = [
-                    import_file.name.replace(".h", ".cpp"),
-                    import_file.name.replace(".h", ".c"),
-                    import_file.name.replace(".hpp", ".cpp"),
-                    import_file.name.replace(".hpp", ".c"),
-                    import_file.name.replace(".h", ".cc"),
-                    import_file.name.replace(".hpp", ".cc"),
-                    import_file.name.replace(".c", ".h"),
-                    import_file.name.replace(".cpp", ".h"),
-                    import_file.name.replace(".c", ".hpp"),
-                    import_file.name.replace(".cpp", ".hpp"),
-                ]
+                heuristic_name_list = set(
+                    [
+                        import_file.name.replace(".h", ".cpp"),
+                        import_file.name.replace(".h", ".c"),
+                        import_file.name.replace(".hpp", ".cpp"),
+                        import_file.name.replace(".hpp", ".c"),
+                        import_file.name.replace(".h", ".cc"),
+                        import_file.name.replace(".hpp", ".cc"),
+                        import_file.name.replace(".c", ".h"),
+                        import_file.name.replace(".cpp", ".h"),
+                        import_file.name.replace(".c", ".hpp"),
+                        import_file.name.replace(".cpp", ".hpp"),
+                    ]
+                )
+                # remove self's own file name from the heuristic list
+                heuristic_name_list.discard(import_file.name)
                 for relpath, file in self.project.files.items():
                     for heuristic_name in heuristic_name_list:
                         if relpath.endswith(heuristic_name):
