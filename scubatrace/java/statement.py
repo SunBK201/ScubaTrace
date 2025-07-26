@@ -8,6 +8,7 @@ from tree_sitter import Node
 from ..statement import BlockStatement, SimpleStatement
 
 if TYPE_CHECKING:
+    from ..file import File
     from ..function import Function
     from ..statement import Statement
 
@@ -19,7 +20,7 @@ class JavaBlockStatement(BlockStatement):
     def _build_statements(
         self,
         node: Node,
-        parent: BlockStatement | Function,
+        parent: BlockStatement | Function | File,
     ) -> Generator[Statement, None, None]:
         cursor = node.walk()
         if cursor.node is not None:
