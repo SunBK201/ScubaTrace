@@ -146,20 +146,26 @@ class Function(BlockStatement):
         return f"{self.name}#{self.file.name}#{self.start_line}"
 
     @cached_property
-    @abstractmethod
     def parameter_lines(self) -> list[int]:
         """
         The lines where the parameters of the function are defined.
         """
-        ...
+        parameters_node = self.node.child_by_field_name("parameters")
+        if parameters_node is None:
+            return [self.start_line]
+        param_start_line = parameters_node.start_point[0] + 1
+        param_end_line = parameters_node.end_point[0] + 1
+        return list(range(param_start_line, param_end_line + 1))
 
     @cached_property
-    @abstractmethod
     def name_node(self) -> Node:
         """
         The tree-sitter node representing the name of the function.
         """
-        ...
+        node = self.node.child_by_field_name("name")
+        if node is None:
+            raise ValueError(f"Function name node not found: {self.node}")
+        return node
 
     @property
     @abstractmethod

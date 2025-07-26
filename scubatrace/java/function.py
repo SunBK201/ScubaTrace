@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from tree_sitter import Node
-
 from ..function import Function
 from ..statement import BlockStatement, Statement
 from . import language
@@ -11,22 +9,6 @@ from .statement import JavaBlockStatement, SimpleStatement
 
 
 class JavaFunction(Function, JavaBlockStatement):
-    @cached_property
-    def name_node(self) -> Node:
-        node = self.node.child_by_field_name("name")
-        if node is None:
-            raise ValueError(f"Function name node not found: {self.node}")
-        return node
-
-    @cached_property
-    def parameter_lines(self) -> list[int]:
-        parameters_node = self.node.child_by_field_name("parameters")
-        if parameters_node is None:
-            return [self.start_line]
-        param_start_line = parameters_node.start_point[0] + 1
-        param_end_line = parameters_node.end_point[0] + 1
-        return list(range(param_start_line, param_end_line + 1))
-
     @cached_property
     def statements(self) -> list[Statement]:
         if self.body_node is None:
