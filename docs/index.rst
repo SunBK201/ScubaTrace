@@ -73,13 +73,13 @@ Language             Language Server              Tree-sitter Parser        Matu
 C/C++                clangd                       tree-sitter-cpp           High
 Java                 Eclipse JDT LS               tree-sitter-java          High
 Python               jedi-language-server         tree-sitter-python        High
-JavaScript           typescript-language-server   tree-sitter-javascript    High
-Go                   gopls                        tree-sitter-go            WIP
-Rust                 Rust Analyzer                tree-sitter-rust          WIP
-Ruby                 Solargraph                   tree-sitter-ruby          WIP
-Swift                SourceKit-LSP                tree-sitter-swift         WIP
-C#                   OmniSharp                    tree-sitter-c-sharp       WIP
-PHP                  phpactor                     tree-sitter-php           WIP
+JavaScript           typescript-language-server   tree-sitter-javascript    Medium
+Go                   gopls                        tree-sitter-go            Medium
+Rust                 Rust Analyzer                tree-sitter-rust          Medium
+Ruby                 Solargraph                   tree-sitter-ruby          Low
+Swift                SourceKit-LSP                tree-sitter-swift         Low
+C#                   OmniSharp                    tree-sitter-c-sharp       Low
+PHP                  phpactor                     tree-sitter-php           Low
 ===================  ===========================  ========================  ========
 
 Reference
