@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from tree_sitter import Node
-
 from ..function import Function
 from ..statement import BlockStatement, Statement
 from . import language
