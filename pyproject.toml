@@ -37,7 +37,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/SunBK201/ScubaTrace"
+Homepage = "https://sunbk201.github.io/ScubaTrace"
 Issues = "https://github.com/SunBK201/ScubaTrace/issues"
 
 [project.optional-dependencies]
