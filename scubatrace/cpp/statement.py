@@ -62,34 +62,12 @@ class CBlockStatement(BlockStatement):
                     stats.extend(list(self._build_statements(compound_node, self)))
                 else:  # else ...;
                     stats.extend(list(self._build_statements(self.node, self)))
-            case "for_range_loop":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._build_statements(body_node, self)))
-                elif body_node is not None:
-                    if self.language.is_simple_node(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.language.is_block_node(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "for_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._build_statements(body_node, self)))
-                elif body_node is not None:
-                    if self.language.is_simple_node(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.language.is_block_node(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "while_statement":
-                body_node = self.node.child_by_field_name("body")
-                if body_node is not None and body_node.type in ["compound_statement"]:
-                    stats.extend(list(self._build_statements(body_node, self)))
-                elif body_node is not None:
-                    if self.language.is_simple_node(body_node):
-                        stats.extend([CSimpleStatement(body_node, self)])
-                    elif self.language.is_block_node(body_node):
-                        stats.extend([CBlockStatement(body_node, self)])
-            case "do_statement":
+            case (
+                "for_statement"
+                | "for_range_loop"
+                | "while_statement"
+                | "do_statement"
+            ):
                 body_node = self.node.child_by_field_name("body")
                 if body_node is not None and body_node.type in ["compound_statement"]:
                     stats.extend(list(self._build_statements(body_node, self)))
