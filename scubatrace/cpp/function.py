@@ -68,8 +68,8 @@ class CFunction(Function, CBlockStatement):
         parent_statements = stat.parent.statements
         index = parent_statements.index(stat)
         not_last = index < len(parent_statements) - 1  # not last statement in block
-        last_stat_type = parent_statements[index + 1].node.type
-        if not_last and last_stat_type != "else_clause":  # if () { stat; } else { ... }
+        next_stat_type = parent_statements[index + 1].node.type if not_last else None
+        if not_last and next_stat_type != "else_clause":  # if () { stat; } else { ... }
             return parent_statements[index + 1]
         else:
             if isinstance(stat.parent, Function):
