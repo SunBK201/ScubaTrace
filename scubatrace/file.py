@@ -6,6 +6,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 import chardet
+import networkx as nx
 from scubalspy import SyncLanguageServer
 from tree_sitter import Node
 
@@ -346,3 +347,41 @@ class File:
 
     def statements_by_field_name(self, field_name: str) -> list[Statement]:
         return [s for s in self.statements if s.field_name == field_name]
+
+    def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
+        for stat in statments:
+            color = "blue" if isinstance(stat, BlockStatement) else "black"
+            graph.add_node(stat.signature, label=stat.dot_text, color=color)
+            for post_stat in stat.post_controls:
+                graph.add_node(post_stat.signature, label=post_stat.dot_text)
+                graph.add_edge(stat.signature, post_stat.signature, label="CFG")
+            if isinstance(stat, BlockStatement):
+                self.__build_cfg_graph(graph, stat.statements)
+
+    def export_cfg_dot(self, path: str) -> nx.DiGraph:
+        """
+        Exports the CFG of the file to a DOT file.
+
+        Args:
+            path (str): The path to save the DOT file.
+        """
+        graph = nx.MultiDiGraph()
+        graph.add_node("graph", bgcolor="ivory", splines="true")
+        graph.add_node(
+            "node",
+            fontname="SF Pro Rounded, system-ui",
+            shape="box",
+            style="rounded",
+            margin="0.5,0.1",
+        )
+        graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
+        graph.add_node(self.signature, label=self.relpath, color="red")
+        if len(self.statements) == 0:
+            graph.add_node(
+                self.signature, label="No statements found", color="red", shape="box"
+            )
+        else:
+            graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
+        self.__build_cfg_graph(graph, self.statements)
+        nx.nx_pydot.write_dot(graph, path)
+        return graph
