@@ -47,10 +47,12 @@ class JAVASCRIPT(Language):
 
     SIMPLE_STATEMENTS = [
         "variable_declaration",
+        "lexical_declaration",
         "expression_statement",
         "return_statement",
         "break_statement",
         "continue_statement",
+        "import_statement",
     ]
 
     LOOP_STATEMENTS = ["for_statement", "while_statement", "do_statement"]
