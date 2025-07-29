@@ -443,7 +443,12 @@ class Function(BlockStatement):
         )
         graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
         graph.add_node(self.signature, label=self.dot_text, color="red")
-        graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
+        if len(self.statements) == 0:
+            graph.add_node(
+                self.signature, label="No statements found", color="red", shape="box"
+            )
+        else:
+            graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
         self.__build_cfg_graph(graph, self.statements)
 
         if with_cdg:
