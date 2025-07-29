@@ -44,7 +44,6 @@ class JAVASCRIPT(Language):
         "switch_default",
         "case_clause",
         "default_clause",
-        "statement_block",
     ]
 
     SIMPLE_STATEMENTS = [
