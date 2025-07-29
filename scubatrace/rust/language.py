@@ -8,8 +8,6 @@ class RUST(Language):
     extensions = ["rs"]
     tslanguage = TSLanguage(tsrust.language())
 
-    query_function = "(function_item)@name"
-    query_return = "(return_expression)@name"
     query_call = "(call_expression)@name"
     query_import_identifier = """
         (use_declaration
@@ -23,20 +21,22 @@ class RUST(Language):
 
     query_class = "(struct_item)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break_expression",
         "continue_expression",
         "return_expression",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_expression",
+        "match_expression",
+        "match_arm",
         "for_expression",
         "while_expression",
         "loop_expression",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "expression_statement",
         "let_declaration",
         "assignment_expression",
@@ -45,15 +45,34 @@ class RUST(Language):
         "return_expression",
     ]
 
-    control_statements = [
-        "if_expression",
-        "for_expression",
-    ]
-
-    loop_statements = [
+    LOOP_STATEMENTS = [
         "for_expression",
         "while_expression",
         "loop_expression",
+    ]
+
+    FUNCTION_STATEMENTS = [
+        "function_item",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_expression",
+    ]
+
+    IF_STATEMENTS = [
+        "if_expression",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "match_expression",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "continue_expression",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_expression",
     ]
 
     @staticmethod

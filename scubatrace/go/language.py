@@ -8,8 +8,6 @@ class GO(Language):
     extensions = ["go"]
     tslanguage = TSLanguage(tsgo.language())
 
-    query_function = "(function_declaration)@name"
-    query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
     query_import_identifier = """
         (import_declaration
@@ -25,14 +23,14 @@ class GO(Language):
     query_package = "(package_clause)@name"
     query_class = "(type_declaration)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break_statement",
         "continue_statement",
         "goto_statement",
         "return_statement",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "for_statement",
         "expression_switch_statement",
@@ -40,7 +38,7 @@ class GO(Language):
         "communication_case",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "var_declaration",
         "const_declaration",
         "expression_statement",
@@ -54,16 +52,36 @@ class GO(Language):
         "defer_statement",
     ]
 
-    control_statements = [
-        "if_statement",
+    LOOP_STATEMENTS = [
         "for_statement",
-        "expression_switch_statement",
-        "select_statement",
-        "labeled_statement",
     ]
 
-    loop_statements = [
-        "for_statement",
+    FUNCTION_STATEMENTS = [
+        "function_declaration",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
+        "if_statement",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "expression_switch_statement",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "continue_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_statement",
+    ]
+
+    GOTO_STATEMENTS = [
+        "goto_statement",
     ]
 
     @staticmethod
@@ -99,4 +117,13 @@ class GO(Language):
                 )
                 (#eq? @left "{text}")
             )
+        """
+
+    @staticmethod
+    def query_goto_label(label_name: str) -> str:
+        return f"""
+            (labeled_statement
+                label: (label_name)@label
+                (#eq? @label "{label_name}")
+            )@labeled_statement
         """

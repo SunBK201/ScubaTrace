@@ -21,7 +21,9 @@ class Function(BlockStatement):
     A function in the source code.
     """
 
-    def __init__(self, node: Node, file: File, joern_id: str | None = None):
+    def __init__(
+        self, node: Node, file: File | BlockStatement, joern_id: str | None = None
+    ):
         super().__init__(node, file)
         self.joern_id = joern_id
         self._is_build_cfg = False
@@ -30,7 +32,7 @@ class Function(BlockStatement):
         self.callees_joern: list[Call] = []
 
     @staticmethod
-    def Function(node: Node, file: File):
+    def Function(node: Node, file: File | BlockStatement):
         """
         Factory function to create a Function instance based on the language of the file.
 
@@ -284,34 +286,6 @@ class Function(BlockStatement):
                         break
         return callers
 
-    def __traverse_statements(self):
-        stack = []
-        for stat in self.statements:
-            stack.append(stat)
-            while stack:
-                cur_stat = stack.pop()
-                yield cur_stat
-                if isinstance(cur_stat, BlockStatement):
-                    stack.extend(reversed(cur_stat.statements))
-
-    def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
-        """
-        Retrieves all statements of a given tree-sitter node type within the function.
-
-        Args:
-            type (str): The tree-sitter node type to filter by.
-            recursive (bool): If True, recursively search through all sub-statements.
-
-        Returns:
-            list[Statement]: A list of statements that match the specified type.
-        """
-        if recursive:
-            return [
-                stat for stat in self.__traverse_statements() if stat.node.type == type
-            ]
-        else:
-            return [stat for stat in self.statements if stat.node.type == type]
-
     def slice_by_statements(
         self,
         statements: list[Statement],
@@ -389,19 +363,15 @@ class Function(BlockStatement):
             control_dependent_depth=control_dependent_depth,
         )
 
-    @abstractmethod
-    def _build_post_cfg(self, statements: list[Statement]): ...
-
     def _build_pre_cfg(self, statements: list[Statement]):
         for i in range(len(statements)):
             cur_stat = statements[i]
-            for post_stat in cur_stat._post_control_statements:
+            for post_stat in cur_stat.post_controls:
                 post_stat._pre_control_statements.append(cur_stat)
             if isinstance(cur_stat, BlockStatement):
                 self._build_pre_cfg(cur_stat.statements)
 
     def build_cfg(self):
-        self._build_post_cfg(self.statements)
         self._build_pre_cfg(self.statements)
         if len(self.statements) > 0:
             self.statements[0]._pre_control_statements.insert(0, self)

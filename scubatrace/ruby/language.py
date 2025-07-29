@@ -8,8 +8,6 @@ class RUBY(Language):
     extensions = ["rb"]
     tslanguage = TSLanguage(tsruby.language())
 
-    query_function = "(method)@name"
-    query_return = "(return)@name"
     query_call = "(call)@name"
     query_import_identifier = """
         (call
@@ -23,14 +21,14 @@ class RUBY(Language):
 
     query_class = "(class)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break",
         "next",
         "redo",
         "return",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if",
         "unless",
         "case",
@@ -40,7 +38,7 @@ class RUBY(Language):
         "until",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "break",
         "next",
         "redo",
@@ -49,19 +47,35 @@ class RUBY(Language):
         "assignment",
     ]
 
-    control_statements = [
-        "if",
-        "unless",
-        "case",
+    LOOP_STATEMENTS = [
         "for",
         "while",
         "until",
     ]
 
-    loop_statements = [
-        "for",
-        "while",
-        "until",
+    FUNCTION_STATEMENTS = [
+        "method",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return",
+    ]
+
+    IF_STATEMENTS = [
+        "if",
+        "unless",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "case",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "next",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break",
     ]
 
     @staticmethod

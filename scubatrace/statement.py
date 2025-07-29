@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING, Callable, Generator
 
 from tree_sitter import Node
 
+from . import language as lang
 from .identifier import Identifier
 from .language import Language
 
 if TYPE_CHECKING:
     from .file import File
     from .function import Function
+    from .project import Project
 
 
 class Statement:
@@ -30,7 +32,6 @@ class Statement:
         self.node = node
         self.parent = parent
         self._pre_control_statements = []
-        self._post_control_statements = []
 
     def __str__(self) -> str:
         return f"{self.signature}: {self.text}"
@@ -40,6 +41,36 @@ class Statement:
 
     def __hash__(self):
         return hash(self.signature)
+
+    @property
+    def project(self) -> Project:
+        """
+        The project this statement belongs to.
+        """
+        return self.file.project
+
+    @property
+    def node_type(self) -> str:
+        """
+        The type of the tree-sitter node.
+        """
+        return self.node.type
+
+    @property
+    def field_name(self) -> str | None:
+        """
+        The field name of the tree-sitter node.
+        """
+        cur_node = self.node
+        parent_node = cur_node.parent
+        while parent_node is not None:
+            child_index = parent_node.named_children.index(cur_node)
+            field_name = parent_node.field_name_for_named_child(child_index)
+            if field_name is not None:
+                return field_name
+            cur_node = parent_node
+            parent_node = parent_node.parent
+        return None
 
     @property
     @abstractmethod
@@ -222,23 +253,76 @@ class Statement:
                 return None
         return cur
 
-    @property
+    @cached_property
+    def prev_sibling(self) -> Statement | None:
+        """
+        Returns the previous sibling statement in the same block.
+
+        If there is no previous sibling, returns None.
+        """
+        parent_statements = self.parent.statements
+        index = parent_statements.index(self)
+        if index == 0:
+            return None
+        return parent_statements[index - 1]
+
+    @cached_property
+    def next_sibling(self) -> Statement | None:
+        """
+        Returns the next sibling statement in the same block.
+
+        If there is no next sibling, returns None.
+        """
+        parent_statements = self.parent.statements
+        index = parent_statements.index(self)
+        if index == len(parent_statements) - 1:
+            return None
+        return parent_statements[index + 1]
+
+    @cached_property
+    def right_uncle_ancestor(self) -> Statement | None:
+        """
+        Returns the right uncle ancestor of the statement.
+
+        The right uncle ancestor is the next statement in the control flow after this statement.
+        """
+        from .function import Function
+
+        cur = self.parent
+        while cur is not None:
+            if isinstance(cur, Function):
+                return None
+            if not isinstance(cur, Statement):
+                return None
+            if cur.node_type in self.language.LOOP_STATEMENTS:
+                return cur
+            if cur.next_sibling is not None:
+                return cur.next_sibling
+            cur = cur.parent
+        return None
+
+    @cached_property
+    def preorder_successor(self) -> Statement | None:
+        """
+        Returns the preorder successor of the statement.
+
+        The preorder successor is the next statement in the preorder traversal of the block.
+        If there is no such statement, returns None.
+        """
+        next_sibling = self.next_sibling
+        if next_sibling is not None:
+            return next_sibling
+        return self.right_uncle_ancestor
+
+    @cached_property
+    @abstractmethod
     def post_controls(self) -> list[Statement]:
         """
         Post-control statements of the statement.
 
         These are statements that are executed after this statement in the control flow.
         """
-        func = self.function
-        if func is None:
-            return []
-        if not func._is_build_cfg:
-            func.build_cfg()
-        return self._post_control_statements
-
-    @post_controls.setter
-    def post_controls(self, stats: list[Statement]):
-        self._post_control_statements = stats
+        ...
 
     @property
     def pre_controls(self) -> list[Statement]:
@@ -253,10 +337,6 @@ class Statement:
         if not func._is_build_cfg:
             func.build_cfg()
         return self._pre_control_statements
-
-    @pre_controls.setter
-    def pre_controls(self, stats: list[Statement]):
-        self._pre_control_statements = stats
 
     @property
     def post_control_dependents(self) -> list[Statement]:
@@ -488,15 +568,187 @@ class Statement:
                     dq.appendleft(post)
             depth -= 1
 
+    def ancestor_by_type(self, type: str) -> Statement | None:
+        """
+        Returns the nearest ancestor of the specified type.
+
+        Args:
+            type (str): The type of the ancestor to find.
+
+        Returns:
+            Statement | None: The nearest ancestor of the specified type, or None if not found.
+        """
+        cur = self.parent
+        while cur is not None:
+            if not isinstance(cur, Statement):
+                return None
+            if cur.node_type == type:
+                return cur
+            cur = cur.parent
+        return None
+
+    def ancestor_by_types(self, types: list[str]) -> Statement | None:
+        """
+        Returns the nearest ancestor of any of the specified types.
+
+        Args:
+            types (list[str]): The types of the ancestors to find.
+
+        Returns:
+            Statement | None: The nearest ancestor of any of the specified types, or None if not found.
+        """
+        cur = self.parent
+        while cur is not None:
+            if not isinstance(cur, Statement):
+                return None
+            if cur.node_type in types:
+                return cur
+            cur = cur.parent
+        return None
+
 
 class SimpleStatement(Statement):
+    @staticmethod
+    def SimpleStatement(node: Node, parent: BlockStatement | Function | File):
+        language = parent.language
+        if language == lang.C:
+            from .cpp.statement import CSimpleStatement
+
+            return CSimpleStatement(node, parent)
+        elif language == lang.JAVA:
+            from .java.statement import JavaSimpleStatement
+
+            return JavaSimpleStatement(node, parent)
+        elif language == lang.JAVASCRIPT:
+            from .javascript.statement import JavaScriptSimpleStatement
+
+            return JavaScriptSimpleStatement(node, parent)
+        elif language == lang.PYTHON:
+            from .python.statement import PythonSimpleStatement
+
+            return PythonSimpleStatement(node, parent)
+        elif language == lang.GO:
+            from .go.statement import GoSimpleStatement
+
+            return GoSimpleStatement(node, parent)
+        elif language == lang.PHP:
+            from .php.statement import PHPSimpleStatement
+
+            return PHPSimpleStatement(node, parent)
+        elif language == lang.RUBY:
+            from .ruby.statement import RubySimpleStatement
+
+            return RubySimpleStatement(node, parent)
+        elif language == lang.RUST:
+            from .rust.statement import RustSimpleStatement
+
+            return RustSimpleStatement(node, parent)
+        elif language == lang.SWIFT:
+            from .swift.statement import SwiftSimpleStatement
+
+            return SwiftSimpleStatement(node, parent)
+        elif language == lang.CSHARP:
+            from .csharp.statement import CSharpSimpleStatement
+
+            return CSharpSimpleStatement(node, parent)
+        else:
+            return SimpleStatement(node, parent)
+
     @property
     def is_jump_statement(self) -> bool:
-        language = self.language
-        return self.node.type in language.jump_statements
+        return self.node_type in self.language.JUMP_STATEMENTS
+
+    @cached_property
+    def post_controls(self) -> list[Statement]:
+        if self.node_type in self.language.EXIT_STATEMENTS:
+            return []
+        if self.node_type in self.language.CONTINUE_STATEMENTS:
+            loop_stat = self.ancestor_by_types(self.language.LOOP_STATEMENTS)
+            return [loop_stat] if loop_stat else []
+        if self.node_type in self.language.BREAK_STATEMENTS:
+            loop_stat = self.ancestor_by_types(
+                self.language.LOOP_STATEMENTS + self.language.SWITCH_STATEMENTS
+            )
+            preorder_successor = loop_stat.preorder_successor if loop_stat else None
+            return [preorder_successor] if preorder_successor else []
+        if self.node_type in self.language.GOTO_STATEMENTS:
+            function = self.function
+            if function is not None:
+                label_name_node = self.node.child_by_field_name("label")
+                assert label_name_node is not None and label_name_node.text is not None
+                label_name = label_name_node.text.decode()
+                label_stat = function.query_oneshot(
+                    self.language.query_goto_label(label_name)
+                )
+                return [label_stat] if label_stat else []
+
+        if self.parent.node_type in self.language.LOOP_STATEMENTS:
+            # while () {last_statement;}
+            loop_stat = self.ancestor_by_types(self.language.LOOP_STATEMENTS)
+            is_last_statement = self.next_sibling is None
+            if is_last_statement:
+                return [loop_stat] if loop_stat else []
+        if self.parent.node_type in self.language.IF_STATEMENTS:
+            # if () {last_statement;} else { ...}
+            consequences = self.parent.statements_by_field_name("consequence")
+            if self in consequences:
+                is_last_consequences = consequences.index(self) == len(consequences) - 1
+                if is_last_consequences:
+                    return (
+                        [self.right_uncle_ancestor] if self.right_uncle_ancestor else []
+                    )
+
+        preorder_successor = self.preorder_successor
+        return [preorder_successor] if preorder_successor is not None else []
 
 
 class BlockStatement(Statement):
+    @staticmethod
+    def BlockStatement(node: Node, parent: BlockStatement | Function | File):
+        language = parent.language
+        if language == lang.C:
+            from .cpp.statement import CBlockStatement
+
+            return CBlockStatement(node, parent)
+        elif language == lang.JAVA:
+            from .java.statement import JavaBlockStatement
+
+            return JavaBlockStatement(node, parent)
+        elif language == lang.JAVASCRIPT:
+            from .javascript.statement import JavaScriptBlockStatement
+
+            return JavaScriptBlockStatement(node, parent)
+        elif language == lang.PYTHON:
+            from .python.statement import PythonBlockStatement
+
+            return PythonBlockStatement(node, parent)
+        elif language == lang.GO:
+            from .go.statement import GoBlockStatement
+
+            return GoBlockStatement(node, parent)
+        elif language == lang.PHP:
+            from .php.statement import PHPBlockStatement
+
+            return PHPBlockStatement(node, parent)
+        elif language == lang.RUBY:
+            from .ruby.statement import RubyBlockStatement
+
+            return RubyBlockStatement(node, parent)
+        elif language == lang.RUST:
+            from .rust.statement import RustBlockStatement
+
+            return RustBlockStatement(node, parent)
+        elif language == lang.SWIFT:
+            from .swift.statement import SwiftBlockStatement
+
+            return SwiftBlockStatement(node, parent)
+        elif language == lang.CSHARP:
+            from .csharp.statement import CSharpBlockStatement
+
+            return CSharpBlockStatement(node, parent)
+        else:
+            return BlockStatement(node, parent)
+
     def __getitem__(self, index: int) -> Statement:
         return self.statements[index]
 
@@ -505,12 +757,11 @@ class BlockStatement(Statement):
         return '"' + self.text.split("\n")[0].replace('"', '\\"') + '..."'
 
     @cached_property
-    @abstractmethod
     def statements(self) -> list[Statement]:
         """
         Sub-statements of the block.
         """
-        ...
+        return BlockStatement.build_statements(self.node, self)
 
     @cached_property
     def block_identifiers(self) -> list[Identifier]:
@@ -557,14 +808,73 @@ class BlockStatement(Statement):
     @property
     def is_jump_statement(self) -> bool:
         language = self.language
-        if self.node.type in language.loop_statements:
+        if self.node.type in language.LOOP_STATEMENTS:
             return False
         for child in self.statements:
             if child.is_jump_statement:
                 return True
         return False
 
-    def __traverse_statements(self):
+    @cached_property
+    def post_controls(self) -> list[Statement]:
+        if self.node_type in self.language.IF_STATEMENTS:
+            consequences = self.statements_by_field_name("consequence")
+            alternatives = self.statements_by_field_name("alternative")
+            nexts = []
+            if len(consequences) > 0:
+                nexts.append(consequences[0])
+            if len(alternatives) > 0:
+                nexts.append(alternatives[0])
+            elif self.preorder_successor is not None:
+                nexts.append(self.preorder_successor)
+            return nexts
+        if self.node_type in self.language.SWITCH_STATEMENTS:
+            if len(self.statements) > 0:
+                return [self.statements[0]]
+        if self.parent.node_type in self.language.SWITCH_STATEMENTS:
+            if self.text.strip().startswith("default:") and len(self.statements) > 0:
+                return [self.statements[0]]
+        if self.parent.node_type in self.language.LOOP_STATEMENTS:
+            # while () {last_statement;}
+            loop_stat = self.ancestor_by_types(self.language.LOOP_STATEMENTS)
+            is_last_statement = self.next_sibling is None
+            if is_last_statement:
+                return [loop_stat] if loop_stat else []
+
+        nexts = [self.statements[0]] if len(self.statements) > 0 else []
+        if self.preorder_successor is not None:
+            nexts.append(self.preorder_successor)
+        return nexts
+
+    @staticmethod
+    def build_statements(
+        node: Node,
+        parent: BlockStatement | Function | File,
+    ) -> list[Statement]:
+        stats = []
+        cursor = node.walk()
+        if cursor.node is not None:
+            if not cursor.goto_first_child():
+                return stats
+        while True:
+            assert cursor.node is not None
+            language = parent.language
+            if language.is_function_node(cursor.node):
+                from .function import Function
+
+                stats.append(Function.Function(cursor.node, parent))
+            elif language.is_simple_node(cursor.node):
+                stats.append(SimpleStatement.SimpleStatement(cursor.node, parent))
+            elif language.is_block_node(cursor.node):
+                stats.append(BlockStatement.BlockStatement(cursor.node, parent))
+            else:
+                stats.extend(BlockStatement.build_statements(cursor.node, parent))
+
+            if not cursor.goto_next_sibling():
+                break
+        return stats
+
+    def __traverse_statements(self) -> Generator[Statement, None, None]:
         stack = []
         for stat in self.statements:
             stack.append(stat)
@@ -615,6 +925,24 @@ class BlockStatement(Statement):
         else:
             return [s for s in self.statements if s.node.type == type]
 
+    def statements_by_types(
+        self, types: list[str], recursive: bool = False
+    ) -> list[Statement]:
+        """
+        Returns the statements that are of any of the specified types.
+
+        Args:
+            types (list[str]): The tree-sitter ast types of the statements to return.
+            recursive (bool): If True, recursively search in sub-statements.
+
+        Returns:
+            list[Statement]: A list of statements that match any of the specified types.
+        """
+        if recursive:
+            return [s for s in self.__traverse_statements() if s.node.type in types]
+        else:
+            return [s for s in self.statements if s.node.type in types]
+
     def statement_by_field_name(self, field_name: str) -> Statement | None:
         """
         Returns the statement that contains the specified tree-sitter ast field name.
@@ -632,3 +960,44 @@ class BlockStatement(Statement):
             if stat.node.start_byte == field_node.start_byte:
                 return stat
         return None
+
+    def statements_by_field_name(self, field_name: str) -> list[Statement]:
+        return [s for s in self.statements if s.field_name == field_name]
+
+    def query(self, query: str) -> list[Statement]:
+        """
+        Executes a tree-sitter query to find statements in the block.
+
+        Args:
+            query (str): The tree-sitter query to execute.
+
+        Returns:
+            list[Statement]: A list of statements that match the query.
+        """
+        matched_nodes = self.file.parser.query_all(self.node, query)
+        matched_statements = []
+
+        def collect_matching_statements(stat: Statement):
+            if stat.node in matched_nodes:
+                matched_statements.append(stat)
+            if isinstance(stat, BlockStatement):
+                for child in stat.statements:
+                    collect_matching_statements(child)
+
+        collect_matching_statements(self)
+        return matched_statements
+
+    def query_oneshot(self, query: str) -> Statement | None:
+        """
+        Executes a tree-sitter oneshot query to find statements in the block.
+
+        Args:
+            query (str): The tree-sitter oneshot query to execute.
+
+        Returns:
+            list[Statement]: A list of statements that match the query.
+        """
+        matched_statements = self.query(query)
+        if len(matched_statements) == 0:
+            return None
+        return matched_statements[0]

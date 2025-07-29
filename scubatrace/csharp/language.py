@@ -8,8 +8,6 @@ class CSHARP(Language):
     extensions = ["cs"]
     tslanguage = TSLanguage(tscsharp.language())
 
-    query_function = "(method_declaration)@name"
-    query_return = "(return_statement)@name"
     query_call = "(invocation_expression)@name"
     query_import_identifier = """
         (using_directive
@@ -24,14 +22,7 @@ class CSHARP(Language):
 
     query_class = "(class_declaration)@name"
 
-    jump_statements = [
-        "break_statement",
-        "continue_statement",
-        "goto_statement",
-        "return_statement",
-    ]
-
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "switch_statement",
         "switch_section",
@@ -41,28 +32,56 @@ class CSHARP(Language):
         "foreach_statement",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "expression_statement",
         "local_declaration_statement",
         "return_statement",
         "break_statement",
         "continue_statement",
         "labeled_statement",
+        "goto_statement",
     ]
 
-    control_statements = [
+    FUNCTION_STATEMENTS = [
+        "method_declaration",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
         "if_statement",
-        "for_statement",
-        "switch_statement",
-        "switch_section",
-        "labeled_statement",
     ]
 
-    loop_statements = [
+    SWITCH_STATEMENTS = [
+        "switch_statement",
+    ]
+
+    LOOP_STATEMENTS = [
         "while_statement",
         "do_statement",
         "for_statement",
         "foreach_statement",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "continue_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_statement",
+    ]
+
+    GOTO_STATEMENTS = [
+        "goto_statement",
+    ]
+
+    JUMP_STATEMENTS = [
+        "break_statement",
+        "continue_statement",
+        "goto_statement",
+        "return_statement",
     ]
 
     @staticmethod
@@ -82,4 +101,13 @@ class CSHARP(Language):
                 name: (identifier)@left
                 (#eq? @left "{text}")
             )
+        """
+
+    @staticmethod
+    def query_goto_label(label_name: str) -> str:
+        return f"""
+            (labeled_statement
+                (identifier)@label
+                (#eq? @label "{label_name}")
+            )@labeled_statement
         """

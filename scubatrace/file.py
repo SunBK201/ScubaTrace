@@ -13,7 +13,7 @@ from . import language as lang
 from .clazz import Class
 from .function import Function
 from .identifier import Identifier
-from .statement import Statement
+from .statement import BlockStatement, SimpleStatement, Statement
 
 if TYPE_CHECKING:
     from .project import Project
@@ -183,6 +183,13 @@ class File:
         """
         return self.parser.parse(self.text)
 
+    @property
+    def node_type(self) -> str:
+        """
+        The type of the tree-sitter root node.
+        """
+        return self.node.type
+
     @cached_property
     @abstractmethod
     def imports(self) -> list[File]:
@@ -216,10 +223,9 @@ class File:
     @cached_property
     def functions(self) -> list[Function]:
         """
-        All functions in the file.
+        functions in the file.
         """
-        func_node = self.parser.query_all(self.text, self.language.query_function)
-        return [Function.Function(node, file=self) for node in func_node]
+        return [stat for stat in self.statements if isinstance(stat, Function)]
 
     @cached_property
     @abstractmethod
@@ -229,17 +235,14 @@ class File:
     @abstractmethod
     def statements(self) -> list[Statement]:
         """
-        All statements of functions in the file.
+        statements in the file.
         """
-        stats = []
-        for func in self.functions:
-            stats.extend(func.statements)
-        return stats
+        return BlockStatement.build_statements(self.node, self)
 
     @cached_property
     def identifiers(self) -> list[Identifier]:
         """
-        All identifiers of functions in the file.
+        identifiers in the file.
         """
         identifiers = []
         for stmt in self.statements:
@@ -249,7 +252,7 @@ class File:
     @cached_property
     def variables(self) -> list[Identifier]:
         """
-        All variables of functions in the file.
+        variables in the file.
         """
         variables = []
         for stmt in self.statements:
@@ -338,5 +341,8 @@ class File:
                     continue
                 if node.text is None:
                     continue
-                return [Statement(node, self)]
+                return [SimpleStatement(node, self)]
         return []
+
+    def statements_by_field_name(self, field_name: str) -> list[Statement]:
+        return [s for s in self.statements if s.field_name == field_name]

@@ -8,8 +8,6 @@ class JAVA(Language):
     extensions = ["java"]
     tslanguage = TSLanguage(tsjava.language())
 
-    query_function = query_method = "(method_declaration)@name"
-    query_return = "(return_statement)@name"
     query_call = "(method_invocation)@name"
     query_import_identifier = """
         (import_declaration
@@ -25,13 +23,13 @@ class JAVA(Language):
     query_package = "(package_declaration)@name"
     query_class = "(class_declaration)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break_statement",
         "continue_statement",
         "return_statement",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "for_statement",
         "enhanced_for_statement",
@@ -44,29 +42,45 @@ class JAVA(Language):
         "catch_clause",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "expression_statement",
         "return_statement",
         "local_variable_declaration",
         "break_statement",
         "continue_statement",
         "yield_statement",
+        "import_declaration",
     ]
 
-    control_statements = [
-        "if_statement",
+    LOOP_STATEMENTS = [
         "for_statement",
-        "enhanced_for_statement",
         "while_statement",
         "do_statement",
+        "enhanced_for_statement",
+    ]
+
+    FUNCTION_STATEMENTS = [
+        "method_declaration",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
+        "if_statement",
+    ]
+
+    SWITCH_STATEMENTS = [
         "switch_expression",
     ]
 
-    loop_statements = [
-        "for_statement",
-        "while_statement",
-        "do_statement",
-        "enhanced_for_statement",
+    CONTINUE_STATEMENTS = [
+        "continue_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_statement",
     ]
 
     @staticmethod

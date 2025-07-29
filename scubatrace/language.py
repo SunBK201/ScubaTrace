@@ -29,16 +29,6 @@ class Language:
     The tree-sitter query to match identifiers.
     """
 
-    query_function: str
-    """
-    The tree-sitter query to match function definitions.
-    """
-
-    query_return: str
-    """
-    The tree-sitter query to match return statements.
-    """
-
     query_call: str
     """
     The tree-sitter query to match function calls.
@@ -51,40 +41,44 @@ class Language:
     For example, in C/C++, this would match the `header.h` in `#include <header.h>`.
     """
 
-    jump_statements: list[str]
+    EXIT_STATEMENTS: list[str] = []
     """
-    The tree-sitter AST types of jump statements.
+    The tree-sitter AST types of exit statements.
 
-    For example, in Python, this would include 'break', 'continue', 'return', etc.
-    """
-
-    loop_statements: list[str]
-    """
-    The tree-sitter AST types of loop statements.
-    
-    For example, in Python, this would include 'for', 'while', etc.
+    For example, in Python, this would include 'return'.
     """
 
-    block_statements: list[str]
+    FUNCTION_STATEMENTS: list[str] = []
+
+    IF_STATEMENTS: list[str] = []
+
+    SWITCH_STATEMENTS: list[str] = []
+
+    CONTINUE_STATEMENTS: list[str] = []
+
+    BREAK_STATEMENTS: list[str] = []
+
+    GOTO_STATEMENTS: list[str] = []
+
+    JUMP_STATEMENTS: list[str] = []
+
+    LOOP_STATEMENTS: list[str] = []
+
+    BLOCK_STATEMENTS: list[str] = []
     """
     The tree-sitter AST types of block statements.
 
     For example, in Python, this would include 'if', 'for', 'while', etc.
     """
 
-    simple_statements: list[str]
+    SIMPLE_STATEMENTS: list[str] = []
     """
     The tree-sitter AST types of simple statements.
 
     For example, in Python, this would include 'expression_statement', 'pass_statement', etc.
     """
 
-    control_statements: list[str]
-    """
-    The tree-sitter AST types of control statements.
-
-    For example, in Python, this would include 'if', 'elif', 'else', etc.
-    """
+    EXCLUDED_NODE_FIELDS: list[str] = []
 
     @staticmethod
     @abstractmethod
@@ -93,6 +87,27 @@ class Language:
         Formats a tree-sitter query to match left values in the given text.
         """
         ...
+
+    @staticmethod
+    @abstractmethod
+    def query_goto_label(label_name: str) -> str:
+        """
+        Formats a tree-sitter query to match goto statements with the given label name.
+        """
+        ...
+
+    @classmethod
+    def is_function_node(cls, node: Node) -> bool:
+        """
+        Checks if the given node is a function definition.
+
+        Args:
+            node (Node): The tree-sitter node to check.
+
+        Returns:
+            bool: True if the node is a function definition, False otherwise.
+        """
+        return node.type in cls.FUNCTION_STATEMENTS
 
     @classmethod
     def is_block_node(cls, node: Node) -> bool:
@@ -105,7 +120,7 @@ class Language:
         Returns:
             bool: True if the node is a block statement, False otherwise.
         """
-        return node.type in cls.block_statements
+        return node.type in cls.BLOCK_STATEMENTS
 
     @classmethod
     def is_simple_node(cls, node: Node) -> bool:
@@ -118,9 +133,22 @@ class Language:
         Returns:
             bool: True if the node is a simple statement, False otherwise.
         """
-        if node.parent is not None and node.parent.type in cls.simple_statements:
+        if node.parent is not None and node.parent.type in cls.SIMPLE_STATEMENTS:
             return False
-        return node.type in cls.simple_statements
+        if not node.is_named:
+            return False
+
+        parent_node = node.parent
+        if parent_node is not None:
+            child_index = parent_node.named_children.index(node)
+            node_field_name = parent_node.field_name_for_named_child(child_index)
+            if (
+                node_field_name is not None
+                and node_field_name in cls.EXCLUDED_NODE_FIELDS
+            ):
+                return False
+
+        return node.type in cls.SIMPLE_STATEMENTS
 
     # C = scubalspy_config.Language.C
     # JAVA = scubalspy_config.Language.JAVA

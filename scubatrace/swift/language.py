@@ -8,7 +8,6 @@ class SWIFT(Language):
     extensions = ["swift"]
     tslanguage = TSLanguage(tsswift.language())
 
-    query_function = "(function_declaration)@name"
     query_return = """
     (control_transfer_statement)@name
     (#eq? @left "return")
@@ -22,30 +21,52 @@ class SWIFT(Language):
 
     query_class = "(class_declaration)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "control_transfer_statement",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "for_statement",
         "while_statement",
         "repeat_while_statement",
     ]
 
-    simple_statements = jump_statements + [
+    SIMPLE_STATEMENTS = JUMP_STATEMENTS + [
         "import_declaration",
         "property_declaration",
         "call_expression",
         "assignment",
     ]
 
-    control_statements = block_statements
-
-    loop_statements = [
+    LOOP_STATEMENTS = [
         "for_statement",
         "while_statement",
         "repeat_while_statement",
+    ]
+
+    FUNCTION_STATEMENTS = [
+        "function_declaration",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
+        "if_statement",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "switch_statement",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "control_transfer_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "control_transfer_statement",
     ]
 
     @staticmethod

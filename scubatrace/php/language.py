@@ -10,8 +10,6 @@ class PHP(Language):
 
     query_identifier = "(name)@name"
 
-    query_function = "(function_definition)@name"
-    query_return = "(return_statement)@name"
     query_call = "(function_call_expression)@name"
     query_import_identifier = """
         (include_expression
@@ -30,14 +28,14 @@ class PHP(Language):
 
     query_class = "(class_declaration)@name"
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break_statement",
         "continue_statement",
         "goto_statement",
         "return_statement",
     ]
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "else_clause",
         "switch_statement",
@@ -49,7 +47,7 @@ class PHP(Language):
         "try_statement",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "expression_statement",
         "break_statement",
         "continue_statement",
@@ -57,23 +55,42 @@ class PHP(Language):
         "return_statement",
         "echo_statement",
         "namespace_definition",
-    ]
-
-    control_statements = [
-        "if_statement",
-        "switch_statement",
-        "for_statement",
-        "foreach_statement",
-        "while_statement",
-        "do_statement",
         "named_label_statement",
     ]
 
-    loop_statements = [
+    LOOP_STATEMENTS = [
         "for_statement",
         "foreach_statement",
         "while_statement",
         "do_statement",
+    ]
+
+    FUNCTION_STATEMENTS = [
+        "function_definition",
+    ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
+        "if_statement",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "switch_statement",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "continue_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_statement",
+    ]
+
+    GOTO_STATEMENTS = [
+        "goto_statement",
     ]
 
     @staticmethod
@@ -91,4 +108,13 @@ class PHP(Language):
                 )
                 (#eq? @left "{text}")
             )
+        """
+
+    @staticmethod
+    def query_goto_label(label_name: str) -> str:
+        return f"""
+            (named_label_statement
+                (name)@label
+                (#eq? @label "{label_name}")
+            )@labeled_statement
         """

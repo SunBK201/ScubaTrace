@@ -8,8 +8,6 @@ class C(Language):
     extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp"]
     tslanguage = TSLanguage(tscpp.language())
 
-    query_function = "(function_definition)@name"
-    query_return = "(return_statement)@name"
     query_call = "(call_expression)@name"
     query_import_identifier = """
         (preproc_include
@@ -33,7 +31,7 @@ class C(Language):
         "(preproc_def)@name"
     )
 
-    block_statements = [
+    BLOCK_STATEMENTS = [
         "if_statement",
         "for_statement",
         "for_range_loop",
@@ -42,45 +40,62 @@ class C(Language):
         "switch_statement",
         "case_statement",
         "default_statement",
-        "else_clause",
+        # "else_clause",
     ]
 
-    simple_statements = [
+    SIMPLE_STATEMENTS = [
         "declaration",
         "expression_statement",
         "return_statement",
         "break_statement",
         "continue_statement",
         "goto_statement",
-        "binary_expression",
-        "unary_expression",
         "labeled_statement",
     ]
 
-    control_statements = [
-        "if_statement",
+    LOOP_STATEMENTS = [
         "for_statement",
         "for_range_loop",
         "while_statement",
         "do_statement",
-        "switch_statement",
-        "labeled_statement",
-        "condition_clause",
     ]
 
-    jump_statements = [
+    JUMP_STATEMENTS = [
         "break_statement",
         "continue_statement",
         "goto_statement",
         "return_statement",
     ]
 
-    loop_statements = [
-        "for_statement",
-        "while_statement",
-        "do_statement",
-        "for_range_loop",
+    FUNCTION_STATEMENTS = [
+        "function_definition",
     ]
+
+    EXIT_STATEMENTS = [
+        "return_statement",
+    ]
+
+    IF_STATEMENTS = [
+        "if_statement",
+    ]
+
+    SWITCH_STATEMENTS = [
+        "switch_statement",
+    ]
+
+    CONTINUE_STATEMENTS = [
+        "continue_statement",
+    ]
+
+    BREAK_STATEMENTS = [
+        "break_statement",
+    ]
+
+    GOTO_STATEMENTS = [
+        "goto_statement",
+    ]
+
+    EXCLUDED_NODE_FIELDS = ["initializer"]
 
     @staticmethod
     def query_left_value(text):
@@ -121,4 +136,13 @@ class C(Language):
                 )
                 (#eq? @left "{text}")
             )
+        """
+
+    @staticmethod
+    def query_goto_label(label_name: str) -> str:
+        return f"""
+            (labeled_statement
+                label: (statement_identifier)@label
+                (#eq? @label "{label_name}")
+            )@labeled_statement
         """
