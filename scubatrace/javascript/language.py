@@ -36,7 +36,6 @@ class JAVASCRIPT(Language):
 
     BLOCK_STATEMENTS = [
         "if_statement",
-        "else_clause",
         "for_statement",
         "while_statement",
         "do_statement",
