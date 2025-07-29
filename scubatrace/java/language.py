@@ -1,4 +1,4 @@
-import tree_sitter_cpp as tsjava
+import tree_sitter_java as tsjava
 from tree_sitter import Language as TSLanguage
 
 from ..language import Language
