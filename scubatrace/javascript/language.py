@@ -5,7 +5,7 @@ from ..language import Language
 
 
 class JAVASCRIPT(Language):
-    extensions = ["js"]
+    extensions = ["js", "ts"]
     tslanguage = TSLanguage(tsjavascript.language())
 
     query_call = "(call_expression)@name"
