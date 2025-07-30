@@ -240,7 +240,7 @@ class Function(BlockStatement):
                         continue
                     from .file import File
 
-                    self.file.project.files_uri[callee_def["uri"]] = File.File(
+                    self.file.project.files_uri[callee_def["uri"]] = File.create(
                         callee_def["uri"],
                         self.file.project,
                     )

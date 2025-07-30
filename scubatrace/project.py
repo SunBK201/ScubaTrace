@@ -30,7 +30,7 @@ class Project:
     """The programming language type for the project."""
 
     @staticmethod
-    def Project(
+    def create(
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
@@ -206,7 +206,7 @@ class Project:
                 if file.split(".")[-1] in self.language.extensions:
                     file_path = os.path.join(root, file)
                     key = file_path.replace(self.path + "/", "")
-                    file_lists[key] = File.File(file_path, self)
+                    file_lists[key] = File.create(file_path, self)
         return file_lists
 
     @cached_property

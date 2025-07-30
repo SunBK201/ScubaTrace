@@ -24,5 +24,5 @@ class JavaScriptFile(File):
                 import_files.append(self.project.files_abspath[include_abspath])
             else:
                 # If the file is not in the project, we still add it to the imports
-                import_files.append(File.File(include_abspath, self.project))
+                import_files.append(File.create(include_abspath, self.project))
         return import_files

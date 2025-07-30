@@ -612,7 +612,7 @@ class Statement:
 
 class SimpleStatement(Statement):
     @staticmethod
-    def SimpleStatement(node: Node, parent: BlockStatement | Function | File):
+    def create(node: Node, parent: BlockStatement | Function | File):
         language = parent.language
         if language == lang.C:
             from .cpp.statement import CSimpleStatement
@@ -707,7 +707,7 @@ class SimpleStatement(Statement):
 
 class BlockStatement(Statement):
     @staticmethod
-    def BlockStatement(node: Node, parent: BlockStatement | Function | File):
+    def create(node: Node, parent: BlockStatement | Function | File):
         language = parent.language
         if language == lang.C:
             from .cpp.statement import CBlockStatement
@@ -867,9 +867,9 @@ class BlockStatement(Statement):
 
                 stats.append(Function.Function(cursor.node, parent))
             elif language.is_simple_node(cursor.node):
-                stats.append(SimpleStatement.SimpleStatement(cursor.node, parent))
+                stats.append(SimpleStatement.create(cursor.node, parent))
             elif language.is_block_node(cursor.node):
-                stats.append(BlockStatement.BlockStatement(cursor.node, parent))
+                stats.append(BlockStatement.create(cursor.node, parent))
             else:
                 stats.extend(BlockStatement.build_statements(cursor.node, parent))
 

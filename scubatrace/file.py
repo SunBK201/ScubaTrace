@@ -43,7 +43,7 @@ class File:
         self.__lsp_preload = False
 
     @staticmethod
-    def File(path: str, project: Project) -> File:
+    def create(path: str, project: Project) -> File:
         """
         Factory function to create a :class:`File` instance.
 
@@ -217,7 +217,7 @@ class File:
                 import_files.append(self.project.files_abspath[include_abspath])
             else:
                 # If the file is not in the project, we still add it to the imports
-                import_files.append(File.File(include_abspath, self.project))
+                import_files.append(File.create(include_abspath, self.project))
         return import_files
 
     @cached_property
