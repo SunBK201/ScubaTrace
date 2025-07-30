@@ -47,7 +47,7 @@ ScubaTrace supports multiple programming languages, including:
 | ---------- | -------------------------- | ---------------------- | -------- |
 | C/C++      | clangd                     | tree-sitter-cpp        | High     |
 | Java       | Eclipse JDT LS             | tree-sitter-java       | High     |
-| Python     | pylsp                      | tree-sitter-python     | High     |
+| Python     | Pyright                    | tree-sitter-python     | High     |
 | JavaScript | typescript-language-server | tree-sitter-javascript | Medium   |
 | Go         | gopls                      | tree-sitter-go         | Medium   |
 | Rust       | Rust Analyzer              | tree-sitter-rust       | Medium   |
