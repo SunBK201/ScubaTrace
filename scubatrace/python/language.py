@@ -42,6 +42,7 @@ class PYTHON(Language):
         "for_statement",
         "function_definition",
         "if_statement",
+        "elif_clause",
         "match_statement",
         "try_statement",
         "while_statement",
@@ -80,6 +81,7 @@ class PYTHON(Language):
 
     IF_STATEMENTS = [
         "if_statement",
+        "elif_clause",
     ]
 
     SWITCH_STATEMENTS = [
@@ -93,6 +95,8 @@ class PYTHON(Language):
     BREAK_STATEMENTS = [
         "break_statement",
     ]
+
+    EXCLUDED_NODE_FIELDS: list[str] = ["body"]
 
     @staticmethod
     def query_left_value(text):

@@ -66,7 +66,10 @@ class Statement:
         while parent_node is not None:
             child_index = parent_node.named_children.index(cur_node)
             field_name = parent_node.field_name_for_named_child(child_index)
-            if field_name is not None:
+            if (
+                field_name is not None
+                and field_name not in self.language.EXCLUDED_NODE_FIELDS
+            ):
                 return field_name
             cur_node = parent_node
             parent_node = parent_node.parent
