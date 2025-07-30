@@ -1,6 +1,10 @@
 # ScubaTrace
+[![PyPI](https://img.shields.io/pypi/v/ScubaTrace?style=flat&logo=pypi&label=PyPI)](https://pypi.org/project/scubatrace/)
+[![Docs](https://img.shields.io/github/deployments/SunBK201/ScubaTrace/github-pages?logo=sphinx&label=Docs)](https://sunbk201.github.io/ScubaTrace/)
+[![CodeQL](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql)
+[![License](https://img.shields.io/github/license/SunBK201/ScubaTrace)](https://github.com/SunBK201/ScubaTrace/blob/master/LICENSE)
 
-Source Level Code Analysis Toolkit.
+Source level code analysis toolkit.
 
 <br>
 <img src="https://sunbk201.oss-cn-beijing.aliyuncs.com/img/ScubaTrace.png" width="61.8%">
@@ -111,3 +115,5 @@ file_node = file.node
 function_node = function.node
 statement_node = statement.node
 ```
+
+For more detailed information, refer to the [Documentation](https://sunbk201.github.io/ScubaTrace/).
