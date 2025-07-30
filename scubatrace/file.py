@@ -385,29 +385,42 @@ class File:
         nx.nx_pydot.write_dot(graph, path)
         return graph
 
-    def query(self, query: str) -> list[Statement]:
+    def query(self, query: str, node: Node | None = None) -> list[Statement]:
         """
         Executes a tree-sitter query to find statements in the file.
 
         Args:
             query (str): The tree-sitter query to execute.
+            node (Node | None): The tree-sitter node to query. If None, uses the root node of the file.
 
         Returns:
             list[Statement]: A list of statements that match the query.
         """
-        matched_nodes = self.parser.query_all(self.node, query)
-        matched_statements = []
+        if node is None:
+            node = self.node
+        matched_nodes = self.parser.query_all(node, query)
+        matched_statements = set()
+        visited_nodes = set()
 
         def collect_matching_statements(stat: Statement):
-            if stat.node in matched_nodes:
-                matched_statements.append(stat)
             if isinstance(stat, BlockStatement):
                 for child in stat.statements:
                     collect_matching_statements(child)
 
+            for node in matched_nodes:
+                if node in visited_nodes:
+                    continue
+                node_in_stat = (
+                    node.start_byte >= stat.node.start_byte
+                    and node.end_byte <= stat.node.end_byte
+                )
+                if node_in_stat:
+                    matched_statements.add(stat)
+                    visited_nodes.add(node)
+
         for statement in self.statements:
             collect_matching_statements(statement)
-        return matched_statements
+        return list(matched_statements)
 
     def query_oneshot(self, query: str) -> Statement | None:
         """

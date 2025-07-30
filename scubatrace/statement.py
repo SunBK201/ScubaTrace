@@ -974,18 +974,7 @@ class BlockStatement(Statement):
         Returns:
             list[Statement]: A list of statements that match the query.
         """
-        matched_nodes = self.file.parser.query_all(self.node, query)
-        matched_statements = []
-
-        def collect_matching_statements(stat: Statement):
-            if stat.node in matched_nodes:
-                matched_statements.append(stat)
-            if isinstance(stat, BlockStatement):
-                for child in stat.statements:
-                    collect_matching_statements(child)
-
-        collect_matching_statements(self)
-        return matched_statements
+        return self.file.query(query, self.node)
 
     def query_oneshot(self, query: str) -> Statement | None:
         """
