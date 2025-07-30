@@ -2,6 +2,7 @@ import sys
 
 sys.path.append("../../")
 
+import os
 import time
 
 import scubatrace
@@ -41,11 +42,12 @@ def testIsSimpleStatement():
 
 
 def testCFG():
-    proj = scubatrace.Project.Project(".", language.C)
+    proj = scubatrace.Project.create(".", language.C)
     test_c = proj.files["test.c"]
     for func in test_c.functions:
         print(f"Function: {func.name}")
-        func.export_cfg_dot(f"{func.name}_cfg.dot", with_ddg=False, with_cdg=False)
+        os.makedirs("dot", exist_ok=True)
+        func.export_cfg_dot(f"dot/{func.name}_cfg.dot", with_ddg=False, with_cdg=True)
         print(f"CFG exported for function {func.name} to {func.name}_cfg.dot")
 
 
@@ -371,7 +373,7 @@ def test_identifier_pre_data_dependents():
 
 
 def test_identifier_post_data_dependents():
-    project = scubatrace.Project.Project(".", scubatrace.language.C)
+    project = scubatrace.Project.create(".", scubatrace.language.C)
     test_c = project.files["test.c"]
     func_main = test_c.functions[1]
     for stat in func_main.statements:
@@ -390,5 +392,18 @@ def test_identifier_post_data_dependents():
                 print("    No post data dependent found.")
 
 
+def test_query():
+    project = scubatrace.Project.create(".", scubatrace.language.C)
+    file = project.files["test.c"]
+    query = """
+    (call_expression
+	    function: (identifier)@name
+    )
+    """
+    stats = file.query(query)
+    for stat in stats:
+        print(f"(Line {stat.start_line}, Column {stat.start_column}): {stat.text}")
+
+
 if __name__ == "__main__":
-    test_identifier_post_data_dependents()
+    testCFG()
