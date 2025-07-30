@@ -192,7 +192,6 @@ class File:
         return self.node.type
 
     @cached_property
-    @abstractmethod
     def imports(self) -> list[File]:
         """
         A list of :class:`File` that are imported by this file.
