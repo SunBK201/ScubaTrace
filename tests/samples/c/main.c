@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     int c = count + argc;
     while (a < 10 && add(c, c)) {
         a += 1;
-        if (b > 5) 
+        if (b > 5)
             a -= 1;
         else if (b < 3) {
             a += 2;
@@ -52,7 +52,7 @@ int mul(int a, int b)
     return a * add(a, b);
 }
 
-int cp(int *x, int *y)
+int cp(int* x, int* y)
 {
     *x = *y;
     return 0;
@@ -61,13 +61,13 @@ int cp(int *x, int *y)
 int test_switch(int a)
 {
     switch (a) {
-        case 1:
-            return 1;
-        case 2:
-            return 2;
-        default:
-            a = 0;
-        }
+    case 1:
+        return 1;
+    case 2:
+        return 2;
+    default:
+        a = 0;
+    }
     return a;
 }
 

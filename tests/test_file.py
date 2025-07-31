@@ -14,12 +14,19 @@ class TestProject(unittest.TestCase):
         )
         self.file = self.project.files.get("main.c")
 
+    def test_file_create(self):
+        file = scubatrace.File.create(
+            str(self.project_path / "main.c"),
+            self.project,
+        )
+        self.assertIsNotNone(file)
+
     def test_file_imports(self):
         assert self.file is not None
         imports = self.file.imports
         self.assertGreater(len(imports), 0)
         for imp in imports:
-            self.assertIsNotNone(imp.name)
+            self.assertTrue(imp.name in ["stdio.h", "sub.h"])
 
     def test_file_functions(self):
         assert self.file is not None
@@ -28,12 +35,37 @@ class TestProject(unittest.TestCase):
         for func in functions:
             self.assertIsNotNone(func.name)
 
+    def test_file_function_by_line(self):
+        assert self.file is not None
+        function = self.file.function_by_line(5)
+        self.assertIsNotNone(function)
+        assert function is not None
+        self.assertEqual(function.name, "add")
+
     def test_file_statements(self):
         assert self.file is not None
         statements = self.file.statements
         self.assertGreater(len(statements), 0)
         for stmt in statements:
             self.assertIsNotNone(stmt.text)
+
+    def test_file_statement_by_line(self):
+        assert self.file is not None
+        statements = self.file.statements_by_line(14)
+        self.assertGreater(len(statements), 0)
+        statement = statements[0]
+        self.assertIsNotNone(statement)
+        self.assertEqual(statement.text, "int c = count + argc;")
+
+        self.assertEqual(len(self.file.statements_by_line(-1)), 0)
+        self.assertGreater(len(self.file.statements_by_line(1)), 0)
+
+    def test_file_identifiers(self):
+        assert self.file is not None
+        identifiers = self.file.identifiers
+        self.assertGreater(len(identifiers), 0)
+        for identifier in identifiers:
+            self.assertIsNotNone(identifier.name)
 
     def test_file_variables(self):
         assert self.file is not None
@@ -48,3 +80,22 @@ class TestProject(unittest.TestCase):
         self.assertIsNotNone(cfg)
         self.assertGreater(len(cfg.nodes), 0)
         self.assertGreater(len(cfg.edges), 0)
+
+    def test_file_query(self):
+        assert self.file is not None
+        query_str = """
+            (call_expression
+                function: (identifier)@func
+                (#eq? @func "sub")
+            )@call
+        """
+        query = self.file.query(query_str)
+        target_lines = [6, 36]
+        self.assertEqual(len(query), len(target_lines))
+        for stat in query:
+            self.assertIn(stat.start_line, target_lines)
+
+        one_shot_result = self.file.query_oneshot(query_str)
+        self.assertIsNotNone(one_shot_result)
+        assert one_shot_result is not None
+        self.assertIn(one_shot_result.start_line, target_lines)
