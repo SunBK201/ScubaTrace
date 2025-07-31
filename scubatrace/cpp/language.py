@@ -40,6 +40,8 @@ class C(Language):
         "switch_statement",
         "case_statement",
         "default_statement",
+        "class_specifier",
+        "field_declaration",
         # "else_clause",
     ]
 
@@ -51,6 +53,11 @@ class C(Language):
         "continue_statement",
         "goto_statement",
         "labeled_statement",
+        "preproc_include",
+        "preproc_def",
+        "struct_specifier",
+        "type_definition",
+        "using_declaration",
     ]
 
     LOOP_STATEMENTS = [

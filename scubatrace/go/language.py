@@ -10,13 +10,8 @@ class GO(Language):
 
     query_call = "(call_expression)@name"
     query_import_identifier = """
-        (import_declaration
-            (scoped_identifier
-                name: (identifier)@name
-            )
-        )
-        (import_declaration
-            (identifier)@name
+        (import_spec
+            path: (interpreted_string_literal)@name
         )
     """
 
@@ -50,6 +45,8 @@ class GO(Language):
         "labeled_statement",
         "go_statement",
         "defer_statement",
+        "type_declaration",
+        "package_clause",
     ]
 
     LOOP_STATEMENTS = [

@@ -30,6 +30,7 @@ class JAVA(Language):
     ]
 
     BLOCK_STATEMENTS = [
+        "class_declaration",
         "if_statement",
         "for_statement",
         "enhanced_for_statement",
@@ -49,7 +50,9 @@ class JAVA(Language):
         "break_statement",
         "continue_statement",
         "yield_statement",
+        "package_declaration",
         "import_declaration",
+        "field_declaration",
     ]
 
     LOOP_STATEMENTS = [

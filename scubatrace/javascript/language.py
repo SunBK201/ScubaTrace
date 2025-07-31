@@ -43,6 +43,7 @@ class JAVASCRIPT(Language):
         "switch_default",
         "case_clause",
         "default_clause",
+        "class_declaration",
     ]
 
     SIMPLE_STATEMENTS = [
@@ -53,6 +54,7 @@ class JAVASCRIPT(Language):
         "break_statement",
         "continue_statement",
         "import_statement",
+        "field_definition",
     ]
 
     LOOP_STATEMENTS = ["for_statement", "while_statement", "do_statement"]

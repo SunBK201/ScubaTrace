@@ -8,7 +8,7 @@ class RUST(Language):
     extensions = ["rs"]
     tslanguage = TSLanguage(tsrust.language())
 
-    query_call = "(call_expression)@name"
+    query_call = "(call_expression)@name(macro_invocation)@name"
     query_import_identifier = """
         (use_declaration
         	argument: (identifier)@name
@@ -37,12 +37,14 @@ class RUST(Language):
     ]
 
     SIMPLE_STATEMENTS = [
-        "expression_statement",
         "let_declaration",
         "assignment_expression",
         "break_expression",
         "continue_expression",
         "return_expression",
+        "macro_invocation",
+        "enum_item",
+        "struct_item",
     ]
 
     LOOP_STATEMENTS = [
