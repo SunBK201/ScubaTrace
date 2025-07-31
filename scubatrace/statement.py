@@ -865,7 +865,7 @@ class BlockStatement(Statement):
             if language.is_function_node(cursor.node):
                 from .function import Function
 
-                stats.append(Function.Function(cursor.node, parent))
+                stats.append(Function.create(cursor.node, parent))
             elif language.is_simple_node(cursor.node):
                 stats.append(SimpleStatement.create(cursor.node, parent))
             elif language.is_block_node(cursor.node):

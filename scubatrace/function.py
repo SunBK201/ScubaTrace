@@ -32,7 +32,7 @@ class Function(BlockStatement):
         self.callees_joern: list[Call] = []
 
     @staticmethod
-    def Function(node: Node, file: File | BlockStatement):
+    def create(node: Node, parent: File | BlockStatement):
         """
         Factory function to create a Function instance based on the language of the file.
 
@@ -43,48 +43,48 @@ class Function(BlockStatement):
         Returns:
             Function: An instance of a language-specific Function subclass corresponding to the file's language.
         """
-        if file.project.language == lang.C:
+        if parent.project.language == lang.C:
             from .cpp.function import CFunction
 
-            return CFunction(node, file)
-        elif file.project.language == lang.JAVA:
+            return CFunction(node, parent)
+        elif parent.project.language == lang.JAVA:
             from .java.function import JavaFunction
 
-            return JavaFunction(node, file)
-        elif file.project.language == lang.JAVASCRIPT:
+            return JavaFunction(node, parent)
+        elif parent.project.language == lang.JAVASCRIPT:
             from .javascript.function import JavaScriptFunction
 
-            return JavaScriptFunction(node, file)
-        elif file.project.language == lang.PYTHON:
+            return JavaScriptFunction(node, parent)
+        elif parent.project.language == lang.PYTHON:
             from .python.function import PythonFunction
 
-            return PythonFunction(node, file)
-        elif file.project.language == lang.GO:
+            return PythonFunction(node, parent)
+        elif parent.project.language == lang.GO:
             from .go.function import GoFunction
 
-            return GoFunction(node, file)
-        elif file.project.language == lang.PHP:
+            return GoFunction(node, parent)
+        elif parent.project.language == lang.PHP:
             from .php.function import PHPFunction
 
-            return PHPFunction(node, file)
-        elif file.project.language == lang.RUBY:
+            return PHPFunction(node, parent)
+        elif parent.project.language == lang.RUBY:
             from .ruby.function import RubyFunction
 
-            return RubyFunction(node, file)
-        elif file.project.language == lang.RUST:
+            return RubyFunction(node, parent)
+        elif parent.project.language == lang.RUST:
             from .rust.function import RustFunction
 
-            return RustFunction(node, file)
-        elif file.project.language == lang.SWIFT:
+            return RustFunction(node, parent)
+        elif parent.project.language == lang.SWIFT:
             from .swift.function import SwiftFunction
 
-            return SwiftFunction(node, file)
-        elif file.project.language == lang.CSHARP:
+            return SwiftFunction(node, parent)
+        elif parent.project.language == lang.CSHARP:
             from .csharp.function import CSharpFunction
 
-            return CSharpFunction(node, file)
+            return CSharpFunction(node, parent)
         else:
-            return Function(node, file)
+            return Function(node, parent)
 
     def __str__(self) -> str:
         return self.signature
