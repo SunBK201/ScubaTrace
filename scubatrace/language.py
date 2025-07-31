@@ -41,6 +41,11 @@ class Language:
     For example, in C/C++, this would match the `header.h` in `#include <header.h>`.
     """
 
+    query_function_parameter: str
+    """
+    The tree-sitter query to match function parameters.
+    """
+
     EXIT_STATEMENTS: list[str] = []
     """
     The tree-sitter AST types of exit statements.

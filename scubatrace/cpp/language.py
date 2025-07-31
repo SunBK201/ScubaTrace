@@ -8,12 +8,47 @@ class C(Language):
     extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp"]
     tslanguage = TSLanguage(tscpp.language())
 
+    query_identifier = """
+        (identifier)@name
+        (field_identifier)@name
+    """
     query_call = "(call_expression)@name"
     query_import_identifier = """
         (preproc_include
             path: [
                 (system_lib_string)@name
                 (string_literal)@name
+            ]
+        )
+    """
+    query_function_parameter = """
+        (parameter_declaration
+        	declarator: [
+            	(identifier)@name
+                (pointer_declarator
+                	(identifier)@name
+                )
+                (pointer_declarator
+                	(pointer_declarator
+                		(identifier)@name
+                    )
+                )
+                (pointer_declarator
+                	(pointer_declarator
+                        (pointer_declarator
+                            (identifier)@name
+                        )
+                    )
+                )
+                (pointer_declarator
+                    (pointer_declarator
+                        (pointer_declarator
+                            (pointer_declarator
+                                (identifier)@name
+                            )
+                        )
+                    )
+                )
             ]
         )
     """

@@ -1024,3 +1024,30 @@ class BlockStatement(Statement):
         if len(matched_statements) == 0:
             return None
         return matched_statements[0]
+
+    def query_identifiers(self, query: str) -> list[Identifier]:
+        """
+        Executes a tree-sitter query to find identifiers in the block.
+
+        Args:
+            query (str): The tree-sitter query to execute.
+
+        Returns:
+            list[Identifier]: A list of identifiers that match the query.
+        """
+        return self.file.query_identifiers(query, self.node)
+
+    def query_identifier(self, query: str) -> Identifier | None:
+        """
+        Executes a tree-sitter oneshot query to find an identifier in the block.
+
+        Args:
+            query (str): The tree-sitter oneshot query to execute.
+
+        Returns:
+            Identifier | None: The identifier that matches the query, or None if not found.
+        """
+        matched_identifiers = self.query_identifiers(query)
+        if len(matched_identifiers) == 0:
+            return None
+        return matched_identifiers[0]

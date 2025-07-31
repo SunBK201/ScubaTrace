@@ -27,6 +27,14 @@ class PYTHON(Language):
         ]
     )
     """
+    query_function_parameter = """
+        (parameters
+            (identifier)@name
+        )
+        (typed_parameter
+            (identifier)@name
+        )
+    """
 
     query_class = "(class_definition)@name"
 

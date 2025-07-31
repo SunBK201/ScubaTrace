@@ -10,6 +10,7 @@ from tree_sitter import Node
 
 from . import language as lang
 from .call import Call
+from .identifier import Identifier
 from .statement import BlockStatement, Statement
 
 if TYPE_CHECKING:
@@ -163,12 +164,20 @@ class Function(BlockStatement):
         """
         The lines where the parameters of the function are defined.
         """
-        parameters_node = self.node.child_by_field_name("parameters")
-        if parameters_node is None:
+        params = self.query_identifiers(self.language.query_function_parameter)
+        if len(params) == 0:
             return [self.start_line]
-        param_start_line = parameters_node.start_point[0] + 1
-        param_end_line = parameters_node.end_point[0] + 1
-        return list(range(param_start_line, param_end_line + 1))
+        return list(range(params[0].start_line, params[-1].end_line + 1))
+
+    @cached_property
+    def parameters(self) -> list[Identifier]:
+        """
+        The parameter statements of the function.
+        """
+        params = self.query_identifiers(self.language.query_function_parameter)
+        if len(params) == 0:
+            return self.block_variables
+        return params
 
     @cached_property
     def name_node(self) -> Node:

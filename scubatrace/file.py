@@ -454,3 +454,47 @@ class File:
         if len(matched_statements) == 0:
             return None
         return matched_statements[0]
+
+    def query_identifiers(
+        self, query: str, node: Node | None = None
+    ) -> list[Identifier]:
+        """
+        Executes a tree-sitter query to find identifiers in the file.
+
+        Args:
+            identifier (str): The identifier to search for.
+            node (Node | None): The tree-sitter node to query. If None, uses the root node of the file.
+
+        Returns:
+            list[Identifier]: A list of identifiers that contain the specified identifier.
+        """
+        if node is None:
+            node = self.node
+        matched_nodes = self.parser.query_all(node, query)
+        matched_identifiers = []
+        for identifier in self.identifiers:
+            for node in matched_nodes:
+                if (
+                    identifier.node.start_byte >= node.start_byte
+                    and identifier.node.end_byte <= node.end_byte
+                ):
+                    matched_identifiers.append(identifier)
+                    break
+        return matched_identifiers
+
+    def query_identifier(
+        self, query: str, node: Node | None = None
+    ) -> Identifier | None:
+        """
+        Executes a tree-sitter oneshot query to find an identifier in the file.
+
+        Args:
+            query (str): The tree-sitter oneshot query to execute.
+
+        Returns:
+            Identifier | None: The first identifier that matches the query, or None if no match is found.
+        """
+        matched_identifiers = self.query_identifiers(query, node)
+        if len(matched_identifiers) == 0:
+            return None
+        return matched_identifiers[0]

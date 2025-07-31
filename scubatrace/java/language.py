@@ -19,6 +19,11 @@ class JAVA(Language):
             (identifier)@name
         )
     """
+    query_function_parameter = """
+        (formal_parameter
+        	name: (identifier)@name
+        )
+    """
 
     query_package = "(package_declaration)@name"
     query_class = "(class_declaration)@name"
