@@ -27,6 +27,12 @@ Here is a basic example of how to use ScubaTrace to analyze a C project:
     # scubatrace.language.[C, JAVA, PYTHON, JAVASCRIPT, GO, RUST, RUBY, PHP, CSHARP, SWIFT]
     project = scubatrace.Project.create("path/to/your/codebase", language=scubatrace.language.C)
 
+.. note::
+
+    Incomplete or broken codebases may cause parsing errors that could result in inaccurate analysis results.
+
+.. code-block:: python
+
     # Get a file from the project
     file = project.files["relative/path/to/your/file.c"]
 

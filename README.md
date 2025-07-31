@@ -71,7 +71,12 @@ import scubatrace
 # language can be set to one of the following:
 # scubatrace.language.[C, JAVA, PYTHON, JAVASCRIPT, GO, RUST, RUBY, PHP, CSHARP, SWIFT]
 project = scubatrace.Project.create("path/to/your/codebase", language=scubatrace.language.C)
+```
 
+> [!NOTE]
+> Incomplete or broken codebases may cause parsing errors that could result in inaccurate analysis results.
+
+```python
 # Get a file from the project
 file = project.files["relative/path/to/your/file.c"]
 
