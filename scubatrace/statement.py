@@ -816,6 +816,7 @@ class BlockStatement(Statement):
         for identifier in self.block_identifiers:
             node = identifier.node
             if node.parent is not None and node.parent.type in [
+                "ERROR",
                 "call_expression",
                 "function_declarator",
                 "method_invocation",
