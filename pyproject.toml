@@ -15,7 +15,7 @@ dependencies = [
     "tree_sitter_go==0.23.4",
     "tree_sitter_php==0.23.11",
     "tree_sitter_ruby==0.23.1",
-    "tree_sitter_rust==0.24.0",
+    "tree_sitter_rust==0.23.2",
     "tree_sitter_swift==0.0.1",
     "networkx>=3.3",
     "pygraphviz>=1.13",
