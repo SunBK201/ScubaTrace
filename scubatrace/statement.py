@@ -124,6 +124,7 @@ class Statement:
         for identifier in self.identifiers:
             node = identifier.node
             if node.parent is not None and node.parent.type in [
+                "ERROR",
                 "call_expression",
                 "function_declarator",
                 "method_invocation",
@@ -724,7 +725,7 @@ class BlockStatement(Statement):
         Args:
             node (Node): The tree-sitter node representing the block statement.
             parent (BlockStatement | Function | File): The parent block, function, or file this statement belongs to.
-        
+
         Returns:
             BlockStatement: An instance of the appropriate BlockStatement subclass based on the language.
         """

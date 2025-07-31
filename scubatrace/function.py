@@ -86,6 +86,15 @@ class Function(BlockStatement):
         else:
             return Function(node, parent)
 
+    @cached_property
+    def statements(self) -> list[Statement]:
+        """
+        Statements in the function.
+        """
+        if self.body_node is None:
+            return []
+        return BlockStatement.build_statements(self.body_node, self)
+
     def __str__(self) -> str:
         return self.signature
 
