@@ -1,6 +1,7 @@
 # ScubaTrace
 [![PyPI](https://img.shields.io/pypi/v/ScubaTrace?style=flat&logo=pypi&label=PyPI)](https://pypi.org/project/scubatrace/)
 [![Docs](https://img.shields.io/github/deployments/SunBK201/ScubaTrace/github-pages?logo=sphinx&label=Docs)](https://sunbk201.github.io/ScubaTrace/)
+[![Tests](https://github.com/SunBK201/ScubaTrace/actions/workflows/test.yml/badge.svg)](https://github.com/SunBK201/ScubaTrace/actions/workflows/test.yml)
 [![CodeQL](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql)
 [![License](https://img.shields.io/github/license/SunBK201/ScubaTrace)](https://github.com/SunBK201/ScubaTrace/blob/master/LICENSE)
 
