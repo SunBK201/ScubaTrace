@@ -346,7 +346,7 @@ class Function(BlockStatement):
         Slices the function to retrieve relevant statements based on the specified lines.
 
         Args:
-            lines (list[int]): Slice criteria lines.
+            lines (list[int]): Slice criteria lines. Note that only support the lines in the function body currently.
             control_depth (int): Slice depth for control flow dependencies.
             data_dependent_depth (int): Slice depth for data dependencies.
             control_dependent_depth (int): Slice depth for control-dependent statements.
