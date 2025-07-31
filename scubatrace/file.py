@@ -225,7 +225,15 @@ class File:
         """
         functions in the file.
         """
-        return [stat for stat in self.statements if isinstance(stat, Function)]
+        functions = []
+        for statement in self.statements:
+            if isinstance(statement, Function):
+                functions.append(statement)
+            if isinstance(statement, BlockStatement):
+                functions.extend(
+                    statement.statements_by_types(self.language.FUNCTION_STATEMENTS)
+                )
+        return functions
 
     @cached_property
     @abstractmethod
