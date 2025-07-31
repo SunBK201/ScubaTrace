@@ -14,9 +14,17 @@ class TestProject(unittest.TestCase):
         )
         self.file = self.project.files.get("main.c")
         assert self.file is not None
-        self.function = self.file.function_by_line(11)
+        function = self.file.function_by_line(11)
+        assert function is not None
+        self.function = function
 
     def test_function_create(self):
-        assert self.function is not None
         function = scubatrace.Function.create(self.function.node, self.function.parent)
         self.assertIsNotNone(function)
+
+    def test_function_lines(self):
+        self.assertGreater(len(self.function.lines), 0)
+
+    def test_function_parameter_lines(self):
+        self.assertEqual(len(self.function.parameter_lines), 1)
+        self.assertEqual(self.function.parameter_lines[0], 9)

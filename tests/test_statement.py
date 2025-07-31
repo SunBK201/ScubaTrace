@@ -21,7 +21,6 @@ class TestProject(unittest.TestCase):
         self.statement = statement[0]
 
     def test_statement_create(self):
-        assert self.statement is not None
         statement = scubatrace.SimpleStatement.create(
             self.statement.node, self.statement.parent
         )
