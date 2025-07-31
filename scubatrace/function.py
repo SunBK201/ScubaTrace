@@ -101,7 +101,7 @@ class Function(BlockStatement):
             '"'
             + self.file.signature
             + "#"
-            + self.name.replace("::", "--") # dot bug
+            + self.name.replace("::", "--")  # dot bug
             + "#"
             + str(self.start_line)
             + "#"
@@ -249,6 +249,8 @@ class Function(BlockStatement):
                 callee_file = self.file.project.files_uri[callee_def["uri"]]
                 callee_line = callee_def["range"]["start"]["line"] + 1
                 callee_func = callee_file.function_by_line(callee_line)
+                if callee_func == self:
+                    continue  # avoid self-references
                 if callee_func is None:
                     declar = callee_file.lines[callee_line - 1]
                     callee_func = FunctionDeclaration(
