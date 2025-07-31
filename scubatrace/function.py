@@ -98,13 +98,15 @@ class Function(BlockStatement):
         A unique signature for the function.
         """
         return (
-            self.file.signature
+            '"'
+            + self.file.signature
             + "#"
-            + self.name
+            + self.name.replace("::", "--") # dot bug
             + "#"
             + str(self.start_line)
             + "#"
             + str(self.end_line)
+            + '"'
         )
 
     @property
@@ -145,7 +147,7 @@ class Function(BlockStatement):
 
     @property
     def dot_text(self) -> str:
-        return f"{self.name}#{self.file.name}#{self.start_line}"
+        return '"' + f"{self.name}#{self.file.name}#{self.start_line}" + '"'
 
     @cached_property
     def parameter_lines(self) -> list[int]:
