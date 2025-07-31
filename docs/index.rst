@@ -13,10 +13,6 @@ ScubaTrace serves as a portable analysis solution for IDE development, AI-powere
     :width: 500px
     :alt: ScubaTrace
 
-.. caution::
-
-    This project is still in development and not ready for production use.
-
 Install
 ==========
 

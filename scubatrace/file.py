@@ -304,7 +304,7 @@ class File:
 
     def function_by_line(self, line: int) -> Function | None:
         """
-        Returns the function that contains the specified line number.
+        The function that contains the specified line number.
 
         Args:
             line (int): The line number to check.
@@ -319,7 +319,7 @@ class File:
 
     def statements_by_line(self, line: int) -> list[Statement]:
         """
-        Returns the statements that are located on the specified line number.
+        The statements that are located on the specified line number.
 
         Args:
             line (int): The line number to check.
@@ -345,6 +345,15 @@ class File:
         return []
 
     def statements_by_field_name(self, field_name: str) -> list[Statement]:
+        """
+        The statements that have the specified tree-sitter field name.
+
+        Args:
+            field_name (str): The tree-sitter field name to check.
+
+        Returns:
+            list[Statement]: A list of statements that have the specified field name.
+        """
         return [s for s in self.statements if s.field_name == field_name]
 
     def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):

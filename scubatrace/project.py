@@ -226,7 +226,7 @@ class Project:
     @cached_property
     def functions(self) -> list[Function]:
         """
-        All functions in the project.
+        Functions in the project.
         """
         functions = []
         for file in self.files.values():
@@ -245,15 +245,6 @@ class Project:
         ...
 
     def __build_callgraph(self, entry: Function) -> nx.MultiDiGraph:
-        """
-        Build a call graph starting from the given entry function.
-
-        Args:
-            entry (Function | None): The entry point function to start building the call graph.
-
-        Returns:
-            nx.MultiDiGraph: A directed graph representing the call relationships between functions.
-        """
         cg = nx.MultiDiGraph()
         dq: deque[Function | FunctionDeclaration] = deque([entry])
         visited: set[Function | FunctionDeclaration] = set([entry])

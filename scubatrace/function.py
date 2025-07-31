@@ -429,6 +429,8 @@ class Function(BlockStatement):
 
         Args:
             path (str): The path to save the DOT file.
+            with_cdg (bool): Whether to include the Control Dependence Graph (CDG).
+            with_ddg (bool): Whether to include the Data Dependence Graph (DDG).
         """
         if not self._is_build_cfg:
             self.build_cfg()

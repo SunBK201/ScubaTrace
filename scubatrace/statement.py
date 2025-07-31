@@ -259,7 +259,7 @@ class Statement:
     @cached_property
     def prev_sibling(self) -> Statement | None:
         """
-        Returns the previous sibling statement in the same block.
+        The previous sibling statement in the same block.
 
         If there is no previous sibling, returns None.
         """
@@ -272,7 +272,7 @@ class Statement:
     @cached_property
     def next_sibling(self) -> Statement | None:
         """
-        Returns the next sibling statement in the same block.
+        The next sibling statement in the same block.
 
         If there is no next sibling, returns None.
         """
@@ -285,7 +285,7 @@ class Statement:
     @cached_property
     def right_uncle_ancestor(self) -> Statement | None:
         """
-        Returns the right uncle ancestor of the statement.
+        The right uncle ancestor of the statement.
 
         The right uncle ancestor is the next statement in the control flow after this statement.
         """
@@ -307,7 +307,7 @@ class Statement:
     @cached_property
     def preorder_successor(self) -> Statement | None:
         """
-        Returns the preorder successor of the statement.
+        The preorder successor of the statement.
 
         The preorder successor is the next statement in the preorder traversal of the block.
         If there is no such statement, returns None.
@@ -573,7 +573,7 @@ class Statement:
 
     def ancestor_by_type(self, type: str) -> Statement | None:
         """
-        Returns the nearest ancestor of the specified type.
+        The nearest ancestor of the specified type.
 
         Args:
             type (str): The type of the ancestor to find.
@@ -592,7 +592,7 @@ class Statement:
 
     def ancestor_by_types(self, types: list[str]) -> Statement | None:
         """
-        Returns the nearest ancestor of any of the specified types.
+        The nearest ancestor of any of the specified types.
 
         Args:
             types (list[str]): The types of the ancestors to find.
@@ -613,6 +613,16 @@ class Statement:
 class SimpleStatement(Statement):
     @staticmethod
     def create(node: Node, parent: BlockStatement | Function | File):
+        """
+        Factory function to create a SimpleStatement instance based on the language of the parent.
+
+        Args:
+            node (Node): The tree-sitter node representing the statement.
+            parent (BlockStatement | Function | File): The parent block, function, or file this statement belongs to.
+
+        Returns:
+            SimpleStatement: An instance of the appropriate SimpleStatement subclass based on the language.
+        """
         language = parent.language
         if language == lang.C:
             from .cpp.statement import CSimpleStatement
@@ -708,6 +718,16 @@ class SimpleStatement(Statement):
 class BlockStatement(Statement):
     @staticmethod
     def create(node: Node, parent: BlockStatement | Function | File):
+        """
+        Factory function to create a BlockStatement instance based on the language of the parent.
+
+        Args:
+            node (Node): The tree-sitter node representing the block statement.
+            parent (BlockStatement | Function | File): The parent block, function, or file this statement belongs to.
+        
+        Returns:
+            BlockStatement: An instance of the appropriate BlockStatement subclass based on the language.
+        """
         language = parent.language
         if language == lang.C:
             from .cpp.statement import CBlockStatement
@@ -889,7 +909,7 @@ class BlockStatement(Statement):
 
     def statements_by_line(self, line: int) -> list[Statement]:
         """
-        Returns the statements that are located on the specified line number.
+        The statements that are located on the specified line number.
 
         Args:
             line (int): The line number to check.
@@ -914,7 +934,7 @@ class BlockStatement(Statement):
 
     def statements_by_type(self, type: str, recursive: bool = False) -> list[Statement]:
         """
-        Returns the statements that are of the specified type.
+        The statements that are of the specified type.
 
         Args:
             type (str): The tree-sitter ast type of the statements to return.
@@ -932,7 +952,7 @@ class BlockStatement(Statement):
         self, types: list[str], recursive: bool = False
     ) -> list[Statement]:
         """
-        Returns the statements that are of any of the specified types.
+        The statements that are of any of the specified types.
 
         Args:
             types (list[str]): The tree-sitter ast types of the statements to return.
@@ -948,7 +968,7 @@ class BlockStatement(Statement):
 
     def statement_by_field_name(self, field_name: str) -> Statement | None:
         """
-        Returns the statement that contains the specified tree-sitter ast field name.
+        The statement that contains the specified tree-sitter ast field name.
 
         Args:
             field_name (str): The tree-sitter ast field name to search for.
@@ -965,6 +985,15 @@ class BlockStatement(Statement):
         return None
 
     def statements_by_field_name(self, field_name: str) -> list[Statement]:
+        """
+        The statements that contain the specified tree-sitter ast field name.
+
+        Args:
+            field_name (str): The tree-sitter ast field name to search for.
+
+        Returns:
+            list[Statement]: A list of statements that contain the specified field name.
+        """
         return [s for s in self.statements if s.field_name == field_name]
 
     def query(self, query: str) -> list[Statement]:
