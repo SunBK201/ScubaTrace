@@ -8,6 +8,7 @@ const { default: defaultExport } = await import('./admin.js');
 admin.name = "Pete";
 
 class Runoob {
+  name = "Runoob";
   constructor(name, url) {
     this.name = name;
     this.url = url;

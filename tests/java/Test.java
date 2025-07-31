@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.Map.Entry;
 
 public class Test {
+
+    int globalVar = 0;
 
     public static int gcd(int a, int b) {
         while (b != 0) {
@@ -76,7 +77,6 @@ public class Test {
         String numStr = testCases.keySet().iterator().next();
 
         Integer a = 1;
-        Integer b = new Integer(1);
-        System.out.println(a == 1);
+        System.out.println(a == Integer.parseInt(numStr));
     }
 }

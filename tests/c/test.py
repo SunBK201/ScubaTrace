@@ -44,11 +44,7 @@ def testIsSimpleStatement():
 def testCFG():
     proj = scubatrace.Project.create(".", language.C)
     test_c = proj.files["test.c"]
-    for func in test_c.functions:
-        print(f"Function: {func.name}")
-        os.makedirs("dot", exist_ok=True)
-        func.export_cfg_dot(f"dot/{func.name}_cfg.dot", with_ddg=False, with_cdg=True)
-        print(f"CFG exported for function {func.name} to {func.name}_cfg.dot")
+    test_c.export_cfg_dot("cfg.dot")
 
 
 def testPostControl():
@@ -216,7 +212,7 @@ def test_slice_by_lines():
 
 def test_cg():
     start_time = time.time()
-    a_proj = scubatrace.CProject("/Users/sunbk201/Downloads/marco_expanded_repo")
+    a_proj = scubatrace.Project.create(".", language=scubatrace.language.C)
     a_proj.export_callgraph(".")
     end_time = time.time()
     print(f"Time: {end_time - start_time:.2f} s")

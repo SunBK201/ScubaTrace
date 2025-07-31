@@ -20,4 +20,4 @@ def testImports():
 
 
 if __name__ == "__main__":
-    testImports()
+    test_cfg()
