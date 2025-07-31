@@ -63,8 +63,9 @@ Here is a basic example of how to use ScubaTrace to analyze a C project:
 
     # Perform slicing in a function based on specified lines
     # Configure the slicing with control depth and data-dependent depth
+    criteria_lines = [10, 12, 18]
     sliced_statements = function.slice_by_lines(
-        lines=[10, 12, 18], control_depth=5, data_dependent_depth=8
+        lines=criteria_lines, control_depth=5, data_dependent_depth=8
     )
 
     # Get tree-sitter node in a file/function/statement

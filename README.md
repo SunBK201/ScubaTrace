@@ -1,4 +1,5 @@
 # ScubaTrace
+
 [![PyPI](https://img.shields.io/pypi/v/ScubaTrace?style=flat&logo=pypi&label=PyPI&color=F4D35E)](https://pypi.org/project/scubatrace/)
 [![Docs](https://img.shields.io/github/deployments/SunBK201/ScubaTrace/github-pages?logo=sphinx&label=Docs)](https://sunbk201.github.io/ScubaTrace/)
 [![Tests](https://github.com/SunBK201/ScubaTrace/actions/workflows/test.yml/badge.svg)](https://github.com/SunBK201/ScubaTrace/actions/workflows/test.yml)
@@ -107,8 +108,9 @@ post_data_dependencies = variable.post_data_dependents
 
 # Perform slicing in a function based on specified lines
 # Configure the slicing with control depth and data-dependent depth
+criteria_lines = [10, 12, 18]
 sliced_statements = function.slice_by_lines(
-    lines=[10, 12, 18], control_depth=5, data_dependent_depth=8
+    lines=criteria_lines, control_depth=5, data_dependent_depth=8
 )
 
 # Get tree-sitter node in a file/function/statement
