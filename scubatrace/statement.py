@@ -335,11 +335,12 @@ class Statement:
 
         These are statements that are executed before this statement in the control flow.
         """
-        func = self.function
-        if func is None:
-            return []
-        if not func._is_build_cfg:
-            func.build_cfg()
+        if self.function is not None:
+            if not self.function._is_build_cfg:
+                self.function.build_cfg()
+        else:
+            if not self.file._is_build_cfg:
+                self.file.build_cfg()
         return self._pre_control_statements
 
     @property

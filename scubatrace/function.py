@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -96,6 +95,12 @@ class Function(BlockStatement):
             return []
         return BlockStatement.build_statements(self.body_node, self)
 
+    @cached_property
+    def first_statement(self) -> Statement | None:
+        if len(self.statements) == 0:
+            return None
+        return self.statements[0]
+
     def __str__(self) -> str:
         return self.signature
 
@@ -190,7 +195,6 @@ class Function(BlockStatement):
         return node
 
     @property
-    @abstractmethod
     def name(self) -> str:
         """
         The name of the function.
@@ -200,7 +204,14 @@ class Function(BlockStatement):
         return name_node.text.decode()
 
     @cached_property
-    @abstractmethod
+    def exits(self) -> list[Statement]:
+        """
+        The exit statements of the function, such as return statements.
+        """
+        exits = self.statements_by_types(self.language.EXIT_STATEMENTS, recursive=True)
+        return exits
+
+    @cached_property
     def accessible_functions(self) -> list[Function]:
         funcs = []
         for file in self.file.imports:
@@ -279,7 +290,6 @@ class Function(BlockStatement):
         return callees
 
     @cached_property
-    @abstractmethod
     def callers(self) -> dict[Function, list[Statement]]:
         """
         The functions that call this function and their corresponding call sites.
@@ -385,16 +395,16 @@ class Function(BlockStatement):
             control_dependent_depth=control_dependent_depth,
         )
 
-    def _build_pre_cfg(self, statements: list[Statement]):
-        for i in range(len(statements)):
-            cur_stat = statements[i]
-            for post_stat in cur_stat.post_controls:
-                post_stat._pre_control_statements.append(cur_stat)
-            if isinstance(cur_stat, BlockStatement):
-                self._build_pre_cfg(cur_stat.statements)
-
     def build_cfg(self):
-        self._build_pre_cfg(self.statements)
+        def build_pre_cfg(statements: list[Statement]):
+            for i in range(len(statements)):
+                cur_stat = statements[i]
+                for post_stat in cur_stat.post_controls:
+                    post_stat._pre_control_statements.append(cur_stat)
+                if isinstance(cur_stat, BlockStatement):
+                    build_pre_cfg(cur_stat.statements)
+
+        build_pre_cfg(self.statements)
         if len(self.statements) > 0:
             self.statements[0]._pre_control_statements.insert(0, self)
             self._post_control_statements = [self.statements[0]]
@@ -467,12 +477,12 @@ class Function(BlockStatement):
         )
         graph.add_node("edge", fontname="SF Pro Rounded, system-ui", arrowhead="vee")
         graph.add_node(self.signature, label=self.dot_text, color="red")
-        if len(self.statements) == 0:
+        if self.first_statement is None:
             graph.add_node(
                 self.signature, label="No statements found", color="red", shape="box"
             )
         else:
-            graph.add_edge(self.signature, self.statements[0].signature, label="CFG")
+            graph.add_edge(self.signature, self.first_statement.signature, label="CFG")
         self.__build_cfg_graph(graph, self.statements)
 
         if with_cdg:

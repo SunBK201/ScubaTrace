@@ -41,6 +41,7 @@ class File:
         self._path = path
         self.project = project
         self.__lsp_preload = False
+        self._is_build_cfg = False
 
     @staticmethod
     def create(path: str, project: Project) -> File:
@@ -341,16 +342,19 @@ class File:
         if func is not None:
             # If the line is in a function, get the statement from the function
             return func.statements_by_line(line)
-        else:
-            # If the line is not in a function, get the statement from the file
-            root_node = self.parser.parse(self.text)
-            for node in root_node.named_children:
-                if line < node.start_point[0] + 1 or line > node.end_point[0] + 1:
-                    continue
-                if node.text is None:
-                    continue
-                return [SimpleStatement(node, self)]
-        return []
+
+        # If the line is not in a function, get the statement from the file
+        def collect_statements(statements: list[Statement]) -> list[Statement]:
+            for statement in statements:
+                if isinstance(statement, BlockStatement):
+                    results = collect_statements(statement.statements)
+                    if len(results) > 0:
+                        return results
+                if statement.start_line <= line <= statement.end_line:
+                    return [statement]
+            return []
+
+        return collect_statements(self.statements)
 
     def statements_by_field_name(self, field_name: str) -> list[Statement]:
         """
@@ -363,6 +367,18 @@ class File:
             list[Statement]: A list of statements that have the specified field name.
         """
         return [s for s in self.statements if s.field_name == field_name]
+
+    def build_cfg(self):
+        def build_pre_cfg(statements: list[Statement]):
+            for i in range(len(statements)):
+                cur_stat = statements[i]
+                for post_stat in cur_stat.post_controls:
+                    post_stat._pre_control_statements.append(cur_stat)
+                if isinstance(cur_stat, BlockStatement):
+                    build_pre_cfg(cur_stat.statements)
+
+        build_pre_cfg(self.statements)
+        self._is_build_cfg = True
 
     def __build_cfg_graph(self, graph: nx.DiGraph, statments: list[Statement]):
         for stat in statments:
