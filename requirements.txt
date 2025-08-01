@@ -14,4 +14,3 @@ pygraphviz>=1.13
 pydot>=3.0.3
 chardet>=5.2.0
 scubalspy>=0.0.19
-tqdm>=4.66.1
