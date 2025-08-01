@@ -4,7 +4,7 @@ from pathlib import Path
 import scubatrace
 
 
-class TestProject(unittest.TestCase):
+class TestFile(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path(__file__).parent
         self.samples_dir = self.test_dir / "samples"
@@ -50,12 +50,12 @@ class TestProject(unittest.TestCase):
     def test_file_statement_by_line(self):
         statements = self.file.statements_by_line(14)
         self.assertGreater(len(statements), 0)
-        statement = statements[0]
-        self.assertIsNotNone(statement)
-        self.assertEqual(statement.text, "int c = count + argc;")
+        self.assertEqual(statements[0].text, "int c = count + argc;")
 
         self.assertEqual(len(self.file.statements_by_line(-1)), 0)
         self.assertGreater(len(self.file.statements_by_line(1)), 0)
+
+        self.assertEqual(self.file.statements_by_line(18)[0].text, "a -= 1;")
 
     def test_file_identifiers(self):
         identifiers = self.file.identifiers

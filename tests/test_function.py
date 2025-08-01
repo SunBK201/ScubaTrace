@@ -4,7 +4,7 @@ from pathlib import Path
 import scubatrace
 
 
-class TestProject(unittest.TestCase):
+class TestFunction(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path(__file__).parent
         self.samples_dir = self.test_dir / "samples"
