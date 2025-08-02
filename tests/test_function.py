@@ -12,9 +12,7 @@ class TestFunction(unittest.TestCase):
         self.project = scubatrace.Project.create(
             str(self.project_path), language=scubatrace.language.C
         )
-        file = self.project.files.get("main.c")
-        assert file is not None
-        self.file = file
+        self.file = self.project.files.get("main.c") or self.fail()
         self.function = self.file.functions_by_name("main")[0]
 
     def test_function_create(self):
@@ -29,9 +27,7 @@ class TestFunction(unittest.TestCase):
         self.assertIn("printf", [callee.name for callee in callees])
 
     def test_function_callers(self):
-        function = self.file.function_by_line(6)
-        self.assertIsNotNone(function)
-        assert function is not None
+        function = self.file.function_by_line(6) or self.fail()
         callers = function.callers
         self.assertGreater(len(callers), 0)
         self.assertIn("main", [caller.name for caller in callers])
@@ -70,7 +66,6 @@ class TestFunction(unittest.TestCase):
 
     def test_function_walk_backward(self):
         function = self.file.functions_by_name("add")[0]
-        assert function is not None
         functions = list(function.walk_backward())
         self.assertEqual(len(functions), 3)
         functions_start_lines = sorted([f.start_line for f in functions])

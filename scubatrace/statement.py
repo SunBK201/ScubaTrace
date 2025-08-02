@@ -105,7 +105,7 @@ class Statement:
         language = self.language
         nodes = parser.query_all(self.node, language.query_identifier)
         identifiers = set(
-            [Identifier(node, self) for node in nodes if node.text is not None]
+            [Identifier.create(node, self) for node in nodes if node.text is not None]
         )
         if isinstance(self, BlockStatement):
             identifiers_in_children = set()
@@ -137,6 +137,25 @@ class Statement:
                 continue
             variables.append(identifier)
         return variables
+
+    def identifier_by_position(self, line: int, column: int) -> Identifier | None:
+        """
+        Returns the identifier at the specified line and column in the statement.
+
+        Args:
+            line (int): The line number (1-based).
+            column (int): The column number (1-based).
+
+        Returns:
+            Identifier | None: The identifier at the specified position, or None if not found.
+        """
+        for identifier in self.identifiers:
+            if (
+                identifier.start_line == line
+                and identifier.start_column <= column <= identifier.end_column
+            ):
+                return identifier
+        return None
 
     @property
     def right_values(self) -> list[Identifier]:
@@ -808,10 +827,9 @@ class BlockStatement(Statement):
         Only includes identifiers that are declared in this block and excludes those found in sub-statements.
         """
         parser = self.file.parser
-        language = self.language
-        nodes = parser.query_all(self.node, language.query_identifier)
+        nodes = parser.query_all(self.node, self.language.query_identifier)
         identifiers = set(
-            Identifier(node, self) for node in nodes if node.text is not None
+            Identifier.create(node, self) for node in nodes if node.text is not None
         )
         identifiers_in_children = set()
         for stat in self.statements:

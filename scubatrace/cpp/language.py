@@ -77,7 +77,6 @@ class C(Language):
         "default_statement",
         "class_specifier",
         "field_declaration",
-        # "else_clause",
     ]
 
     SIMPLE_STATEMENTS = [
@@ -149,6 +148,12 @@ class C(Language):
             (assignment_expression
                 left: (field_expression
                 	argument: (identifier)@left
+                )
+                (#eq? @left "{text}")
+            )
+            (assignment_expression
+                left: (pointer_expression
+                    argument: (identifier)@left
                 )
                 (#eq? @left "{text}")
             )

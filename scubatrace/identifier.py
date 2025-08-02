@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
+
+from . import language as lang
 
 if TYPE_CHECKING:
     from .file import File
@@ -23,6 +26,61 @@ class Identifier:
     def __init__(self, node: Node, statement: Statement):
         self.node = node
         self.statement = statement
+
+    @classmethod
+    def create(cls, node: Node, parent: Statement) -> Identifier:
+        """
+        Factory function to create a :class:`Identifier` instance.
+
+        Args:
+            node (Node): The tree-sitter node representing the identifier.
+            statement (Statement): The statement that contains this identifier.
+
+        Returns:
+            Identifier: A new instance of the Identifier.
+        """
+        if parent.language == lang.C:
+            from .cpp.identifier import CIdentifier
+
+            return CIdentifier(node, parent)
+        elif parent.language == lang.JAVA:
+            from .java.identifier import JavaIdentifier
+
+            return JavaIdentifier(node, parent)
+        elif parent.language == lang.JAVASCRIPT:
+            from .javascript.identifier import JavaScriptIdentifier
+
+            return JavaScriptIdentifier(node, parent)
+        elif parent.language == lang.PYTHON:
+            from .python.identifier import PythonIdentifier
+
+            return PythonIdentifier(node, parent)
+        elif parent.language == lang.GO:
+            from .go.identifier import GoIdentifier
+
+            return GoIdentifier(node, parent)
+        elif parent.language == lang.RUST:
+            from .rust.identifier import RustIdentifier
+
+            return RustIdentifier(node, parent)
+        elif parent.language == lang.CSHARP:
+            from .csharp.identifier import CSharpIdentifier
+
+            return CSharpIdentifier(node, parent)
+        elif parent.language == lang.RUBY:
+            from .ruby.identifier import RubyIdentifier
+
+            return RubyIdentifier(node, parent)
+        elif parent.language == lang.PHP:
+            from .php.identifier import PHPIdentifier
+
+            return PHPIdentifier(node, parent)
+        elif parent.language == lang.SWIFT:
+            from .swift.identifier import SwiftIdentifier
+
+            return SwiftIdentifier(node, parent)
+        else:
+            return Identifier(node, parent)
 
     def __str__(self) -> str:
         return f"{self.signature}: {self.text}"
@@ -328,3 +386,19 @@ class Identifier:
                 if post_var.text == self.text and not post_var.is_left_value:
                     dependents.append(post_var)
         return sorted(dependents, key=lambda x: (x.start_line, x.start_column))
+
+    @cached_property
+    @abstractmethod
+    def type_info(self) -> str:
+        """
+        Returns the type of the identifier.
+        """
+        ...
+
+    @property
+    @abstractmethod
+    def is_pointer(self) -> bool:
+        """
+        Checks if the identifier is a pointer type.
+        """
+        ...

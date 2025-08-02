@@ -108,3 +108,16 @@ int test_break(int a)
     }
     return 0;
 }
+
+#include <stdlib.h>
+int* swap_malloc(int* a, int* b)
+{
+    int* temp = malloc(sizeof(int));
+    if (temp == NULL) {
+        return NULL;
+    }
+    *temp = *a;
+    *a = *b;
+    *b = *temp;
+    return temp;
+}

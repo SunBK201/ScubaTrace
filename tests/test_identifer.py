@@ -12,8 +12,7 @@ class TestIdentifier(unittest.TestCase):
         self.project = scubatrace.Project.create(
             str(self.project_path), language=scubatrace.language.C
         )
-        self.file = self.project.files.get("main.c")
-        assert self.file is not None
+        self.file = self.project.files.get("main.c") or self.fail()
         self.assertGreater(len(self.file.statements), 0)
         self.statement = self.file.statements_by_line(16)[0]
         self.assertGreater(len(self.statement.identifiers), 0)
@@ -28,3 +27,8 @@ class TestIdentifier(unittest.TestCase):
         self.assertEqual(len(dependents), 5)
         dependents_lines = sorted([dep.start_line for dep in dependents])
         self.assertEqual(dependents_lines, [17, 17, 36, 38, 40])
+
+    def test_identifier_type_info(self):
+        identifier = self.file.identifier_by_position(59, 6) or self.fail()
+        type_info = identifier.type_info
+        self.assertEqual(type_info, "int *")

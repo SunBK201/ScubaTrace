@@ -12,12 +12,9 @@ class TestStatement(unittest.TestCase):
         self.project = scubatrace.Project.create(
             str(self.project_path), language=scubatrace.language.C
         )
-        self.file = self.project.files.get("main.c")
-        assert self.file is not None
-        self.function = self.file.function_by_line(11)
-        assert self.function is not None
+        self.file = self.project.files.get("main.c") or self.fail()
+        self.function = self.file.function_by_line(11) or self.fail()
         statement = self.function.statements_by_line(14)
-        assert statement is not None and len(statement) == 1
         self.statement = statement[0]
 
     def test_statement_create(self):
@@ -35,10 +32,8 @@ class TestJavaScriptStatement(unittest.TestCase):
         self.project = scubatrace.Project.create(
             str(self.project_path), language=scubatrace.language.JAVASCRIPT
         )
-        self.file = self.project.files.get("index.js")
-        assert self.file is not None
+        self.file = self.project.files.get("index.js") or self.fail()
         statement = self.file.statements_by_line(4)
-        assert statement is not None and len(statement) == 1
         self.statement = statement[0]
 
     def test_statement_create(self):

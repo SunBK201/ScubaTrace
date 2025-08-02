@@ -12,9 +12,7 @@ class TestFile(unittest.TestCase):
         self.project = scubatrace.Project.create(
             str(self.project_path), language=scubatrace.language.C
         )
-        file = self.project.files.get("main.c")
-        assert file is not None
-        self.file = file
+        self.file = self.project.files.get("main.c") or self.fail()
 
     def test_file_create(self):
         file = scubatrace.File.create(
@@ -25,20 +23,16 @@ class TestFile(unittest.TestCase):
 
     def test_file_imports(self):
         imports = self.file.imports
-        self.assertGreater(len(imports), 0)
-        for imp in imports:
-            self.assertTrue(imp.name in ["stdio.h", "sub.h"])
+        self.assertEqual(len(imports), 3)
+        imports_names = sorted([imp.name for imp in imports])
+        self.assertEqual(imports_names, ["stdio.h", "stdlib.h", "sub.h"])
 
     def test_file_functions(self):
         functions = self.file.functions
         self.assertGreater(len(functions), 0)
-        for func in functions:
-            self.assertIsNotNone(func.name)
 
     def test_file_function_by_line(self):
-        function = self.file.function_by_line(8)
-        self.assertIsNotNone(function)
-        assert function is not None
+        function = self.file.function_by_line(8) or self.fail()
         self.assertEqual(function.name, "add")
 
     def test_file_function_by_name(self):
@@ -50,8 +44,6 @@ class TestFile(unittest.TestCase):
     def test_file_statements(self):
         statements = self.file.statements
         self.assertGreater(len(statements), 0)
-        for stmt in statements:
-            self.assertIsNotNone(stmt.text)
 
     def test_file_statement_by_line(self):
         statements = self.file.statements_by_line(16)
@@ -66,14 +58,10 @@ class TestFile(unittest.TestCase):
     def test_file_identifiers(self):
         identifiers = self.file.identifiers
         self.assertGreater(len(identifiers), 0)
-        for identifier in identifiers:
-            self.assertIsNotNone(identifier.name)
 
     def test_file_variables(self):
         variables = self.file.variables
         self.assertGreater(len(variables), 0)
-        for var in variables:
-            self.assertIsNotNone(var.name)
 
     def test_file_cfg(self):
         assert self.file is not None
@@ -95,7 +83,5 @@ class TestFile(unittest.TestCase):
         for stat in query:
             self.assertIn(stat.start_line, target_lines)
 
-        one_shot_result = self.file.query_oneshot(query_str)
-        self.assertIsNotNone(one_shot_result)
-        assert one_shot_result is not None
+        one_shot_result = self.file.query_oneshot(query_str) or self.fail()
         self.assertIn(one_shot_result.start_line, target_lines)

@@ -380,6 +380,25 @@ class File:
         """
         return [s for s in self.statements if s.field_name == field_name]
 
+    def identifier_by_position(self, line: int, column: int) -> Identifier | None:
+        """
+        The identifier at the specified line and column.
+
+        Args:
+            line (int): The line number to check.
+            column (int): The column number to check.
+
+        Returns:
+            Identifier | None: The identifier at the specified position, or None if not found.
+        """
+        for identifier in self.identifiers:
+            if (
+                identifier.start_line == line
+                and identifier.start_column <= column <= identifier.end_column
+            ):
+                return identifier
+        return None
+
     def build_cfg(self):
         def build_pre_cfg(statements: list[Statement]):
             for i in range(len(statements)):
