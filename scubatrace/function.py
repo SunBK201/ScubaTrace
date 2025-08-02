@@ -235,13 +235,7 @@ class Function(BlockStatement):
         """
         Call statements within the function.
         """
-        parser = self.file.parser
-        call_nodes = parser.query_all(self.node, self.language.query_call)
-        calls = []
-        for call_node in call_nodes:
-            call_node_line = call_node.start_point[0] + 1
-            calls.extend(self.statements_by_line(call_node_line))
-        return calls
+        return self.query(self.language.query_call)
 
     @cached_property
     def callees(self) -> dict[Function | FunctionDeclaration, list[Statement]]:

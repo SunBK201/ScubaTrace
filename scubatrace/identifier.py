@@ -274,14 +274,14 @@ class Identifier:
         """
         Checks if the identifier is a left value (e.g., a variable that can be assigned a value).
         """
-        parser = self.file.parser
-        language = self.file.project.language
-        stat = self.statement
-        query = language.query_left_value(self.text)
-        nodes = parser.query_all(stat.node, query)
+        query = self.file.language.query_left_value(self.text)
+        nodes = self.file.parser.query_all(self.statement.node, query)
         for node in nodes:
             if node.start_point == self.node.start_point:
                 return True
+        if self.function is None or not self.is_argument:
+            return False
+        # TODO: check if the identifier is an argument in a function call
         return False
 
     @property
