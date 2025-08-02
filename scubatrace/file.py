@@ -14,7 +14,7 @@ from . import language as lang
 from .clazz import Class
 from .function import Function
 from .identifier import Identifier
-from .statement import BlockStatement, SimpleStatement, Statement
+from .statement import BlockStatement, Statement
 
 if TYPE_CHECKING:
     from .project import Project

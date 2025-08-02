@@ -22,3 +22,9 @@ class TestIdentifier(unittest.TestCase):
     def test_identifier_create(self):
         identifier = scubatrace.Identifier(self.identifier.node, self.statement)
         self.assertIsNotNone(identifier)
+
+    def test_identifier_post_data_dependents(self):
+        dependents = self.identifier.post_data_dependents
+        self.assertEqual(len(dependents), 5)
+        dependents_lines = sorted([dep.start_line for dep in dependents])
+        self.assertEqual(dependents_lines, [15, 15, 34, 36, 38])
