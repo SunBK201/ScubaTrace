@@ -15,9 +15,7 @@ class TestFunction(unittest.TestCase):
         file = self.project.files.get("main.c")
         assert file is not None
         self.file = file
-        function = self.file.function_by_line(11)
-        assert function is not None
-        self.function = function
+        self.function = self.file.functions_by_name("main")[0]
 
     def test_function_create(self):
         function = scubatrace.Function.create(self.function.node, self.function.parent)
@@ -31,7 +29,7 @@ class TestFunction(unittest.TestCase):
         self.assertIn("printf", [callee.name for callee in callees])
 
     def test_function_callers(self):
-        function = self.file.function_by_line(4)
+        function = self.file.function_by_line(6)
         self.assertIsNotNone(function)
         assert function is not None
         callers = function.callers
@@ -43,7 +41,7 @@ class TestFunction(unittest.TestCase):
 
     def test_function_parameter_lines(self):
         self.assertEqual(len(self.function.parameter_lines), 1)
-        self.assertEqual(self.function.parameter_lines[0], 9)
+        self.assertEqual(self.function.parameter_lines[0], 11)
 
     def test_function_parameters(self):
         parameters = self.function.parameters
@@ -58,10 +56,40 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(variables[len(variables) - 1].text, "count")
 
     def test_function_export_cfg_dot(self):
-        cfg = self.function.export_cfg_dot("cfg.dot", with_cdg=True, with_ddg=True)
+        cfg = self.function.export_cfg_dot(
+            f"{self.project_path}/{self.function.name}.dot",
+            with_cdg=True,
+            with_ddg=True,
+        )
         self.assertIsNotNone(cfg)
 
     def test_function_slicing_by_lines(self):
-        stats = self.function.slice_by_lines([14])
-        self.assertEqual(stats[0].start_line, 9)
-        self.assertEqual(stats[len(stats) - 1].start_line, 38)
+        stats = self.function.slice_by_lines([16])
+        self.assertEqual(stats[0].start_line, 11)
+        self.assertEqual(stats[len(stats) - 1].start_line, second=40)
+
+    def test_function_walk_backward(self):
+        function = self.file.functions_by_name("add")[0]
+        assert function is not None
+        functions = list(function.walk_backward())
+        self.assertEqual(len(functions), 3)
+        functions_start_lines = sorted([f.start_line for f in functions])
+        self.assertEqual(functions_start_lines, [6, 11, 51])
+
+    def test_function_walk_forward(self):
+        functions = list(self.function.walk_forward())
+        self.assertGreater(len(functions), 0)
+        functions_start_lines = sorted([f.start_line for f in functions])
+        self.assertIn(11, functions_start_lines)
+        self.assertIn(6, functions_start_lines)
+        self.assertIn(51, functions_start_lines)
+
+    def test_function_export_callgraph(self):
+        function = self.file.functions_by_name("add")[0]
+        callgraph = function.export_callgraph(
+            f"{self.project_path}/{function.name}_callgraph.dot",
+            depth=1,
+        )
+        self.assertIsNotNone(callgraph)
+        self.assertGreater(len(callgraph.nodes), 0)
+        self.assertGreater(len(callgraph.edges), 0)

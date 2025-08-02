@@ -326,6 +326,18 @@ class File:
                 return func
         return None
 
+    def functions_by_name(self, name: str) -> list[Function]:
+        """
+        The functions that have the specified name.
+
+        Args:
+            name (str): The name of the function to check.
+
+        Returns:
+            list[Function]: A list of functions that have the specified name.
+        """
+        return [f for f in self.functions if f.name == name]
+
     def statements_by_line(self, line: int) -> list[Statement]:
         """
         The statements that are located on the specified line number.

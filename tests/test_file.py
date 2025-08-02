@@ -36,10 +36,16 @@ class TestFile(unittest.TestCase):
             self.assertIsNotNone(func.name)
 
     def test_file_function_by_line(self):
-        function = self.file.function_by_line(5)
+        function = self.file.function_by_line(8)
         self.assertIsNotNone(function)
         assert function is not None
         self.assertEqual(function.name, "add")
+
+    def test_file_function_by_name(self):
+        function = self.file.functions_by_name("add")
+        self.assertEqual(len(function), 1)
+        function = self.file.functions_by_name("main")
+        self.assertEqual(len(function), 1)
 
     def test_file_statements(self):
         statements = self.file.statements
@@ -48,14 +54,14 @@ class TestFile(unittest.TestCase):
             self.assertIsNotNone(stmt.text)
 
     def test_file_statement_by_line(self):
-        statements = self.file.statements_by_line(14)
+        statements = self.file.statements_by_line(16)
         self.assertGreater(len(statements), 0)
         self.assertEqual(statements[0].text, "int c = count + argc;")
 
         self.assertEqual(len(self.file.statements_by_line(-1)), 0)
         self.assertGreater(len(self.file.statements_by_line(1)), 0)
 
-        self.assertEqual(self.file.statements_by_line(18)[0].text, "a -= 1;")
+        self.assertEqual(self.file.statements_by_line(20)[0].text, "a -= 1;")
 
     def test_file_identifiers(self):
         identifiers = self.file.identifiers
@@ -71,7 +77,7 @@ class TestFile(unittest.TestCase):
 
     def test_file_cfg(self):
         assert self.file is not None
-        cfg = self.file.export_cfg_dot(f"{self.file.name}.dot")
+        cfg = self.file.export_cfg_dot(f"{self.project_path}/{self.file.name}.dot")
         self.assertIsNotNone(cfg)
         self.assertGreater(len(cfg.nodes), 0)
         self.assertGreater(len(cfg.edges), 0)
@@ -84,7 +90,7 @@ class TestFile(unittest.TestCase):
             )@call
         """
         query = self.file.query(query_str)
-        target_lines = [6, 36]
+        target_lines = [8, 38]
         self.assertEqual(len(query), len(target_lines))
         for stat in query:
             self.assertIn(stat.start_line, target_lines)

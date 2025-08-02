@@ -15,7 +15,7 @@ class TestIdentifier(unittest.TestCase):
         self.file = self.project.files.get("main.c")
         assert self.file is not None
         self.assertGreater(len(self.file.statements), 0)
-        self.statement = self.file.statements_by_line(14)[0]
+        self.statement = self.file.statements_by_line(16)[0]
         self.assertGreater(len(self.statement.identifiers), 0)
         self.identifier = self.statement.identifiers[0]
 
@@ -27,4 +27,4 @@ class TestIdentifier(unittest.TestCase):
         dependents = self.identifier.post_data_dependents
         self.assertEqual(len(dependents), 5)
         dependents_lines = sorted([dep.start_line for dep in dependents])
-        self.assertEqual(dependents_lines, [15, 15, 34, 36, 38])
+        self.assertEqual(dependents_lines, [17, 17, 36, 38, 40])

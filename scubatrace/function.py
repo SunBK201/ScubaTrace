@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Generator
 
 import networkx as nx
 from tree_sitter import Node
@@ -102,7 +102,9 @@ class Function(BlockStatement):
         return self.statements[0]
 
     def __str__(self) -> str:
-        return self.signature
+        return (
+            f'"{self.name.replace("::", "--")} ({self.file.name}\\:{self.start_line})"'
+        )
 
     def set_joernid(self, joern_id: str):
         self.joern_id = joern_id
@@ -317,6 +319,106 @@ class Function(BlockStatement):
                         callers[stat.function].append(stat)
                         break
         return callers
+
+    def walk_backward(
+        self,
+        filter: Callable[[Statement], bool] | None = None,
+        stop_by: Callable[[Statement], bool] | None = None,
+        depth: int = -1,
+        base: str = "call",
+    ) -> Generator[Function, None, None]:
+        for caller in super().walk_backward(
+            filter=filter,
+            stop_by=stop_by,
+            depth=depth,
+            base=base,
+        ):
+            assert isinstance(caller, Function)
+            yield caller
+
+    def walk_forward(
+        self,
+        filter: Callable[[Statement], bool] | None = None,
+        stop_by: Callable[[Statement], bool] | None = None,
+        depth: int = -1,
+        base: str = "call",
+    ) -> Generator[Function, None, None]:
+        for callee in super().walk_forward(
+            filter=filter,
+            stop_by=stop_by,
+            depth=depth,
+            base=base,
+        ):
+            assert isinstance(callee, Function)
+            yield callee
+
+    def __build_callgraph(self, depth: int = -1) -> nx.MultiDiGraph:
+        cg = nx.MultiDiGraph()
+        cg.add_node(
+            self,
+            color="red",
+            shape="box",
+            style="rounded",
+        )
+        forward_depth = 2048 if depth == -1 else depth
+        dq: deque[Function | FunctionDeclaration] = deque([self])
+        visited: set[Function | FunctionDeclaration] = set([self])
+        while len(dq) > 0 and forward_depth > 0:
+            size = len(dq)
+            for _ in range(size):
+                caller = dq.popleft()
+                if not isinstance(caller, Function):
+                    continue
+                for callee, callsites in caller.callees.items():
+                    for callsite in callsites:
+                        cg.add_edge(
+                            caller,
+                            callee,
+                            key=callsite.signature,
+                            label=callsite.start_line,
+                        )
+                    if callee not in visited:
+                        visited.add(callee)
+                        dq.append(callee)
+            forward_depth -= 1
+
+        backward_depth = 2048 if depth == -1 else depth
+        dq = deque([self])
+        visited = set([self])
+        while len(dq) > 0 and backward_depth > 0:
+            size = len(dq)
+            for _ in range(size):
+                callee = dq.popleft()
+                if not isinstance(callee, Function):
+                    continue
+                for caller, callsites in callee.callers.items():
+                    for callsite in callsites:
+                        cg.add_edge(
+                            caller,
+                            callee,
+                            key=callsite.signature,
+                            label=callsite.start_line,
+                        )
+                    if caller not in visited:
+                        visited.add(caller)
+                        dq.append(caller)
+            backward_depth -= 1
+        return cg
+
+    def export_callgraph(self, path: str, depth: int = -1) -> nx.MultiDiGraph:
+        """
+        Exports the call graph of the function to a DOT file.
+
+        Args:
+            path (str): The path to save the DOT file.
+            depth (int): The depth of the call graph to export. -1 means no limit.
+
+        Returns:
+            nx.MultiDiGraph: The call graph of the function.
+        """
+        cg = self.__build_callgraph(depth)
+        nx.nx_pydot.write_dot(cg, path)
+        return cg
 
     def slice_by_statements(
         self,

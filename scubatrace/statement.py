@@ -514,6 +514,11 @@ class Statement:
                             nexts.extend(stats)
                     case "control_dependent":
                         nexts = cur_stat.pre_control_dependents
+                    case "call":
+                        from .function import Function
+
+                        assert isinstance(cur_stat, Function)
+                        nexts = [caller for caller in cur_stat.callers.keys()]
                     case _:
                         nexts = cur_stat.pre_controls
                 for pre in nexts:
@@ -539,7 +544,7 @@ class Statement:
             stop_by (Callable[[Statement], bool] | None): A function to stop the walking when it returns True.
             depth (int): The maximum depth to walk forward. Default is -1, which means no limit.
             base (str): The base type of the walk.
-                Can be "control", "data_dependent", or "control_dependent".
+                Can be "control", "data_dependent", "control_dependent", "call".
 
         Yields:
             Statement: The statements that match the filter or all statements if no filter is provided.
@@ -564,10 +569,17 @@ class Statement:
                             nexts.extend(stats)
                     case "control_dependent":
                         nexts = cur_stat.post_control_dependents
+                    case "call":
+                        from .function import Function
+
+                        assert isinstance(cur_stat, Function)
+                        nexts = [caller for caller in cur_stat.callees.keys()]
                     case _:
                         nexts = cur_stat.post_controls
                 for post in nexts:
                     if post in visited:
+                        continue
+                    if not isinstance(post, Statement):
                         continue
                     visited.add(post)
                     dq.appendleft(post)

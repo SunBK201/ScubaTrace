@@ -1,9 +1,11 @@
 #include "include/sub.h"
 #include <stdio.h>
 
+int mul(int a, int b);
+
 int add(int a, int b)
 {
-    return a + sub(a, b);
+    return a + sub(a, b) + mul(a, b);
 }
 
 int main(int argc, char** argv)
