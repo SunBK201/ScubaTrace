@@ -32,3 +32,20 @@ class TestIdentifier(unittest.TestCase):
         identifier = self.file.identifier_by_position(59, 6) or self.fail()
         type_info = identifier.type_info
         self.assertEqual(type_info, "int *")
+
+    def test_identifier_is_pointer(self):
+        identifier = self.file.identifier_by_position(11, 27) or self.fail()
+        self.assertTrue(identifier.is_pointer)
+        identifier = self.file.identifier_by_position(59, 6) or self.fail()
+        self.assertTrue(identifier.is_pointer)
+        identifier = self.file.identifier_by_position(53, 5) or self.fail()
+        self.assertFalse(identifier.is_pointer)
+
+    def test_identifier_is_argument(self):
+        self.assertFalse(self.identifier.is_argument)
+        identifier = self.file.identifier_by_position(17, 26) or self.fail()
+        self.assertTrue(identifier.is_argument)
+        identifier = self.file.identifier_by_position(59, 6) or self.fail()
+        self.assertFalse(identifier.is_argument)
+        identifier = self.file.identifier_by_position(47, 41) or self.fail()
+        self.assertTrue(identifier.is_argument)

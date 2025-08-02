@@ -402,3 +402,30 @@ class Identifier:
         Checks if the identifier is a pointer type.
         """
         ...
+
+    @property
+    @abstractmethod
+    def is_argument(self) -> bool:
+        """
+        Checks if the identifier is an argument of a function call.
+        """
+        query = """
+            (call_expression
+                arguments: (argument_list
+                    [
+                        (identifier)@name
+                        (pointer_expression
+                            (identifier)@name
+                        )
+                        (field_expression
+                            field: (field_identifier)@name
+                        )
+                    ]
+                )
+            )
+        """
+        argument_nodes = self.file.parser.query_all(self.statement.node, query)
+        for argument_node in argument_nodes:
+            if argument_node.start_point == self.node.start_point:
+                return True
+        return False
