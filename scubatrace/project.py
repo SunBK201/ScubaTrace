@@ -11,9 +11,7 @@ from scubalspy import SyncLanguageServer
 from scubalspy.scubalspy_config import ScubalspyConfig
 from scubalspy.scubalspy_logger import ScubalspyLogger
 
-from . import joern
 from . import language as lang
-from .call import Call
 from .file import File
 from .function import Function, FunctionDeclaration
 from .parser import Parser
@@ -98,26 +96,9 @@ class Project:
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
-        enable_joern: bool = False,
     ):
         self.path = path
         self.language = language
-        if enable_joern:
-            if language == lang.C:
-                joern_language = joern.Language.C
-            elif language == lang.JAVA:
-                joern_language = joern.Language.JAVA
-            elif language == lang.PYTHON:
-                joern_language = joern.Language.PYTHON
-            elif language == lang.JAVASCRIPT:
-                joern_language = joern.Language.JAVASCRIPT
-            else:
-                raise ValueError("Joern unsupported language")
-            self.joern = joern.Joern(
-                path,
-                joern_language,
-            )
-            self.joern.export_with_preprocess()
         if enable_lsp:
             self.start_lsp()
 
@@ -159,13 +140,6 @@ class Project:
                         f.write(f"-I{sub_dir}\n")
                 atexit.register(os.remove, self.conf_file)
         self.lsp.sync_start_server()
-
-    def close(self):
-        if "joern" in self.__dict__:
-            self.joern.close()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
     @property
     def abspath(self) -> str:
@@ -287,69 +261,6 @@ class Project:
             except Exception as e:
                 print(f"Error preloading file {file.relpath}: {e}")
         cg = self.__build_callgraph(entry)
-        return cg
-
-    @cached_property
-    def callgraph_joern(self) -> nx.MultiDiGraph:
-        if self.joern is None:
-            raise ValueError("Joern is not enabled for this project.")
-        joern_cg = self.joern.callgraph
-        cg = nx.MultiDiGraph()
-        for node in joern_cg.nodes:
-            if joern_cg.nodes[node]["NODE_TYPE"] != "METHOD":
-                continue
-            if joern_cg.nodes[node]["IS_EXTERNAL"] == "true":
-                continue
-            func = self.search_function(
-                joern_cg.nodes[node]["FILENAME"],
-                int(joern_cg.nodes[node]["LINE_NUMBER"]),
-            )
-            if func is None:
-                continue
-            func.set_joernid(node)
-            cg.add_node(
-                func,
-                label=func.dot_text,
-            )
-        for u, v, data in joern_cg.edges(data=True):
-            if joern_cg.nodes[u]["NODE_TYPE"] != "METHOD":
-                continue
-            if joern_cg.nodes[v]["NODE_TYPE"] != "METHOD":
-                continue
-
-            # search by joern_id
-            src_func: Function | None = None
-            dst_func: Function | None = None
-            for node in cg.nodes:
-                if node.joern_id == u:
-                    src_func = node
-                if node.joern_id == v:
-                    dst_func = node
-            if src_func is None or dst_func is None:
-                continue
-            if src_func == dst_func:
-                continue
-            src_func.callees_joern.append(
-                Call(
-                    src_func,
-                    dst_func,
-                    int(data["LINE_NUMBER"]),
-                    int(data["COLUMN_NUMBER"]),
-                )
-            )
-            dst_func.callers_joern.append(
-                Call(
-                    src_func,
-                    dst_func,
-                    int(data["LINE_NUMBER"]),
-                    int(data["COLUMN_NUMBER"]),
-                )
-            )
-            cg.add_edge(
-                src_func,
-                dst_func,
-                **data,
-            )
         return cg
 
     def export_callgraph(self, output_path: str):

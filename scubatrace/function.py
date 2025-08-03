@@ -8,7 +8,6 @@ import networkx as nx
 from tree_sitter import Node
 
 from . import language as lang
-from .call import Call
 from .identifier import Identifier
 from .statement import BlockStatement, Statement
 
@@ -21,15 +20,9 @@ class Function(BlockStatement):
     A function in the source code.
     """
 
-    def __init__(
-        self, node: Node, file: File | BlockStatement, joern_id: str | None = None
-    ):
+    def __init__(self, node: Node, file: File | BlockStatement):
         super().__init__(node, file)
-        self.joern_id = joern_id
         self._is_build_cfg = False
-
-        self.callers_joern: list[Call] = []
-        self.callees_joern: list[Call] = []
 
     @staticmethod
     def create(node: Node, parent: File | BlockStatement):
@@ -105,9 +98,6 @@ class Function(BlockStatement):
         return (
             f'"{self.name.replace("::", "--")} ({self.file.name}\\:{self.start_line})"'
         )
-
-    def set_joernid(self, joern_id: str):
-        self.joern_id = joern_id
 
     @property
     def signature(self) -> str:
