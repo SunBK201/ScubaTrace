@@ -15,7 +15,7 @@ ScubaTrace is a code analysis toolkit that leverages tree-sitter and LSP (Langua
 
 Unlike most traditional static analysis tools that rely on compilation to extract Intermediate Representation (IR) for code analysis, ScubaTrace delivers analysis capabilities even when code repositories are incomplete or unable to compile. This resilience makes it particularly valuable for scenarios where traditional analysis approaches would fail, enabling developers and security researchers to gain insights from code that might otherwise be inaccessible to conventional static analysis methodologies.
 
-ScubaTrace serves as a portable analysis solution for IDE development, AI-powered coding tools, and SAST (Static Application Security Testing).
+Rather than being an end-to-end program analysis framework, ScubaTrace serves as a foundational toolkit that empowers developers to build solutions for IDE development, AI-powered coding tools, and SAST (Static Application Security Testing).
 
 # Features
 

@@ -24,7 +24,7 @@ dependencies = [
     "scubalspy>=0.0.19",
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]
-description = "Next-generation codebase analysis toolkit."
+description = "Source level code analysis toolkit."
 keywords = ["codebase", "parsing", "ast", "analysis"]
 readme = "README.md"
 license = "GPL-3.0-or-later"
