@@ -244,7 +244,6 @@ class Project:
                         column=callsite.start_column,
                     )
                 dq.append(callee)
-            caller.calls
         return cg
 
     @property
