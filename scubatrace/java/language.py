@@ -66,9 +66,10 @@ class JAVA(Language):
         "do_statement",
         "enhanced_for_statement",
     ]
-
+    
     FUNCTION_STATEMENTS = [
         "method_declaration",
+        "constructor_declaration",
     ]
 
     EXIT_STATEMENTS = [
