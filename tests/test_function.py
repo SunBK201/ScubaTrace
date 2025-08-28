@@ -44,6 +44,10 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(parameters[0].text, "argc")
         self.assertEqual(parameters[1].text, "argv")
 
+    def test_function_statements(self):
+        statements = self.function.statements
+        self.assertGreater(len(statements), 0)
+
     def test_function_variables(self):
         variables = self.function.variables
         self.assertGreater(len(variables), 0)

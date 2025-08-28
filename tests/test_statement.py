@@ -23,6 +23,47 @@ class TestStatement(unittest.TestCase):
         )
         self.assertIsNotNone(statement)
 
+    def test_statement_lsp(self):
+        lsp = self.statement.lsp
+        self.assertIsNotNone(lsp)
+
+    def test_statement_variables(self):
+        variables = self.statement.variables
+        self.assertGreater(len(variables), 0)
+
+    def test_statement_statements(self):
+        if isinstance(self.statement, scubatrace.BlockStatement):
+            statements = self.statement.statements
+            self.assertGreater(len(statements), 0)
+
+    def test_statement_pre_data_dependents(self):
+        dependents = self.statement.pre_data_dependents
+        self.assertGreater(len(dependents), 0)
+
+    def test_statement_post_data_dependents(self):
+        dependents = self.statement.post_data_dependents
+        self.assertGreater(len(dependents), 0)
+
+    def test_statement_pre_controls(self):
+        pre_controls = self.statement.pre_controls
+        self.assertGreater(len(pre_controls), 0)
+
+    def test_statement_post_controls(self):
+        post_controls = self.statement.post_controls
+        self.assertGreater(len(post_controls), 0)
+
+    def test_statement_definitions(self):
+        definitions = self.statement.definitions
+        self.assertGreater(len(definitions), 0)
+
+    def test_statement_references(self):
+        references = self.statement.references
+        self.assertGreater(len(references), 0)
+
+    def test_statement_is_taint_from_entry(self):
+        is_taint_from_entry = self.statement.is_taint_from_entry
+        self.assertIsInstance(is_taint_from_entry, bool)
+
 
 class TestJavaScriptStatement(unittest.TestCase):
     def setUp(self):
