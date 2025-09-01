@@ -420,6 +420,14 @@ class Identifier:
                         (field_expression
                             field: (field_identifier)@name
                         )
+                        (cast_expression
+                        	value: (identifier)@name
+                        )
+                        (cast_expression
+                        	value: (field_expression
+                            	field: (field_identifier)@name
+                            )
+                        )
                     ]
                 )
             )
