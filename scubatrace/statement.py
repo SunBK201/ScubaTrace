@@ -258,7 +258,7 @@ class Statement:
             return self.parent
         return self.parent.file
 
-    @property
+    @cached_property
     def function(self) -> Function | None:
         """
         The function this statement belongs to, if any.
