@@ -372,9 +372,17 @@ class Identifier:
                     return True
             return False
 
+        from .function import Function
+
         dependents = []
-        for post in self.statement.walk_forward(
-            filter=is_data_dependents, stop_by=is_stop
+        start_stat = self.statement
+        if isinstance(self.statement, Function):
+            if len(self.statement.statements) != 0:
+                start_stat = self.statement.statements[0]
+            else:
+                return []
+        for post in start_stat.walk_forward(
+            filter=is_data_dependents, stop_by=is_stop, base="control"
         ):
             if post.signature == self.signature:
                 continue

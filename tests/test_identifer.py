@@ -49,3 +49,10 @@ class TestIdentifier(unittest.TestCase):
         self.assertFalse(identifier.is_argument)
         identifier = self.file.identifier_by_position(47, 41) or self.fail()
         self.assertTrue(identifier.is_argument)
+
+    def test_identifier_param_post_data_dependents(self):
+        function = self.file.functions_by_name("main")[0]
+        param = function.parameters[0]
+        self.assertEqual(param.name, "argc")
+        self.assertEqual(len(param.post_data_dependents), 1)
+        self.assertEqual(param.post_data_dependents[0].start_line, 16)
