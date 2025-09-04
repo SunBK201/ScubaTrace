@@ -109,13 +109,3 @@ class TestJavaScriptStatement(unittest.TestCase):
     def test_statement_walk_backward(self):
         for stmt in self.statement.walk_backward(depth=3, base="control"):
             self.assertIn(stmt.start_line, [1, 2, 3, 4])
-
-
-if __name__ == "__main__":
-    project = scubatrace.Project.create(
-        "/Users/sunbk201/Downloads/python-xxhash",
-        language=scubatrace.language.PYTHON,
-        enable_lsp=True,
-    )
-    for impor in project.files["setup.py"].imports:
-        print(impor._path)
