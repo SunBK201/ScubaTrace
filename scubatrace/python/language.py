@@ -9,6 +9,21 @@ class PYTHON(Language):
     tslanguage = TSLanguage(tspython.language())
 
     query_call = "(call)@name"
+    query_argument = """
+    (call
+        arguments: (argument_list
+            [
+                (identifier)@name
+                (attribute
+                    attribute: (identifier)@name
+                )
+                (keyword_argument
+                    value: (identifier)@name
+                )
+            ]
+        )
+    )
+    """
     query_import_identifier = """
     (import_statement
         name: [

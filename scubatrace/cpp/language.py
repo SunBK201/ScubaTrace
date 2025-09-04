@@ -13,6 +13,29 @@ class C(Language):
         (field_identifier)@name
     """
     query_call = "(call_expression)@name"
+    query_argument = """
+        (call_expression
+            arguments: (argument_list
+                [
+                    (identifier)@name
+                    (pointer_expression
+                        (identifier)@name
+                    )
+                    (field_expression
+                        field: (field_identifier)@name
+                    )
+                    (cast_expression
+                        value: (identifier)@name
+                    )
+                    (cast_expression
+                        value: (field_expression
+                            field: (field_identifier)@name
+                        )
+                    )
+                ]
+            )
+        )
+    """
     query_import_identifier = """
         (preproc_include
             path: [

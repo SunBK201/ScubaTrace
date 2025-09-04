@@ -34,6 +34,11 @@ class Language:
     The tree-sitter query to match function calls.
     """
 
+    query_argument: str
+    """
+    The tree-sitter query to match function call argument.
+    """
+
     query_import_identifier: str
     """
     The tree-sitter query to match import identifiers.

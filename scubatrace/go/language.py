@@ -9,6 +9,18 @@ class GO(Language):
     tslanguage = TSLanguage(tsgo.language())
 
     query_call = "(call_expression)@name"
+    query_argument = """
+        (call_expression
+            arguments: (argument_list
+                [
+                    (selector_expression
+                        field: (field_identifier)@name
+                    )
+                    (identifier)@name
+                ]
+            )
+        )
+    """
     query_import_identifier = """
         (import_spec
             path: (interpreted_string_literal)@name

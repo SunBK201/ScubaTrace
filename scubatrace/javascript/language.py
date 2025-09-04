@@ -9,6 +9,24 @@ class JAVASCRIPT(Language):
     tslanguage = TSLanguage(tsjavascript.language())
 
     query_call = "(call_expression)@name"
+    query_argument = """
+    (call_expression
+        arguments: (arguments
+            [
+                (identifier)@name
+                (assignment_expression
+                    right: (identifier)@name
+                )
+                (member_expression
+                    property: (property_identifier)@name
+                )
+                (binary_expression
+                	(identifier)@name
+                )
+            ]
+        )
+    )
+    """
     query_import = "(import_statement)@name"
     query_import_identifier = """
     (call_expression

@@ -9,6 +9,18 @@ class JAVA(Language):
     tslanguage = TSLanguage(tsjava.language())
 
     query_call = "(method_invocation)@name"
+    query_argument = """
+        (method_invocation
+            arguments: (argument_list
+                [
+                    (field_access
+                        field: (identifier)@name
+                    )
+                    (identifier)@name
+                ]
+            )
+        )
+    """
     query_import_identifier = """
         (import_declaration
             (scoped_identifier
@@ -66,7 +78,7 @@ class JAVA(Language):
         "do_statement",
         "enhanced_for_statement",
     ]
-    
+
     FUNCTION_STATEMENTS = [
         "method_declaration",
         "constructor_declaration",
