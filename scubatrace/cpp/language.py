@@ -112,7 +112,6 @@ class C(Language):
         "labeled_statement",
         "preproc_include",
         "preproc_def",
-        "struct_specifier",
         "type_definition",
         "using_declaration",
     ]
