@@ -269,7 +269,7 @@ class Identifier:
                     return True
         return False
 
-    @property
+    @cached_property
     def is_left_value(self) -> bool:
         """
         Checks if the identifier is a left value (e.g., a variable that can be assigned a value).
@@ -284,7 +284,7 @@ class Identifier:
         # TODO: check if the identifier is an argument in a function call
         return False
 
-    @property
+    @cached_property
     def is_right_value(self) -> bool:
         """
         Checks if the identifier is a right value (e.g., a variable that is used to retrieve a value).
