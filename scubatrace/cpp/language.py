@@ -195,6 +195,12 @@ class C(Language):
                     (#eq? @left "{text}")
                 )
             )
+            (init_declarator
+                (array_declarator
+                    (identifier)@left
+                    (#eq? @left "{text}")
+                )
+            )
             (parameter_declaration
                 declarator: (identifier)@left
                 (#eq? @left "{text}")
