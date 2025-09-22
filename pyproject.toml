@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scubatrace"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
     "tree_sitter==0.24.0",
     "tree_sitter_cpp==0.23.4",
@@ -24,7 +24,7 @@ dependencies = [
     "scubalspy>=0.0.19",
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]
-description = "Source level code analysis toolkit."
+description = "ScubaTrace: A source-level code analysis toolkit for SAST, context engineering, and AI coding."
 keywords = ["codebase", "parsing", "ast", "analysis"]
 readme = "README.md"
 license = "GPL-3.0-or-later"
