@@ -64,6 +64,8 @@ ScubaTrace supports multiple programming languages, including:
 
 # Usage
 
+## Initialize a ScubaTrace Project
+
 ```python
 import scubatrace
 
@@ -75,6 +77,8 @@ project = scubatrace.Project.create("path/to/your/codebase", language=scubatrace
 
 > [!NOTE]
 > Incomplete or broken codebases may cause parsing errors that could result in inaccurate analysis results.
+
+## Retrieve Code Entities
 
 ```python
 # Get a file from the project
@@ -95,21 +99,30 @@ for caller, callsites in callers.items():
 # Get the first statement in file line
 statement = file.statements_by_line(10)[0]
 
-# Find the pre/post statements in control flow
-pre_statements_in_control_flow = statement.pre_controls
-post_statements_in_control_flow = statement.post_controls
-
 # Get the first variable in statement
 variable = statement.variables[0]
 print(f"Variable: {variable.name}")
 
-# Find the definitions/references of a variable
-definitions = variable.definitions
-references = variable.references
+# Get tree-sitter node in a file/function/statement
+file_node = file.node
+function_node = function.node
+statement_node = statement.node
+```
+
+## Perform Analysis
+
+```python
+# Find the pre/post statements in control flow
+pre_statements_in_control_flow = statement.pre_controls
+post_statements_in_control_flow = statement.post_controls
 
 # Find the pre/post data dependencies of a variable
 pre_data_dependencies = variable.pre_data_dependents
 post_data_dependencies = variable.post_data_dependents
+
+# Find the definitions/references of a variable
+definitions = variable.definitions
+references = variable.references
 
 # Perform slicing in a function based on specified lines
 # Configure the slicing with control depth and data-dependent depth
@@ -117,11 +130,6 @@ criteria_lines = [10, 12, 18]
 sliced_statements = function.slice_by_lines(
     lines=criteria_lines, control_depth=5, data_dependent_depth=8
 )
-
-# Get tree-sitter node in a file/function/statement
-file_node = file.node
-function_node = function.node
-statement_node = statement.node
 ```
 
 For more detailed information, refer to the [Documentation](https://sunbk201.github.io/ScubaTrace/).
