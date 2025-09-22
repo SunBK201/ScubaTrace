@@ -59,7 +59,7 @@ Making Changes
 
     .. code-block:: bash
 
-        pytest
+        python -m unittest -v
 
 4. **Commit your changes**
 
@@ -84,11 +84,11 @@ Making Changes
 Code Style
 ==========
 
-Please follow the PEP 8 style guide for Python code. You can use tools like `flake8` to check your code for style issues:
+Please follow the PEP 8 style guide for Python code. You can use tools like `ruff` to check your code for style issues:
 
 .. code-block:: bash
 
-    pip install flake8
-    flake8 .
+    pip install ruff
+    ruff format .
 
 Thank you for contributing!
