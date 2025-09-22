@@ -915,7 +915,11 @@ class BlockStatement(Statement):
         while True:
             assert cursor.node is not None
             language = parent.language
-            if language.is_function_node(cursor.node):
+            if language.is_class_node(cursor.node):
+                from .clazz import Class
+
+                stats.append(Class.create(cursor.node, parent))
+            elif language.is_function_node(cursor.node):
                 from .function import Function
 
                 stats.append(Function.create(cursor.node, parent))

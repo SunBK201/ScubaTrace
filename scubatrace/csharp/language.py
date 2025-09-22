@@ -42,6 +42,10 @@ class CSHARP(Language):
         "goto_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "class_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "method_declaration",
     ]

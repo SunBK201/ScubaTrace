@@ -53,6 +53,10 @@ class RUBY(Language):
         "until",
     ]
 
+    CLASS_STATEMENTS = [
+        "class",
+    ]
+
     FUNCTION_STATEMENTS = [
         "method",
     ]

@@ -45,6 +45,10 @@ class SWIFT(Language):
         "repeat_while_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "class_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_declaration",
     ]

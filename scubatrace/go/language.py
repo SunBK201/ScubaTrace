@@ -65,6 +65,10 @@ class GO(Language):
         "for_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "type_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_declaration",
     ]

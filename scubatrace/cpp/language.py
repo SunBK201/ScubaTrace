@@ -130,6 +130,11 @@ class C(Language):
         "return_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "struct_specifier",
+        "class_specifier",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_definition",
     ]

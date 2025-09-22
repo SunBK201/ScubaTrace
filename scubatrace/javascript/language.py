@@ -77,6 +77,10 @@ class JAVASCRIPT(Language):
 
     LOOP_STATEMENTS = ["for_statement", "while_statement", "do_statement"]
 
+    CLASS_STATEMENTS = [
+        "class_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_declaration",
         "method_definition",

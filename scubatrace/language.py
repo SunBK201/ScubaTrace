@@ -58,6 +58,8 @@ class Language:
     For example, in Python, this would include 'return'.
     """
 
+    CLASS_STATEMENTS: list[str] = []
+
     FUNCTION_STATEMENTS: list[str] = []
 
     IF_STATEMENTS: list[str] = []
@@ -105,6 +107,19 @@ class Language:
         Formats a tree-sitter query to match goto statements with the given label name.
         """
         ...
+
+    @classmethod
+    def is_class_node(cls, node: Node) -> bool:
+        """
+        Checks if the given node is a class definition.
+
+        Args:
+            node (Node): The tree-sitter node to check.
+
+        Returns:
+            bool: True if the node is a class definition, False otherwise.
+        """
+        return node.type in cls.CLASS_STATEMENTS
 
     @classmethod
     def is_function_node(cls, node: Node) -> bool:

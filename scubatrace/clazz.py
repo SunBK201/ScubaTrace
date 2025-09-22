@@ -1,78 +1,112 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from tree_sitter import Node
 
+from . import language as lang
 from .function import Function
+from .statement import BlockStatement
 
 if TYPE_CHECKING:
     from .file import File
 
 
-class Class:
+class Class(BlockStatement):
     """
     A class in the source code.
     """
 
-    node: Node
-    """ The tree-sitter node representing the class. """
+    def __init__(self, node: Node, file: File | BlockStatement) -> None:
+        super().__init__(node, file)
 
-    file: File
-    """ The file this class belongs to. """
-
-    def __init__(self, node: Node, file: File) -> None:
-        self.node = node
-        self.file = file
-
-    def __str__(self) -> str:
-        return self.signature
-
-    @property
-    def signature(self) -> str:
+    @staticmethod
+    def create(node: Node, parent: File | BlockStatement):
         """
-        A unique signature for the class.
+        Factory function to create a Class instance based on the language of the file.
+
+        Args:
+            node (Node): The tree-sitter node representing the class.
+            file (File): The file containing the class.
+
+        Returns:
+            Class: An instance of a language-specific Class subclass corresponding to the file's language.
         """
-        return (
-            self.file.signature
-            + "#"
-            + self.name
-            + "#"
-            + str(self.start_line)
-            + "#"
-            + str(self.end_line)
-        )
+        if parent.project.language == lang.C:
+            from .cpp.clazz import CClass
 
-    @property
-    def text(self) -> str:
-        if self.node.text is None:
-            raise ValueError("Node text is None")
-        return self.node.text.decode()
+            return CClass(node, parent)
+        elif parent.project.language == lang.JAVA:
+            from .java.clazz import JavaClass
 
-    @property
-    def start_line(self) -> int:
-        return self.node.start_point[0] + 1
+            return JavaClass(node, parent)
+        elif parent.project.language == lang.JAVASCRIPT:
+            from .javascript.clazz import JavaScriptClass
 
-    @property
-    def end_line(self) -> int:
-        return self.node.end_point[0] + 1
+            return JavaScriptClass(node, parent)
+        elif parent.project.language == lang.PYTHON:
+            from .python.clazz import PythonClass
 
-    @property
-    def length(self):
-        return self.end_line - self.start_line + 1
+            return PythonClass(node, parent)
+        elif parent.project.language == lang.GO:
+            from .go.clazz import GoClass
+
+            return GoClass(node, parent)
+        elif parent.project.language == lang.PHP:
+            from .php.clazz import PHPClass
+
+            return PHPClass(node, parent)
+        elif parent.project.language == lang.RUBY:
+            from .ruby.clazz import RubyClass
+
+            return RubyClass(node, parent)
+        elif parent.project.language == lang.RUST:
+            from .rust.clazz import RustClass
+
+            return RustClass(node, parent)
+        elif parent.project.language == lang.SWIFT:
+            from .swift.clazz import SwiftClass
+
+            return SwiftClass(node, parent)
+        elif parent.project.language == lang.CSHARP:
+            from .csharp.clazz import CSharpClass
+
+            return CSharpClass(node, parent)
+        else:
+            return Class(node, parent)
+
+    @cached_property
+    def name_node(self) -> Node:
+        """
+        The tree-sitter node representing the name of the class.
+        """
+        node = self.node.child_by_field_name("name")
+        if node is None:
+            raise ValueError(f"Class name node not found: {self.node}")
+        return node
 
     @property
     def name(self) -> str:
-        class_name = self.node.child_by_field_name("name")
-        assert class_name is not None
-        assert class_name.text is not None
-        return class_name.text.decode()
+        """
+        The name of the class.
+        """
+        name_node = self.name_node
+        assert name_node.text is not None
+        return name_node.text.decode()
 
     @property
-    @abstractmethod
-    def functions(self) -> list[Function]: ...
-
-    @property
-    @abstractmethod
-    def fields(self) -> list[str]: ...
+    def functions(self) -> list[Function]:
+        """
+        functions in the class.
+        """
+        functions = []
+        for statement in self.statements:
+            if isinstance(statement, Function):
+                functions.append(statement)
+            if isinstance(statement, BlockStatement):
+                # If the statement is a block, we need to find all functions within it
+                functions.extend(
+                    statement.statements_by_types(self.language.FUNCTION_STATEMENTS)
+                )
+        return functions

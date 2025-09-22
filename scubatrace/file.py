@@ -231,17 +231,29 @@ class File:
             if isinstance(statement, Function):
                 functions.append(statement)
             if isinstance(statement, BlockStatement):
+                # If the statement is a block, we need to find all functions within it
                 functions.extend(
                     statement.statements_by_types(self.language.FUNCTION_STATEMENTS)
                 )
         return functions
 
     @cached_property
-    @abstractmethod
-    def classes(self) -> list[Class]: ...
+    def classes(self) -> list[Class]:
+        """
+        classes in the file.
+        """
+        classes = []
+        for statement in self.statements:
+            if isinstance(statement, Class):
+                classes.append(statement)
+            if isinstance(statement, BlockStatement):
+                # If the statement is a block, we need to find all classes within it
+                classes.extend(
+                    statement.statements_by_types(self.language.CLASS_STATEMENTS)
+                )
+        return classes
 
     @cached_property
-    @abstractmethod
     def statements(self) -> list[Statement]:
         """
         statements in the file.
@@ -310,6 +322,33 @@ class File:
                             lsp.open_file(file.relpath).__enter__()
                             break
         return lsp
+
+    def class_by_line(self, line: int) -> Class | None:
+        """
+        The class that contains the specified line number.
+
+        Args:
+            line (int): The line number to check.
+
+        Returns:
+            Class | None: The class that contains the line, or None if not found.
+        """
+        for clazz in self.classes:
+            if clazz.start_line <= line <= clazz.end_line:
+                return clazz
+        return None
+
+    def classes_by_name(self, name: str) -> list[Class]:
+        """
+        The classes that have the specified name.
+
+        Args:
+            name (str): The name of the class to check.
+
+        Returns:
+            list[Class]: A list of classes that have the specified name.
+        """
+        return [c for c in self.classes if c.name == name]
 
     def function_by_line(self, line: int) -> Function | None:
         """

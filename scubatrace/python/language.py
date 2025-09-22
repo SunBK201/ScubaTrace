@@ -94,6 +94,10 @@ class PYTHON(Language):
 
     LOOP_STATEMENTS = ["for_statement", "while_statement"]
 
+    CLASS_STATEMENTS = [
+        "class_definition",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_definition",
     ]

@@ -16,6 +16,7 @@ from .language import Language
 from .parser import Parser
 
 from .file import File
+from .clazz import Class
 from .function import Function, FunctionDeclaration
 from .statement import Statement, SimpleStatement, BlockStatement
 from .identifier import Identifier

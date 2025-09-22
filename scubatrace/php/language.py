@@ -65,6 +65,10 @@ class PHP(Language):
         "do_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "class_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_definition",
     ]

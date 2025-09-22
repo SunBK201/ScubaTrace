@@ -79,6 +79,11 @@ class JAVA(Language):
         "enhanced_for_statement",
     ]
 
+    CLASS_STATEMENTS = [
+        "class_declaration",
+        "interface_declaration",
+    ]
+
     FUNCTION_STATEMENTS = [
         "method_declaration",
         "constructor_declaration",

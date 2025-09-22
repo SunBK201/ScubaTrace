@@ -53,6 +53,10 @@ class RUST(Language):
         "loop_expression",
     ]
 
+    CLASS_STATEMENTS = [
+        "struct_item",
+    ]
+
     FUNCTION_STATEMENTS = [
         "function_item",
     ]
