@@ -6,7 +6,7 @@
 [![CodeQL](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/SunBK201/ScubaTrace/actions/workflows/github-code-scanning/codeql)
 [![License](https://img.shields.io/github/license/SunBK201/ScubaTrace)](https://github.com/SunBK201/ScubaTrace/blob/master/LICENSE)
 
-Source level code analysis toolkit.
+ScubaTrace: A source-level code analysis toolkit for SAST, context engineering, and AI coding.
 
 <br>
 <img src="https://sunbk201.oss-cn-beijing.aliyuncs.com/img/ScubaTrace.png" width="61.8%">
