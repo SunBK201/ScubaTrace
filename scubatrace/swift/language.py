@@ -19,6 +19,23 @@ class SWIFT(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (property_declaration
+            (pattern
+                (simple_identifier)@name
+            )
+        )
+        (variable_declaration
+            (pattern_binding
+                (pattern
+                    (simple_identifier)@name
+                )
+            )
+        )
+    """
+
     query_class = "(class_declaration)@name"
 
     JUMP_STATEMENTS = [
@@ -51,6 +68,11 @@ class SWIFT(Language):
 
     FUNCTION_STATEMENTS = [
         "function_declaration",
+    ]
+
+    FIELD_STATEMENTS = [
+        "property_declaration",
+        "variable_declaration",
     ]
 
     EXIT_STATEMENTS = [

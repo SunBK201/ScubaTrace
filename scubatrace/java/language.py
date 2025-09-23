@@ -37,6 +37,14 @@ class JAVA(Language):
         )
     """
 
+    query_field_name = """
+        (field_declaration
+            (variable_declarator
+                name: (identifier)@name
+            )
+        )
+    """
+
     query_package = "(package_declaration)@name"
     query_class = "(class_declaration)@name"
 
@@ -88,6 +96,8 @@ class JAVA(Language):
         "method_declaration",
         "constructor_declaration",
     ]
+
+    FIELD_STATEMENTS = ["field_declaration"]
 
     EXIT_STATEMENTS = [
         "return_statement",

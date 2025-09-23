@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from tree_sitter import Node
 
 from . import language as lang
+from .field import Field
 from .function import Function
 from .statement import BlockStatement
 
@@ -110,3 +111,19 @@ class Class(BlockStatement):
                     statement.statements_by_types(self.language.FUNCTION_STATEMENTS)
                 )
         return functions
+
+    @property
+    def fields(self) -> list[Field]:
+        """
+        Fields (attributes or member variables) in the class.
+        """
+        fields = []
+        for statement in self.statements:
+            if isinstance(statement, Field):
+                fields.append(statement)
+            if isinstance(statement, BlockStatement):
+                # If the statement is a block, we need to find all fields within it
+                fields.extend(
+                    statement.statements_by_types(self.language.FIELD_STATEMENTS)
+                )
+        return fields

@@ -19,6 +19,14 @@ class RUST(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (field_declaration
+            name: (field_identifier)@name
+        )
+    """
+
     query_class = "(struct_item)@name"
 
     JUMP_STATEMENTS = [
@@ -60,6 +68,8 @@ class RUST(Language):
     FUNCTION_STATEMENTS = [
         "function_item",
     ]
+
+    FIELD_STATEMENTS = ["field_declaration"]
 
     EXIT_STATEMENTS = [
         "return_expression",

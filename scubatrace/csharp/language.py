@@ -20,6 +20,21 @@ class CSHARP(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (field_declaration
+            (variable_declaration
+                (variable_declarator
+                    (identifier)@name
+                )
+            )
+        )
+        (property_declaration
+            name: (identifier)@name
+        )
+    """
+
     query_class = "(class_declaration)@name"
 
     BLOCK_STATEMENTS = [
@@ -48,6 +63,11 @@ class CSHARP(Language):
 
     FUNCTION_STATEMENTS = [
         "method_declaration",
+    ]
+
+    FIELD_STATEMENTS = [
+        "field_declaration",
+        "property_declaration",
     ]
 
     EXIT_STATEMENTS = [

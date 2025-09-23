@@ -26,6 +26,16 @@ class PHP(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (property_declaration
+            (property_element
+                (variable_name)@name
+            )
+        )
+    """
+
     query_class = "(class_declaration)@name"
 
     JUMP_STATEMENTS = [
@@ -71,6 +81,10 @@ class PHP(Language):
 
     FUNCTION_STATEMENTS = [
         "function_definition",
+    ]
+
+    FIELD_STATEMENTS = [
+        "property_declaration",
     ]
 
     EXIT_STATEMENTS = [

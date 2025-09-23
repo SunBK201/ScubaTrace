@@ -12,6 +12,7 @@ from .identifier import Identifier
 from .language import Language
 
 if TYPE_CHECKING:
+    from .clazz import Class
     from .file import File
     from .function import Function
     from .project import Project
@@ -905,7 +906,7 @@ class BlockStatement(Statement):
     @staticmethod
     def build_statements(
         node: Node,
-        parent: BlockStatement | Function | File,
+        parent: BlockStatement | Function | Class | File,
     ) -> list[Statement]:
         stats = []
         cursor = node.walk()
@@ -915,13 +916,16 @@ class BlockStatement(Statement):
         while True:
             assert cursor.node is not None
             language = parent.language
+
+            from .clazz import Class
+            from .field import Field
+            from .function import Function
+
             if language.is_class_node(cursor.node):
-                from .clazz import Class
-
                 stats.append(Class.create(cursor.node, parent))
+            elif isinstance(parent, Class) and language.is_field_node(cursor.node):
+                stats.append(Field.create(cursor.node, parent))
             elif language.is_function_node(cursor.node):
-                from .function import Function
-
                 stats.append(Function.create(cursor.node, parent))
             elif language.is_simple_node(cursor.node):
                 stats.append(SimpleStatement.create(cursor.node, parent))

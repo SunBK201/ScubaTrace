@@ -1,5 +1,6 @@
 import tree_sitter_python as tspython
 from tree_sitter import Language as TSLanguage
+from tree_sitter import Node
 
 from ..language import Language
 
@@ -48,6 +49,17 @@ class PYTHON(Language):
         )
         (typed_parameter
             (identifier)@name
+        )
+    """
+
+    query_field_name = """
+        (assignment
+            left: (identifier)@name
+        )
+        (assignment
+            left: (attribute
+                attribute: (identifier)@name
+            )
         )
     """
 
@@ -102,6 +114,10 @@ class PYTHON(Language):
         "function_definition",
     ]
 
+    FIELD_STATEMENTS = [
+        "assignment",
+    ]
+
     EXIT_STATEMENTS = [
         "return_statement",
     ]
@@ -141,3 +157,24 @@ class PYTHON(Language):
                 (#eq? @left "{text}")
             )
         """
+
+    @classmethod
+    def is_field_node(cls, node: Node) -> bool:
+        """
+        Checks if the given node is a field (attribute or member variable) definition.
+
+        Args:
+            node (Node): The tree-sitter node to check.
+
+        Returns:
+            bool: True if the node is a field definition, False otherwise.
+        """
+        if node.type in cls.FIELD_STATEMENTS:
+            return True
+        if node.type == "expression_statement":
+            if node.named_child_count != 1:
+                return False
+            for child in node.named_children:
+                if child.type == "assignment":
+                    return True
+        return False

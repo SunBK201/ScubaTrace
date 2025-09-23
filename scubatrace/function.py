@@ -12,6 +12,7 @@ from .identifier import Identifier
 from .statement import BlockStatement, Statement
 
 if TYPE_CHECKING:
+    from .clazz import Class
     from .file import File
 
 
@@ -25,7 +26,7 @@ class Function(BlockStatement):
         self._is_build_cfg = False
 
     @staticmethod
-    def create(node: Node, parent: File | BlockStatement):
+    def create(node: Node, parent: File | Class | BlockStatement):
         """
         Factory function to create a Function instance based on the language of the file.
 

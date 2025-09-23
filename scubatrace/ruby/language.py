@@ -19,6 +19,20 @@ class RUBY(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (assignment
+            left: (instance_variable)@name
+        )
+        (assignment
+            left: (class_variable)@name
+        )
+        (assignment
+            left: (identifier)@name
+        )
+    """
+
     query_class = "(class)@name"
 
     JUMP_STATEMENTS = [
@@ -59,6 +73,10 @@ class RUBY(Language):
 
     FUNCTION_STATEMENTS = [
         "method",
+    ]
+
+    FIELD_STATEMENTS = [
+        "assignment",
     ]
 
     EXIT_STATEMENTS = [

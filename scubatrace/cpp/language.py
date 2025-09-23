@@ -76,6 +76,36 @@ class C(Language):
         )
     """
 
+    query_field_name = """
+        (field_declaration
+        	declarator: (field_identifier)@name
+        )
+        (field_declaration
+        	declarator: (reference_declarator
+            	(field_identifier)@name
+            )
+        )
+        (field_declaration
+        	declarator: (pointer_declarator
+            	declarator: (field_identifier)@name
+            )
+        )
+        (field_declaration
+        	declarator: (pointer_declarator
+            	declarator: (
+                	(pointer_declarator
+                        declarator: (field_identifier)@name
+                    )
+                )
+            )
+        )
+        (field_declaration
+        	declarator: (array_declarator
+            	declarator: (field_identifier)@name
+            )
+        )
+    """
+
     query_struct = "(struct_specifier)@name"
     query_class = "(class_specifier)@name"
     query_field = "(field_declaration)@name"
@@ -138,6 +168,8 @@ class C(Language):
     FUNCTION_STATEMENTS = [
         "function_definition",
     ]
+
+    FIELD_STATEMENTS = ["field_declaration"]
 
     EXIT_STATEMENTS = [
         "return_statement",

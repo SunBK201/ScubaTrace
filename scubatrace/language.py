@@ -51,6 +51,11 @@ class Language:
     The tree-sitter query to match function parameters.
     """
 
+    query_field_name: str
+    """
+    The tree-sitter query to match the name of a field.
+    """
+
     EXIT_STATEMENTS: list[str] = []
     """
     The tree-sitter AST types of exit statements.
@@ -59,6 +64,8 @@ class Language:
     """
 
     CLASS_STATEMENTS: list[str] = []
+
+    FIELD_STATEMENTS: list[str] = []
 
     FUNCTION_STATEMENTS: list[str] = []
 
@@ -120,6 +127,19 @@ class Language:
             bool: True if the node is a class definition, False otherwise.
         """
         return node.type in cls.CLASS_STATEMENTS
+
+    @classmethod
+    def is_field_node(cls, node: Node) -> bool:
+        """
+        Checks if the given node is a field (attribute or member variable) definition.
+
+        Args:
+            node (Node): The tree-sitter node to check.
+
+        Returns:
+            bool: True if the node is a field definition, False otherwise.
+        """
+        return node.type in cls.FIELD_STATEMENTS
 
     @classmethod
     def is_function_node(cls, node: Node) -> bool:

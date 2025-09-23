@@ -44,6 +44,14 @@ class JAVASCRIPT(Language):
     )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (field_definition
+            property: (property_identifier)@name
+        )
+    """
+
     query_class = "(class_declaration)@name"
 
     JUMP_STATEMENTS = [
@@ -84,6 +92,10 @@ class JAVASCRIPT(Language):
     FUNCTION_STATEMENTS = [
         "function_declaration",
         "method_definition",
+    ]
+
+    FIELD_STATEMENTS = [
+        "field_definition",
     ]
 
     EXIT_STATEMENTS = [

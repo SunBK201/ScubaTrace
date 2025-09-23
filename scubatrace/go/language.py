@@ -27,6 +27,14 @@ class GO(Language):
         )
     """
 
+    query_function_parameter = ""
+
+    query_field_name = """
+        (field_declaration
+            (field_identifier)@name
+        )
+    """
+
     query_package = "(package_clause)@name"
     query_class = "(type_declaration)@name"
 
@@ -72,6 +80,8 @@ class GO(Language):
     FUNCTION_STATEMENTS = [
         "function_declaration",
     ]
+
+    FIELD_STATEMENTS = []
 
     EXIT_STATEMENTS = [
         "return_statement",
