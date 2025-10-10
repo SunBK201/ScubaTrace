@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from abc import abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -28,13 +27,19 @@ class File:
     project: Project
     """ The project this file belongs to."""
 
-    def __init__(self, path: str, project: Project):
+    def __init__(
+        self,
+        path: str,
+        project: Project,
+        content: str | None = None,
+    ):
         """
         Initializes a new instance of the class.
 
         Args:
             path (str): The file path.
             project (Project): The project associated with this instance.
+            content (str | None): The content of the file. If None, the content will be read from the file.
         """
         if path.startswith("file://"):
             path = path[7:]
@@ -42,15 +47,17 @@ class File:
         self.project = project
         self.__lsp_preload = False
         self._is_build_cfg = False
+        self._content = content
 
     @staticmethod
-    def create(path: str, project: Project) -> File:
+    def create(path: str, project: Project, content: str | None = None) -> File:
         """
         Factory function to create a :class:`File` instance.
 
         Args:
             path (str): The file relative path.
             project (Project): The project instance.
+            content (str | None): The content of the file. If None, the content will be read from the file.
 
         Returns:
             File: An instance of a language-specific File subclass corresponding to the project's language.
@@ -59,45 +66,45 @@ class File:
         if project.language == lang.C:
             from .cpp.file import CFile
 
-            return CFile(path, project)
+            return CFile(path, project, content)
         elif project.language == lang.JAVA:
             from .java.file import JavaFile
 
-            return JavaFile(path, project)
+            return JavaFile(path, project, content)
         elif project.language == lang.JAVASCRIPT:
             from .javascript.file import JavaScriptFile
 
-            return JavaScriptFile(path, project)
+            return JavaScriptFile(path, project, content)
         elif project.language == lang.PYTHON:
             from .python.file import PythonFile
 
-            return PythonFile(path, project)
+            return PythonFile(path, project, content)
         elif project.language == lang.GO:
             from .go.file import GoFile
 
-            return GoFile(path, project)
+            return GoFile(path, project, content)
         elif project.language == lang.PHP:
             from .php.file import PHPFile
 
-            return PHPFile(path, project)
+            return PHPFile(path, project, content)
         elif project.language == lang.RUBY:
             from .ruby.file import RubyFile
 
-            return RubyFile(path, project)
+            return RubyFile(path, project, content)
         elif project.language == lang.RUST:
             from .rust.file import RustFile
 
-            return RustFile(path, project)
+            return RustFile(path, project, content)
         elif project.language == lang.SWIFT:
             from .swift.file import SwiftFile
 
-            return SwiftFile(path, project)
+            return SwiftFile(path, project, content)
         elif project.language == lang.CSHARP:
             from .csharp.file import CSharpFile
 
-            return CSharpFile(path, project)
+            return CSharpFile(path, project, content)
         else:
-            return File(path, project)
+            return File(path, project, content)
 
     @property
     def language(self) -> type[lang.Language]:
@@ -139,6 +146,8 @@ class File:
         """
         The content of the file.
         """
+        if self._content is not None:
+            return self._content
         with open(
             self._path,
             "rb",
@@ -152,7 +161,8 @@ class File:
             "r",
             encoding=encoding,
         ) as f:
-            return f.read()
+            self._content = f.read()
+            return self._content
 
     @property
     def lines(self) -> list[str]:

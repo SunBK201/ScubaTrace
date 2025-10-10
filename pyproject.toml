@@ -22,6 +22,7 @@ dependencies = [
     "pydot>=3.0.3",
     "chardet>=5.2.0",
     "scubalspy>=0.0.19",
+    "GitPython>=3.1.0",
 ]
 authors = [{ name = "SunBK201", email = "sunbk201gm@gmail.com" }]
 description = "ScubaTrace: A source-level code analysis toolkit for SAST, context engineering, and AI coding."

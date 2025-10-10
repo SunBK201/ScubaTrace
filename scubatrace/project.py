@@ -7,6 +7,7 @@ from collections import deque
 from functools import cached_property
 
 import networkx as nx
+from git import Repo
 from scubalspy import SyncLanguageServer
 from scubalspy.scubalspy_config import ScubalspyConfig
 from scubalspy.scubalspy_logger import ScubalspyLogger
@@ -278,3 +279,140 @@ class Project:
             if func.start_line <= start_line <= func.end_line:
                 return func
         return None
+
+
+class GitProject(Project):
+    """
+    A codebase project hosted in a Git repository.
+    """
+
+    repo: Repo
+    """The GitPython Repo object representing the Git repository."""
+
+    @staticmethod
+    def create(
+        path: str,
+        language: type[lang.Language],
+        enable_lsp: bool = True,
+    ) -> GitProject:
+        """Factory method to build a :class:`GitProject` instance."""
+        if language in (lang.PHP, lang.SWIFT):
+            enable_lsp = False
+        return GitProject(path, language, enable_lsp)
+
+    def __init__(
+        self,
+        path: str,
+        language: type[lang.Language],
+        enable_lsp: bool = True,
+    ):
+        """
+        Initialize a GitProject.
+
+        Args:
+            path (str): The file system path to the project root (must be a Git repository).
+            language (type[Language]): The programming language type for the project.
+            enable_lsp (bool, optional): Whether to enable LSP support. Defaults to True.
+
+        Raises:
+            ValueError: If the path is not a valid Git repository.
+        """
+        super().__init__(path, language, enable_lsp)
+        try:
+            self.repo = Repo(path)
+        except Exception as e:
+            raise ValueError(f"Path '{path}' is not a valid Git repository: {e}")
+
+    @property
+    def current_branch(self) -> str:
+        """
+        The name of the current active branch.
+        """
+        return self.repo.active_branch.name
+
+    @property
+    def current_commit(self) -> str:
+        """
+        The SHA hash of the current HEAD commit.
+        """
+        return self.repo.head.commit.hexsha
+
+    @property
+    def remote_url(self) -> str | None:
+        """
+        The URL of the remote repository (typically 'origin').
+        Returns None if no remote is configured.
+        """
+        try:
+            return self.repo.remotes.origin.url
+        except (AttributeError, ValueError):
+            return None
+
+    @property
+    def is_dirty(self) -> bool:
+        """
+        Whether the working directory has uncommitted changes.
+        """
+        return self.repo.is_dirty()
+
+    @property
+    def untracked_files(self) -> list[str]:
+        """
+        Get a list of untracked files in the working directory.
+
+        Returns:
+            list[str]: List of relative paths to untracked files.
+        """
+        return self.repo.untracked_files
+
+    def get_commit_message(self, commit_sha: str | None = None) -> str:
+        """
+        Get the commit message for a specific commit.
+
+        Args:
+            commit_sha (str | None): The SHA hash of the commit. If None, returns the HEAD commit message.
+
+        Returns:
+            str: The commit message.
+        """
+        if commit_sha is None:
+            message = self.repo.head.commit.message
+        else:
+            message = self.repo.commit(commit_sha).message
+        return message if isinstance(message, str) else message.decode("utf-8")
+
+    def get_file_at_commit(self, file_path: str, commit_sha: str) -> File:
+        """
+        Get the content of a file at a specific commit.
+
+        Args:
+            file_path (str): The relative path to the file within the repository.
+            commit_sha (str): The SHA hash of the commit.
+
+        Returns:
+            File: The File object representing the file at the specified commit.
+
+        Raises:
+            ValueError: If the file does not exist at the specified commit.
+        """
+        try:
+            commit = self.repo.commit(commit_sha)
+            blob = commit.tree / file_path
+            return File.create(file_path, self, blob.data_stream.read().decode("utf-8"))
+        except Exception as e:
+            raise ValueError(
+                f"File '{file_path}' not found at commit {commit_sha}: {e}"
+            )
+
+    def get_commits(self, max_count: int | None = None) -> list[str]:
+        """
+        Get a list of commit SHA hashes.
+
+        Args:
+            max_count (int | None): Maximum number of commits to retrieve. If None, returns all commits.
+
+        Returns:
+            list[str]: List of commit SHA hashes in reverse chronological order.
+        """
+        commits = list(self.repo.iter_commits(max_count=max_count))
+        return [commit.hexsha for commit in commits]

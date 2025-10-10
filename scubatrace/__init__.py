@@ -1,4 +1,5 @@
 from .project import Project  # noqa: I001
+from .project import GitProject
 
 from .cpp.project import CProject
 from .java.project import JavaProject
