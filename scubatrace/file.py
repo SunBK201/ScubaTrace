@@ -132,7 +132,9 @@ class File:
         """
         The relative path of the file with respect to the project directory.
         """
-        return self._path.replace(self.project.path + "/", "")
+        if os.path.isabs(self._path):
+            return os.path.relpath(self._path, self.project.abspath)
+        return os.path.normpath(self._path)
 
     @property
     def uri(self) -> str:

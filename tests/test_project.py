@@ -1,3 +1,4 @@
+import os
 import unittest
 from pathlib import Path
 
@@ -40,6 +41,16 @@ class TestProject(unittest.TestCase):
         self.assertIsNotNone(callgraph)
         self.assertGreater(len(callgraph.nodes), 0)
         self.assertGreater(len(callgraph.edges), 0)
+
+    def test_files_keys_are_relative(self):
+        c_project = scubatrace.Project.create(
+            str(self.samples_dir / "c") + os.sep, language=scubatrace.language.C, enable_lsp=False
+        )
+        for key in c_project.files.keys():
+            self.assertFalse(
+                Path(key).is_absolute(),
+                f"Expected relative path key, got absolute path: {key}",
+            )
 
 
 class TestGitProject(unittest.TestCase):

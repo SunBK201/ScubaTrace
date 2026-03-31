@@ -176,12 +176,14 @@ class Project:
         The keys are relative paths from the project root, and the values are :class:`File` representing each source file.
         """
         file_lists = {}
+        project_root = self.abspath
         for root, _, files in os.walk(self.path):
             for file in files:
                 if file.split(".")[-1] in self.language.extensions:
                     file_path = os.path.join(root, file)
-                    key = file_path.replace(self.path + "/", "")
-                    file_lists[key] = File.create(file_path, self)
+                    file_abs_path = os.path.abspath(file_path)
+                    key = os.path.relpath(file_abs_path, project_root)
+                    file_lists[key] = File.create(file_abs_path, self)
         return file_lists
 
     @cached_property
