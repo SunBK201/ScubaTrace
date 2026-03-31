@@ -87,6 +87,7 @@ Reference
 
    scubatrace.Project
    scubatrace.File
+   scubatrace.Class
    scubatrace.Function
    scubatrace.Statement
    scubatrace.Identifier
