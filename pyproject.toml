@@ -21,6 +21,7 @@ dependencies = [
     "pygraphviz>=1.13",
     "pydot>=3.0.3",
     "chardet>=5.2.0",
+    "zstandard>=0.23.0",
     "scubalspy>=0.0.24",
     "GitPython>=3.1.0",
 ]
