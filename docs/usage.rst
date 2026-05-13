@@ -87,3 +87,19 @@ Perform Analysis
     sliced_statements = function.slice_by_lines(
         lines=criteria_lines, control_depth=5, data_dependent_depth=8
     )
+
+ScubaTrace with Joern
+-----------------------
+
+ScubaTrace can also be used with Joern to perform CPG-based code analysis. Please refer to the `Joern Setup Guide <joern_setup.html>`_ for detailed instructions on how to set up and use ScubaTrace with Joern.
+
+.. code-block:: python
+    
+    # Initialize a ScubaTrace Project with Joern
+    project = scubatrace.Project.create(
+        "path/to/your/codebase",
+        language=scubatrace.language.C,
+        joern_config=scubatrace.JoernConfig(
+            enable_joern=True,
+        ),
+    )
