@@ -18,6 +18,7 @@ from .parser import Parser
 
 from .file import File
 from .clazz import Class
-from .function import Function, FunctionDeclaration
+from .function import DummyFunction, Function, FunctionDeclaration
 from .statement import Statement, SimpleStatement, BlockStatement
 from .identifier import Identifier
+from .joern import JoernConfig

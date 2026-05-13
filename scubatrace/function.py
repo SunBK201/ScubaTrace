@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections import defaultdict, deque
 from functools import cached_property
 from typing import TYPE_CHECKING, Callable, Generator
@@ -13,6 +14,7 @@ from .statement import BlockStatement, Statement
 
 if TYPE_CHECKING:
     from .clazz import Class
+    from .cpg import CpgNode
     from .file import File
 
 
@@ -228,11 +230,110 @@ class Function(BlockStatement):
         """
         return self.query(self.language.query_call)
 
+    @property
+    def _has_cpg(self) -> bool:
+        return getattr(self.file.project, "cpg", None) is not None
+
     @cached_property
-    def callees(self) -> dict[Function | FunctionDeclaration, list[Statement]]:
+    def _cpg_method(self) -> CpgNode | None:
+        if not self._has_cpg:
+            return None
+        return self.file.project.cpg.method_at(
+            self.file.relpath,
+            self.start_line,
+        )
+
+    def _file_from_cpg_filename(self, filename: str | None) -> File | None:
+        if filename is None:
+            return None
+        filename = os.path.normpath(filename)
+        if filename in self.file.project.files:
+            return self.file.project.files[filename]
+
+        if os.path.isabs(filename):
+            return self.file.project.files_abspath.get(os.path.abspath(filename))
+
+        absolute = os.path.abspath(os.path.join(self.file.project.abspath, filename))
+        file = self.file.project.files_abspath.get(absolute)
+        if file is not None:
+            return file
+
+        for relpath, file in self.file.project.files.items():
+            norm_relpath = os.path.normpath(relpath)
+            if norm_relpath.endswith(os.path.sep + filename) or filename.endswith(
+                os.path.sep + norm_relpath
+            ):
+                return file
+        return None
+
+    def _function_from_cpg_method(self, method: CpgNode) -> Function | None:
+        location = method.location
+        if location.line_number is None:
+            return None
+        file = self._file_from_cpg_filename(location.filename)
+        if file is None:
+            return None
+        return file.function_by_line(location.line_number)
+
+    def _statement_from_cpg_callsite(
+        self, callsite: CpgNode, fallback_file: File | None = None
+    ) -> Statement | None:
+        location = callsite.location
+        if location.line_number is None:
+            return None
+        file = self._file_from_cpg_filename(location.filename) or fallback_file
+        if file is None:
+            return None
+
+        statements = file.statements_by_line(location.line_number)
+        call_name = callsite.get("NAME")
+        if isinstance(call_name, str):
+            for statement in statements:
+                if call_name in statement.text:
+                    return statement
+        return statements[0] if statements else None
+
+    def _dummy_function_from_cpg_call(self, callsite: CpgNode) -> DummyFunction:
+        name = callsite.get("NAME")
+        if not isinstance(name, str) or len(name) == 0:
+            method_full_name = callsite.get("METHOD_FULL_NAME")
+            name = (
+                method_full_name if isinstance(method_full_name, str) else "<unknown>"
+            )
+        return DummyFunction(name)
+
+    def _cpg_callees(
+        self,
+    ) -> dict[Function | FunctionDeclaration | DummyFunction, list[Statement]]:
+        if self._cpg_method is None:
+            return {}
+
+        callees = defaultdict(set[Statement])
+        for relation in self._cpg_method.callees:
+            callsite = self._statement_from_cpg_callsite(relation.callsite, self.file)
+            if callsite is None:
+                continue
+
+            callee_func: Function | DummyFunction | None = None
+            if relation.callee is not None:
+                callee_func = self._function_from_cpg_method(relation.callee)
+            if callee_func is None:
+                callee_func = self._dummy_function_from_cpg_call(relation.callsite)
+            if callee_func == self:
+                continue
+            callees[callee_func].add(callsite)
+        return {k: list(v) for k, v in callees.items()}
+
+    @cached_property
+    def callees(
+        self,
+    ) -> dict[Function | FunctionDeclaration | DummyFunction, list[Statement]]:
         """
-        The functions or function declarations that are called by this function and their corresponding call sites.
+        The functions, function declarations, or external dummy functions that are called by this function and their corresponding call sites.
         """
+        if self._has_cpg:
+            return self._cpg_callees()
+
         lsp = self.lsp
         callees = defaultdict(set[Statement])
         for call_stat in self.calls:
@@ -255,6 +356,9 @@ class Function(BlockStatement):
                 # external file
                 if callee_def["uri"] not in self.file.project.files_uri:
                     if len(callee_def["uri"]) == 0:
+                        callees[DummyFunction(identifier.text)].add(
+                            identifier.statement
+                        )
                         continue
                     from .file import File
 
@@ -276,11 +380,33 @@ class Function(BlockStatement):
         callees = {k: list(v) for k, v in callees.items()}
         return callees
 
+    def _cpg_callers(self) -> dict[Function, list[Statement]]:
+        if self._cpg_method is None:
+            return {}
+
+        callers = defaultdict(list[Statement])
+        for relation in self._cpg_method.callers:
+            if relation.caller is None:
+                continue
+            caller_func = self._function_from_cpg_method(relation.caller)
+            if caller_func is None:
+                continue
+            callsite = self._statement_from_cpg_callsite(
+                relation.callsite, caller_func.file
+            )
+            if callsite is None:
+                continue
+            callers[caller_func].append(callsite)
+        return callers
+
     @cached_property
     def callers(self) -> dict[Function, list[Statement]]:
         """
         The functions that call this function and their corresponding call sites.
         """
+        if self._has_cpg:
+            return self._cpg_callers()
+
         lsp = self.lsp
         call_hierarchy = lsp.request_prepare_call_hierarchy(
             self.file.relpath,
@@ -346,8 +472,8 @@ class Function(BlockStatement):
             style="rounded",
         )
         forward_depth = 2048 if depth == -1 else depth
-        dq: deque[Function | FunctionDeclaration] = deque([self])
-        visited: set[Function | FunctionDeclaration] = set([self])
+        dq: deque[Function | FunctionDeclaration | DummyFunction] = deque([self])
+        visited: set[Function | FunctionDeclaration | DummyFunction] = set([self])
         while len(dq) > 0 and forward_depth > 0:
             size = len(dq)
             for _ in range(size):
@@ -630,6 +756,37 @@ class FunctionDeclaration:
         The unique signature of the function declaration.
         """
         return self.name + self.text + self.file.abspath
+
+    @property
+    def dot_text(self) -> str:
+        return self.name
+
+
+class DummyFunction:
+    """
+    Represents an external function without a source file location in the project.
+    """
+
+    name: str
+    """
+    The name of the external function.
+    """
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def __hash__(self):
+        return hash(self.signature)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, DummyFunction) and self.signature == other.signature
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def signature(self) -> str:
+        return f"dummy#{self.name}"
 
     @property
     def dot_text(self) -> str:

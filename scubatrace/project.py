@@ -12,9 +12,10 @@ from scubalspy import SyncLanguageServer
 from scubalspy.scubalspy_config import ScubalspyConfig
 from scubalspy.scubalspy_logger import ScubalspyLogger
 
+from . import joern
 from . import language as lang
 from .file import File
-from .function import Function, FunctionDeclaration
+from .function import DummyFunction, Function, FunctionDeclaration
 from .parser import Parser
 
 
@@ -33,6 +34,7 @@ class Project:
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
+        joern_config: joern.JoernConfig | None = None,
     ) -> Project:
         """
         Factory function to create a language-specific :class:`Project` instance.
@@ -42,6 +44,7 @@ class Project:
             language (type[Language]): The programming language type for the project.
             enable_lsp (bool, optional): Whether to enable Language Server Protocol (LSP) support. Defaults to True.
                 Note: For PHP and Swift, LSP is always disabled.
+            joern_config (JoernConfig | None, optional): Configuration for Joern integration. If provided, Joern will be used to generate a CPG for the project.
 
         Returns:
             Project: An instance of the appropriate language-specific Project subclass.
@@ -52,43 +55,43 @@ class Project:
         if language == lang.C:
             from .cpp.project import CProject
 
-            return CProject(path, enable_lsp)
+            return CProject(path, enable_lsp, joern_config)
         elif language == lang.JAVA:
             from .java.project import JavaProject
 
-            return JavaProject(path, enable_lsp)
+            return JavaProject(path, enable_lsp, joern_config)
         elif language == lang.PYTHON:
             from .python.project import PythonProject
 
-            return PythonProject(path, enable_lsp)
+            return PythonProject(path, enable_lsp, joern_config)
         elif language == lang.JAVASCRIPT:
             from .javascript.project import JavaScriptProject
 
-            return JavaScriptProject(path, enable_lsp)
+            return JavaScriptProject(path, enable_lsp, joern_config)
         elif language == lang.GO:
             from .go.project import GoProject
 
-            return GoProject(path, enable_lsp)
+            return GoProject(path, enable_lsp, joern_config)
         elif language == lang.RUST:
             from .rust.project import RustProject
 
-            return RustProject(path, enable_lsp)
+            return RustProject(path, enable_lsp, joern_config)
         elif language == lang.CSHARP:
             from .csharp.project import CSharpProject
 
-            return CSharpProject(path, enable_lsp)
+            return CSharpProject(path, enable_lsp, joern_config)
         elif language == lang.RUBY:
             from .ruby.project import RubyProject
 
-            return RubyProject(path, enable_lsp)
+            return RubyProject(path, enable_lsp, joern_config)
         elif language == lang.PHP:
             from .php.project import PHPProject
 
-            return PHPProject(path, enable_lsp=False)
+            return PHPProject(path, enable_lsp=False, joern_config=joern_config)
         elif language == lang.SWIFT:
             from .swift.project import SwiftProject
 
-            return SwiftProject(path, enable_lsp=False)
+            return SwiftProject(path, enable_lsp=False, joern_config=joern_config)
         else:
             raise ValueError("Unsupported language for project creation")
 
@@ -97,11 +100,18 @@ class Project:
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
+        joern_config: joern.JoernConfig | None = None,
     ):
         self.path = path
         self.language = language
+        self.joern_config = joern_config
         if enable_lsp:
             self.start_lsp()
+        if joern_config is not None and joern_config.enable:
+            self.cpg_path = joern.parse(path, joern_config)
+            from . import cpg
+
+            self.cpg: cpg.CPG = cpg.load(self.cpg_path)
 
     def start_lsp(self):
         if self.language == lang.C:
@@ -223,18 +233,15 @@ class Project:
 
     def __build_callgraph(self, entry: Function) -> nx.MultiDiGraph:
         cg = nx.MultiDiGraph()
-        dq: deque[Function | FunctionDeclaration] = deque([entry])
-        visited: set[Function | FunctionDeclaration] = set([entry])
+        dq: deque[Function | FunctionDeclaration | DummyFunction] = deque([entry])
+        visited: set[Function | FunctionDeclaration | DummyFunction] = set([entry])
         while len(dq) > 0:
             caller = dq.popleft()
-            if isinstance(caller, FunctionDeclaration):
+            if not isinstance(caller, Function):
                 continue
             if caller.file.is_external:
                 continue
             for callee, callsites in caller.callees.items():
-                if callee in visited:
-                    continue
-                visited.add(callee)
                 cg.add_node(
                     callee,
                     label=callee.dot_text,
@@ -246,7 +253,9 @@ class Project:
                         line=callsite.start_line,
                         column=callsite.start_column,
                     )
-                dq.append(callee)
+                if callee not in visited:
+                    visited.add(callee)
+                    dq.append(callee)
         return cg
 
     @property
@@ -257,11 +266,12 @@ class Project:
         entry = self.entry_point
         if entry is None:
             return nx.MultiDiGraph()
-        for file in self.files.values():
-            try:
-                self.lsp.open_file(file.relpath).__enter__()
-            except Exception as e:
-                print(f"Error preloading file {file.relpath}: {e}")
+        if hasattr(self, "lsp"):
+            for file in self.files.values():
+                try:
+                    self.lsp.open_file(file.relpath).__enter__()
+                except Exception as e:
+                    print(f"Error preloading file {file.relpath}: {e}")
         cg = self.__build_callgraph(entry)
         return cg
 
@@ -296,17 +306,19 @@ class GitProject(Project):
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
+        joern_config: joern.JoernConfig | None = None,
     ) -> GitProject:
         """Factory method to build a :class:`GitProject` instance."""
         if language in (lang.PHP, lang.SWIFT):
             enable_lsp = False
-        return GitProject(path, language, enable_lsp)
+        return GitProject(path, language, enable_lsp, joern_config)
 
     def __init__(
         self,
         path: str,
         language: type[lang.Language],
         enable_lsp: bool = True,
+        joern_config: joern.JoernConfig | None = None,
     ):
         """
         Initialize a GitProject.
@@ -315,11 +327,12 @@ class GitProject(Project):
             path (str): The file system path to the project root (must be a Git repository).
             language (type[Language]): The programming language type for the project.
             enable_lsp (bool, optional): Whether to enable LSP support. Defaults to True.
+            joern_config (JoernConfig | None, optional): Configuration for Joern integration.
 
         Raises:
             ValueError: If the path is not a valid Git repository.
         """
-        super().__init__(path, language, enable_lsp)
+        super().__init__(path, language, enable_lsp, joern_config)
         try:
             self.repo = Repo(path)
         except Exception as e:

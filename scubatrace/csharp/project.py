@@ -1,13 +1,19 @@
 from functools import cached_property
 
+from .. import joern
 from ..project import Project
 from . import language
 from .parser import CSharpParser
 
 
 class CSharpProject(Project):
-    def __init__(self, path: str, enable_lsp: bool = True):
-        super().__init__(path, language.CSHARP, enable_lsp)
+    def __init__(
+        self,
+        path: str,
+        enable_lsp: bool = True,
+        joern_config: joern.JoernConfig | None = None,
+    ):
+        super().__init__(path, language.CSHARP, enable_lsp, joern_config)
         self._parser = CSharpParser()
 
     @property
