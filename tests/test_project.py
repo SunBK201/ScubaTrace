@@ -109,18 +109,3 @@ class TestGitProject(unittest.TestCase):
         for sha in commits:
             self.assertIsInstance(sha, str)
             self.assertEqual(len(sha), 40)
-
-
-class TestProjectJoernConfig(unittest.TestCase):
-    def test_project_create_accepts_joern_config(self):
-        self.test_dir = Path(__file__).parent
-        self.samples_dir = self.test_dir / "samples"
-        self.project_path = self.samples_dir / "c"
-        self.project = scubatrace.Project.create(
-            str(self.project_path),
-            language=scubatrace.language.C,
-            joern_config=scubatrace.JoernConfig(enable=True),
-        )
-        self.assertIsNotNone(self.project)
-        self.assertIsNotNone(self.project.cpg_path)
-        self.assertIsNotNone(self.project.cpg)

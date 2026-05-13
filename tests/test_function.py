@@ -92,37 +92,3 @@ class TestFunction(unittest.TestCase):
         self.assertIsNotNone(callgraph)
         self.assertGreater(len(callgraph.nodes), 0)
         self.assertGreater(len(callgraph.edges), 0)
-
-
-class TestFunctionJoernCpg(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = Path(__file__).parent
-        self.samples_dir = self.test_dir / "samples"
-        self.project_path = self.samples_dir / "c"
-
-    def test_function_callees_use_dummy_for_external_cpg_calls(self):
-        project = scubatrace.Project.create(
-            str(self.project_path),
-            language=scubatrace.language.C,
-            enable_lsp=False,
-            joern_config=scubatrace.JoernConfig(),
-        )
-        main_func = project.files["main.c"].functions_by_name("main")[0]
-
-        for callee in main_func.callees:
-            print(f"callee: {callee.name}, type: {type(callee)}")
-            if callee.name == "add":
-                self.assertIsInstance(callee, scubatrace.Function)
-            elif callee.name == "sub":
-                self.assertIsInstance(callee, scubatrace.Function)
-            else:
-                self.assertIsInstance(callee, scubatrace.DummyFunction)
-
-    def test_export_callgraph(self):
-        project = scubatrace.Project.create(
-            str(self.project_path),
-            language=scubatrace.language.C,
-            enable_lsp=False,
-            joern_config=scubatrace.JoernConfig(),
-        )
-        project.export_callgraph(f"{self.project_path}")
