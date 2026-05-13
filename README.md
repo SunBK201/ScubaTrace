@@ -11,7 +11,7 @@ ScubaTrace: Source-level code analysis toolkit for SAST, context engineering, an
 <br>
 <img src="https://sunbk201.oss-cn-beijing.aliyuncs.com/img/ScubaTrace.png" width="61.8%">
 
-ScubaTrace is a code analysis toolkit that leverages tree-sitter and LSP (Language Server Protocol) to provide parsing, analysis, and context extraction capabilities for multiple programming languages.
+ScubaTrace is a code analysis toolkit that leverages tree-sitter, Joern and LSP (Language Server Protocol) to provide parsing, analysis, and context extraction capabilities for multiple programming languages.
 
 Unlike most traditional static analysis tools that rely on compilation to extract Intermediate Representation (IR) for code analysis, ScubaTrace delivers analysis capabilities even when code repositories are incomplete or unable to compile. This resilience makes it particularly valuable for scenarios where traditional analysis approaches would fail, enabling developers and security researchers to gain insights from code that might otherwise be inaccessible to conventional static analysis methodologies.
 
