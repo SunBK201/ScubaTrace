@@ -132,4 +132,17 @@ sliced_statements = function.slice_by_lines(
 )
 ```
 
+## ScubaTrace with Joern
+
+```python
+# Initialize a ScubaTrace Project with Joern
+project = scubatrace.Project.create(
+    "path/to/your/codebase",
+    language=scubatrace.language.C,
+    joern_config=scubatrace.JoernConfig(
+        enable_joern=True,
+    ),
+)
+```
+
 For more detailed information, refer to the [Documentation](https://sunbk201.github.io/ScubaTrace/).
