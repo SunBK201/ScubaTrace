@@ -9,7 +9,7 @@ NodeId = tuple[str, int]
 
 
 @dataclass(frozen=True)
-class Edge:
+class CpgEdge:
     src: NodeId
     dst: NodeId
     label: str
@@ -144,22 +144,19 @@ class CpgNode:
         return result
 
 
-Node = CpgNode
-
-
 class CPG:
     def __init__(
         self,
         nodes: Mapping[NodeId, CpgNode],
-        edges: Iterable[Edge],
+        edges: Iterable[CpgEdge],
         manifest: Mapping[str, Any] | None = None,
     ) -> None:
         self.nodes: dict[NodeId, CpgNode] = dict(nodes)
-        self.edges: list[Edge] = list(edges)
+        self.edges: list[CpgEdge] = list(edges)
         self.manifest = dict(manifest or {})
         self._nodes_by_label: dict[str, list[CpgNode]] = {}
-        self._out_edges: dict[NodeId, list[Edge]] = {}
-        self._in_edges: dict[NodeId, list[Edge]] = {}
+        self._out_edges: dict[NodeId, list[CpgEdge]] = {}
+        self._in_edges: dict[NodeId, list[CpgEdge]] = {}
         self._methods_by_full_name: dict[str, list[CpgNode]] = {}
         for node in self.nodes.values():
             node._cpg = self
@@ -192,12 +189,12 @@ class CPG:
     def nodes_by_label(self, label: str) -> list[CpgNode]:
         return list(self._nodes_by_label.get(label, ()))
 
-    def out_edges(self, node_id: NodeId, label: str | None = None) -> Iterator[Edge]:
+    def out_edges(self, node_id: NodeId, label: str | None = None) -> Iterator[CpgEdge]:
         for edge in self._out_edges.get(node_id, ()):
             if label is None or edge.label == label:
                 yield edge
 
-    def in_edges(self, node_id: NodeId, label: str | None = None) -> Iterator[Edge]:
+    def in_edges(self, node_id: NodeId, label: str | None = None) -> Iterator[CpgEdge]:
         for edge in self._in_edges.get(node_id, ()):
             if label is None or edge.label == label:
                 yield edge

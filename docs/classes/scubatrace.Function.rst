@@ -9,3 +9,8 @@
 .. autoclass:: scubatrace.FunctionDeclaration
    :members:
    :show-inheritance:
+
+
+.. autoclass:: scubatrace.DummyFunction
+   :members:
+   :show-inheritance:

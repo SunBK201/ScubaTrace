@@ -93,6 +93,8 @@ Reference
    scubatrace.Identifier
    scubatrace.Parser
    scubatrace.Language
+   scubatrace.Cpg
+   scubatrace.Joern
 
 .. toctree::
     :caption: DEVELOPMENT

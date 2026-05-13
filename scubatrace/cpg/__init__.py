@@ -1,15 +1,14 @@
-from .model import CPG, CpgNode, Edge, MethodCall, Node, SourceLocation
+from .model import CPG, CpgEdge, CpgNode, MethodCall, SourceLocation
 from .objects import NODE_CLASS_BY_LABEL
 from .reader import FlatGraphReader, load
 
 __all__ = [
     "CPG",
     "CpgNode",
-    "Edge",
+    "CpgEdge",
     "FlatGraphReader",
     "MethodCall",
     "NODE_CLASS_BY_LABEL",
-    "Node",
     "SourceLocation",
     "load",
 ]

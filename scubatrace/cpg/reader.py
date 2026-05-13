@@ -8,7 +8,7 @@ from typing import Any
 
 import zstandard as zstd
 
-from .model import CPG, CpgNode, Edge, NodeId
+from .model import CPG, CpgEdge, CpgNode, NodeId
 from .objects import NODE_CLASS_BY_LABEL
 from .schema import CPG_EDGE_LABELS, CPG_NODE_SCHEMA
 
@@ -159,7 +159,7 @@ class FlatGraphReader:
         for node in nodes.values():
             node.validate_schema()
 
-    def _read_edges(self, node_labels: Sequence[str]) -> Iterable[Edge]:
+    def _read_edges(self, node_labels: Sequence[str]) -> Iterable[CpgEdge]:
         seen_half_edges = set()
         for item in self.manifest["edges"]:
             # FlatGraph encodes Edge.Direction.Incoming as ordinal 0 and
@@ -184,7 +184,7 @@ class FlatGraphReader:
                     if key in seen_half_edges:
                         continue
                     seen_half_edges.add(key)
-                    yield Edge(src=src, dst=dst, label=edge_label, property=prop)
+                    yield CpgEdge(src=src, dst=dst, label=edge_label, property=prop)
 
 
 def _delta_decode(values: list[int]) -> list[int]:
