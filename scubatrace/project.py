@@ -111,7 +111,7 @@ class Project:
             self.cpg_path = joern.parse(path, joern_config)
             from . import cpg
 
-            self.cpg: cpg.CPG = cpg.load(self.cpg_path)
+            self.cpg: cpg.Cpg = cpg.load(self.cpg_path)
 
     def start_lsp(self):
         if self.language == lang.C:

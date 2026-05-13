@@ -44,6 +44,7 @@ Install
     :hidden:
 
     usage
+    joern_setup
 
 Features
 ===================
@@ -94,7 +95,6 @@ Reference
    scubatrace.Parser
    scubatrace.Language
    scubatrace.Cpg
-   scubatrace.Joern
 
 .. toctree::
     :caption: DEVELOPMENT

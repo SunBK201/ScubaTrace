@@ -22,4 +22,4 @@ from .function import DummyFunction, Function, FunctionDeclaration
 from .statement import Statement, SimpleStatement, BlockStatement
 from .identifier import Identifier
 from .joern import JoernConfig
-from .cpg import CPG, CpgNode, CpgEdge, SourceLocation
+from .cpg import Cpg, CpgNode, CpgEdge, SourceLocation

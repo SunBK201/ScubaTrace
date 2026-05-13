@@ -8,7 +8,7 @@ from typing import Any
 
 import zstandard as zstd
 
-from .model import CPG, CpgEdge, CpgNode, NodeId
+from .model import Cpg, CpgEdge, CpgNode, NodeId
 from .objects import NODE_CLASS_BY_LABEL
 from .schema import CPG_EDGE_LABELS, CPG_NODE_SCHEMA
 
@@ -28,12 +28,12 @@ class FlatGraphReader:
         self._validate_manifest_schema()
         self._string_pool: list[str] | None = None
 
-    def read(self) -> CPG:
+    def read(self) -> Cpg:
         node_labels = [item["nodeLabel"] for item in self.manifest["nodes"]]
         nodes = self._create_nodes()
         self._read_properties(nodes)
         edges = list(self._read_edges(node_labels))
-        return CPG(nodes, edges, manifest=self.manifest)
+        return Cpg(nodes, edges, manifest=self.manifest)
 
     def _read_manifest(self) -> dict[str, Any]:
         if len(self._data) < HEADER_SIZE:
@@ -196,5 +196,5 @@ def _delta_decode(values: list[int]) -> list[int]:
     return decoded
 
 
-def load(path: str | Path) -> CPG:
+def load(path: str | Path) -> Cpg:
     return FlatGraphReader(path).read()

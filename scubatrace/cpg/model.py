@@ -55,7 +55,7 @@ class CpgNode:
     label: str
     seq: int
     properties: dict[str, Any] = field(default_factory=dict)
-    _cpg: CPG | None = field(default=None, init=False, repr=False, compare=False)
+    _cpg: Cpg | None = field(default=None, init=False, repr=False, compare=False)
     schema_label: ClassVar[str] = ""
     schema_properties: ClassVar[frozenset[str]] = frozenset()
 
@@ -79,7 +79,7 @@ class CpgNode:
                 f"{self.label} contains properties outside CPG schema: {formatted}"
             )
 
-    def _graph(self) -> CPG:
+    def _graph(self) -> Cpg:
         if self._cpg is None:
             raise RuntimeError("Node is not attached to a CPG instance")
         return self._cpg
@@ -144,7 +144,7 @@ class CpgNode:
         return result
 
 
-class CPG:
+class Cpg:
     def __init__(
         self,
         nodes: Mapping[NodeId, CpgNode],
@@ -170,7 +170,7 @@ class CPG:
             self._in_edges.setdefault(edge.dst, []).append(edge)
 
     @classmethod
-    def load(cls, path: str) -> CPG:
+    def load(cls, path: str) -> Cpg:
         from .reader import load
 
         return load(path)
