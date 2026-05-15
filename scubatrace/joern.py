@@ -17,6 +17,9 @@ class JoernLanguage(Enum):
     C = "newcpp"
     PYTHON = "python"
     JAVASCRIPT = "javascript"
+    GO = "golang"
+    PHP = "php"
+    CSHARP = "csharp"
 
 
 @dataclass
@@ -112,5 +115,11 @@ def _language_to_joern_language(language: Language) -> JoernLanguage:
         return JoernLanguage.PYTHON
     elif language == lang.JAVASCRIPT:
         return JoernLanguage.JAVASCRIPT
+    elif language == lang.GO:
+        return JoernLanguage.GO
+    elif language == lang.PHP:
+        return JoernLanguage.PHP
+    elif language == lang.CSHARP:
+        return JoernLanguage.CSHARP
     else:
         raise ValueError(f"Unsupported language with extensions: {language.extensions}")
