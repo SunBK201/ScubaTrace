@@ -165,8 +165,4 @@ Joern API Reference
    :members:
    :show-inheritance:
 
-.. autoclass:: scubatrace.joern.JoernLanguage
-   :members:
-   :show-inheritance:
-
 .. autofunction:: scubatrace.joern.parse
