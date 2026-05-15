@@ -89,6 +89,9 @@ CPG_NODE_SCHEMA: dict[str, frozenset[str]] = {
     "RETURN": frozenset(
         "ARGUMENT_INDEX ARGUMENT_LABEL ARGUMENT_NAME CODE COLUMN_NUMBER LINE_NUMBER OFFSET OFFSET_END ORDER".split()
     ),
+    "LOCATION": frozenset(
+        "CLASS_NAME CLASS_SHORT_NAME FILENAME LINE_NUMBER METHOD_FULL_NAME METHOD_SHORT_NAME NODE_LABEL PACKAGE_NAME SYMBOL".split()
+    ),
     "TAG": frozenset("NAME VALUE".split()),
     "TAG_NODE_PAIR": frozenset(),
     "TEMPLATE_DOM": frozenset(
