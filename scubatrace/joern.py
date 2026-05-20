@@ -14,7 +14,7 @@ from .language import Language
 
 class JoernLanguage(Enum):
     JAVA = "javasrc"
-    C = "newcpp"
+    C = "newc"
     PYTHON = "python"
     JAVASCRIPT = "javascript"
     GO = "golang"
