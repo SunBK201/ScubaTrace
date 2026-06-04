@@ -13,6 +13,9 @@ Rather than being an end-to-end program analysis framework, ScubaTrace serves as
     :width: 500px
     :alt: ScubaTrace
 
+.. image:: _static/logopic.png
+    :width: 500px
+
 Install
 ==========
 
