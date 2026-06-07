@@ -5,7 +5,7 @@ from ..language import Language
 
 
 class C(Language):
-    extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp"]
+    extensions = ["c", "h", "cc", "cpp", "cxx", "hxx", "hpp", "hh"]
     tslanguage = TSLanguage(tscpp.language())
 
     query_identifier = """
